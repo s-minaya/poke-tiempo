@@ -1,0 +1,30 @@
+# Dependencias
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+
+# Credenciales — la API key de AEMET nunca entra al repositorio
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editores y sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.local
+
+# Playwright
+test-results/
+playwright-report/
+
+# NOTA: src/data/forecast.json y src/data/capitales.ts SÍ se versionan.
+# Son generados, pero el sitio se construye a partir de ellos y el commit
+# diario del bot es lo que deja constancia de la previsión de cada día.
