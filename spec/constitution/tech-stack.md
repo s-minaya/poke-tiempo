@@ -44,7 +44,7 @@ Motivos, para que nadie los reabra por costumbre:
 - **AEMET usa doble llamada:** la primera petición devuelve una URL temporal en el campo `datos` y hay que hacer una segunda a esa URL. Son 2 peticiones por ciudad.
 - **El rate limit de AEMET es de 50 peticiones por minuto y API key**, compartido entre todos los visitantes si se llamara desde el navegador.
 - **La respuesta de AEMET viene en ISO-8859-1**, no en UTF-8. Hay que decodificarla explícitamente o las tildes se rompen.
-- **Cada fuente tiene su propio vocabulario de estado del cielo/viento** (códigos numéricos de AEMET, códigos de IPMA, WMO weather codes de Open-Meteo) — el script de descarga normaliza los tres al mismo `EstadoCielo`/dominio propio antes de escribir `forecast.json`; el resto de la aplicación no sabe de qué fuente vino cada dato.
+- **Cada fuente tiene su propio vocabulario de estado del cielo/viento** (códigos numéricos de AEMET, códigos de IPMA, WMO weather codes de Open-Meteo) — el script de descarga normaliza los tres al mismo `SkyCondition`/dominio propio antes de escribir `forecast.json`; el resto de la aplicación no sabe de qué fuente vino cada dato.
 - Además, el resultado es idéntico para todos los visitantes y cambia una vez al día: no hay nada que personalizar en runtime.
 
 **Regla derivada:** si una feature futura necesita datos que no están en `forecast.json`, se amplía el script de descarga y el esquema del JSON — nunca se añade una llamada de red desde `src/`.
@@ -73,16 +73,18 @@ Motivos, para que nadie los reabra por costumbre:
 
 ## Modelo de datos / dominio
 
-- **Capital** — identificador propio del lugar (código INE de 5 dígitos para España; código de localidad IPMA para Portugal; coordenadas para Andorra, que no tiene identificador de agencia), nombre, latitud, longitud, fuente (`aemet` | `ipma` | `open-meteo`).
-- **CiudadPrevision** — lugar + temperatura máxima y mínima, estado de cielo normalizado, descripción literal de la fuente, probabilidad de precipitación y **velocidad del viento en km/h** (dato propio del dominio: AEMET y Open-Meteo la mandan cruda, la clase 1-4 de IPMA se traduce a un equivalente en km/h con los mismos cortes — así el motor de asignación trabaja siempre con el mismo número, sea cual sea la fuente).
-- **EstadoCielo** — vocabulario propio cerrado, más rico que el binario nublado/despejado porque cada estado es una ranura para un Pokémon distinto: `despejado`, `poco_nuboso`, `nuboso`, `cubierto`, `niebla`, `calima`, `viento_moderado`, `viento_fuerte`, `lluvia`, `lluvia_barro`, `tormenta`, `nieve`. Cada fuente usa su propio código (AEMET: numéricos con sufijo `n` para la noche, calima = 83; IPMA: `idWeatherType`; Open-Meteo: WMO weather code — sin código propio de calima, así que en Andorra ese estado nunca se detecta) y se traducen por familias, no enumerando cada valor posible, con un caso de respaldo para cualquier código no previsto. `lluvia_barro` no viene de ninguna fuente: es una regla compuesta del motor de asignación (003) que combina lluvia + calima del mismo lugar y día en un único estado, con prioridad sobre elegir uno de los dos por separado.
-- **EntradaPokedex** — el Pokémon asignado a una condición: identificador, nombre, etiqueta corta (la que sale en la leyenda) y descripción.
-- **Forecast** — el JSON completo: fecha de previsión, momento de generación, fuente y lista de ciudades.
+⚠️ **Nombres de tipo provisionales.** Los nombres estructurales (tipos/interfaces) van en inglés, igual que el resto del código — nunca se cerraron en español, la lista de abajo ya usa el nombre correcto. Los **valores literales** del vocabulario meteorológico sí se quedan en español cuando vienen tal cual de una fuente o se muestran al usuario (`'poco_nuboso'`, `'despejado'`) — ver la excepción en "Convenciones". El schema exacto (qué campos tiene cada uno) está pendiente de la investigación de la feature 002 sobre AEMET/IPMA/Open-Meteo — lo de abajo es el concepto, no el contrato final.
+
+- **`City`** — identificador propio del lugar (código INE de 5 dígitos para España; código de localidad IPMA para Portugal; coordenadas para Andorra, que no tiene identificador de agencia), nombre, latitud, longitud, fuente (`aemet` | `ipma` | `open-meteo`).
+- **`CityForecast`** — lugar + temperatura máxima y mínima, condición de cielo normalizada, descripción literal de la fuente, probabilidad de precipitación y **velocidad del viento en km/h** (dato propio del dominio: AEMET y Open-Meteo la mandan cruda, la clase 1-4 de IPMA se traduce a un equivalente en km/h con los mismos cortes — así el motor de asignación trabaja siempre con el mismo número, sea cual sea la fuente). Qué más campos necesita (mm de precipitación, cm de nieve, franjas, avisos) se cierra con la investigación de la 002.
+- **`SkyCondition`** — vocabulario propio cerrado, más rico que el binario nublado/despejado porque cada estado es una ranura para un Pokémon distinto: `'despejado'`, `'poco_nuboso'`, `'nuboso'`, `'cubierto'`, `'niebla'`, `'calima'`, `'viento_moderado'`, `'viento_fuerte'`, `'lluvia'`, `'lluvia_barro'`, `'tormenta'`, `'nieve'`. Cada fuente usa su propio código (AEMET: numéricos con sufijo `n` para la noche, calima = 83; IPMA: `idWeatherType`; Open-Meteo: WMO weather code — sin código propio de calima, así que en Andorra ese estado nunca se detecta) y se traducen por familias, no enumerando cada valor posible, con un caso de respaldo para cualquier código no previsto. `'lluvia_barro'` no viene de ninguna fuente: es una regla compuesta del motor de asignación (003) que combina lluvia + calima del mismo lugar y día en un único estado, con prioridad sobre elegir uno de los dos por separado. **Pendiente de decidir en la 002:** si este único valor cerrado basta o si hace falta representar ejes simultáneos por separado (ver `roadmap.md` → "Decisiones pendientes") — la lista de valores de arriba puede cambiar de forma o dejar de ser el único mecanismo.
+- **`PokedexEntry`** — el Pokémon asignado a una condición: identificador, nombre, etiqueta corta (la que sale en la leyenda) y descripción.
+- **`Forecast`** — el JSON completo: fecha de previsión, momento de generación, fuente y lista de lugares.
 
 ## Convenciones
 
 - **Idioma del código:** todo en **inglés** (variables, funciones, componentes, tipos, nombres de archivo). Comentarios y documentación de `spec/` en **español**.
-  - **Excepción deliberada:** los identificadores del dominio meteorológico se escriben en español cuando corresponden a un valor que llega literal de AEMET o que se muestra al usuario (`estadoCielo`, `'poco_nuboso'`). Traducirlos obligaría a mantener un diccionario ida y vuelta sin ganar nada.
+  - **Excepción deliberada:** los **valores literales** del dominio meteorológico se escriben en español cuando corresponden a un valor que llega tal cual de una fuente o que se muestra al usuario (`'poco_nuboso'`, `'despejado'`). Los nombres estructurales (tipos, interfaces, campos, funciones) van siempre en inglés — `skyCondition: SkyCondition`, nunca `estadoCielo: EstadoCielo`. Traducir los valores obligaría a mantener un diccionario ida y vuelta sin ganar nada; los nombres estructurales no tienen ese problema.
 - **Nombrado de archivos:** componentes React en **PascalCase**; funciones, hooks y utilidades en **camelCase**; archivos de estilos con el mismo nombre que el componente que estilan.
 - **Componentes:** siempre `function` (function declarations), no `class` ni arrow-function-const salvo excepción justificada.
 - **Tipos:** `interface` para formas de objeto, `type` para uniones y alias. Los tipos del dominio viven en `src/domain/`, no duplicados por componente. `import type` para importaciones que solo se usan como tipo.
@@ -160,7 +162,7 @@ _Identidad: pixel art, interfaz de Game Boy, Pokédex de primera generación. No
 
 **GitHub Pages**, publicado desde GitHub Actions (Settings → Pages en modo "GitHub Actions", no en modo rama).
 
-- `vite.config.ts` necesita `base: '/poketiempo/'` para que las rutas de los assets resuelvan bajo el subdirectorio del repositorio.
+- `vite.config.ts` necesita `base: '/poke-tiempo/'` para que las rutas de los assets resuelvan bajo el subdirectorio del repositorio (nombre real: `github.com/s-minaya/poke-tiempo`).
 - Workflow diario: cron a las 06:00 UTC (la pasada de las 00 UTC de AEMET ya está publicada), más `workflow_dispatch` para poder lanzarlo a mano.
 - `AEMET_API_KEY` vive en los secrets del repositorio. En local, en un `.env` ignorado por git.
 

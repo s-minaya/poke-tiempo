@@ -4,7 +4,7 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 
 ## Hecho ✅
 
-**001 · Setup base del proyecto** — estructura de carpetas, Vite + React + TypeScript, `_breakpoints.scss`, `_variables.scss`, `_reset.scss`, ESLint + Stylelint, Vitest + React Testing Library, workflow de despliegue a GitHub Pages. Ver `features/001-setup-base-proyecto/`.
+**001 · Setup base del proyecto** — estructura de carpetas, Vite + React + TypeScript, `_breakpoints.scss`, `_variables.scss`, `_reset.scss`, ESLint + Stylelint, Vitest + React Testing Library, workflow de despliegue a GitHub Pages. Ver `features/001-project-setup/`.
 
 ## Siguiente 🔜
 
@@ -25,9 +25,17 @@ _Orden razonado, no comprometido. Cada una necesita su spec antes de tocar códi
    >
    > Nota aparte para cuando se construya el script: existe un municipio español real llamado **"Andorra" (Teruel)**, sin relación con el país — cuidado al resolver nombres contra el maestro de municipios de AEMET.
 
+   > **Decisión de modelo de datos pendiente, importante:** la tabla de reglas de la 003 trabaja sobre **ejes simultáneos** (temperatura, cielo, precipitación, nieve, viento, tormenta, calima, mar...) que pueden darse a la vez en el mismo lugar y día. `SkyCondition`, tal como está descrito hoy en `tech-stack.md`, es un único valor cerrado por lugar — normalizar a eso demasiado pronto **descarta información que la 003 (y la futura 007, Profesor Oak) necesitan después**. `SkyCondition` puede seguir existiendo si resulta útil para algo (p. ej. el mapa), pero la 002 no debe usarlo como único mecanismo para representar fenómenos concurrentes. Se decide al diseñar la spec de esta feature, no aquí.
+   >
+   > **Campos que hoy le faltan al modelo de `CityForecast`** para que la 003 y la 007 funcionen de verdad: precipitación acumulada en mm (hoy solo hay probabilidad), nieve en cm, franjas mañana/tarde (sin esto, algunos modos narrativos de la 007 no se pueden habilitar), y avisos oficiales (estructura y niveles todavía sin definir — ver más abajo).
+   >
+   > **DANA — capacidad pendiente, no asumida.** Si al diseñar esta feature aparece una fuente o criterio fiable para identificarla, se expone como señal (p. ej. `dana: boolean`) para que la 003 la use en su regla de Thundurus. Hasta entonces, ni la 003 ni la 007 asumen que existe.
+   >
+   > **Avisos oficiales — estructura sin definir.** Necesarios para oleaje muy fuerte (003) y para el modo `alerta` de la 007. Qué niveles activan qué, y de dónde sale el dato (AEMET tiene avisos por provincia, no está claro si IPMA/Open-Meteo tienen equivalente), se decide aquí, no se da por hecho en features posteriores.
+
 3. **003 · Motor de asignación de Pokémon** — la función pura que traduce una condición meteorológica en un Pokémon, con su tabla de reglas declarativa y su batería de tests. Se puede cerrar con un puñado de Pokémon de prueba: no hace falta tener la lista completa para dar la feature por hecha, porque ampliarla después es tocar datos, no código.
 
-   > **Reglas de asignación confirmadas por el propietario de la cuenta original.** No son una propuesta: es la tabla real que usa Poketiempo, y define franjas mucho más finas que las 12 categorías de `EstadoCielo` en `tech-stack.md` — cada categoría se resuelve internamente por umbral numérico. El motor de la 003 se diseña contra esta tabla directamente.
+   > **Reglas de asignación confirmadas por el propietario de la cuenta original.** No son una propuesta: es la tabla real que usa Poketiempo, y define franjas mucho más finas que las 12 categorías de `SkyCondition` en `tech-stack.md` — cada categoría se resuelve internamente por umbral numérico. El motor de la 003 se diseña contra esta tabla directamente.
    >
    > - **Temperatura** (un único eje continuo, cubre frío y calor — no son "soleado" y "caluroso" por separado): hasta 7° Snorunt · 8-14° Solrock · 15-25° Castform (forma sol) · 26-29° Charmander · 30-33° Charmeleon · 34-39° Magmar · 40-43° Groudon · más de 44° Groudon primigenio.
    > - **Nubes:** poco nuboso → Altaria · nuboso o muy nuboso → Castform (forma normal/nube).
@@ -35,7 +43,7 @@ _Orden razonado, no comprometido. Cada una necesita su spec antes de tocar códi
    > - **Nieve** (cm): hasta 10cm Cryogonal · más de 10cm Abomasnow.
    > - **Viento** (km/h): 20-40 Hoppip · 40-60 Dragonite · 60-90 Rayquaza · más de 90 Tornadus.
    > - **Calima:** Hippowdon.
-   > - **Tormenta:** Zapdos — salvo que sea una DANA, en cuyo caso Thundurus.
+   > - **Tormenta:** Zapdos — salvo que sea una DANA, en cuyo caso Thundurus. Esta distinción depende de que la 002 exponga una señal de DANA fiable (ver nota en el punto 2); mientras no exista, la regla no distingue y siempre sale Zapdos.
    > - **Niebla:** Castform (forma hielo).
    > - **Oleaje:** Gyarados · oleaje muy fuerte (aviso rojo) → Mega Gyarados.
    >
@@ -49,6 +57,8 @@ _Orden razonado, no comprometido. Cada una necesita su spec antes de tocar códi
 
 6. **006 · Responsive, accesibilidad y cierre** — solución para móvil (el mapa de 52 ciudades no es legible en 320px y necesita su propia forma), alternativa textual del mapa, atribución a AEMET y disclaimer de Pokémon.
 
+7. **007 · Profesor Oak** — 3 diálogos narrativos diarios que traducen la previsión ya decidida (002 + 003) a texto, con Groq (capa gratuita) como redactor y una capa de fallback local sin IA. Diseño detallado en `features/007-professor-oak/`. **Depende por completo de la 002 y la 003:** no genera nada real hasta que ambas existan, aunque su diseño ya está cerrado en paralelo. La lógica de asignación Pokémon (qué Pokémon toca hoy) sigue siendo exclusivamente de la 003 — Oak nunca decide eso, solo lo narra.
+
 ## Decisiones pendientes 🤔
 
 _Bloquean o condicionan alguna de las features de arriba. Ninguna se resuelve por iniciativa de un agente._
@@ -57,6 +67,10 @@ _Bloquean o condicionan alguna de las features de arriba. Ninguna se resuelve po
 - **Fuente de datos de oleaje** para la regla de Gyarados/Mega Gyarados (003) — ver nota en el punto 3 de "Orden previsto". Sin esto, esa regla no es implementable tal cual.
 - **Paleta de color.**
 - **Alta en meteo.ad.** Se descartó como fuente para Andorra (exige registro manual e IP fija, ver `tech-stack.md`), pero si en algún momento se quiere la fuente oficial en vez de Open-Meteo, el alta la tiene que hacer una persona, no un agente.
+- **Cómo representar ejes meteorológicos simultáneos** en el modelo de datos de la 002 sin que `SkyCondition` los colapse — ver nota en el punto 2 de "Orden previsto".
+- **Señal de DANA** — capacidad pendiente, se expone en la 002 solo si aparece una fuente/criterio fiable.
+- **Estructura de avisos oficiales** (niveles, qué los activa, de qué fuente) — necesaria para oleaje muy fuerte (003) y para el modo `alerta` de Profesor Oak (007). El umbral de qué nivel activa `alerta` es una decisión de producto que se toma después de que exista el dato, no antes.
+- **Franjas mañana/tarde** en el modelo de datos de la 002 — sin esto, el modo `relevo` de la 007 no puede habilitarse.
 
 ## Backlog / ideas 💡
 
@@ -66,4 +80,4 @@ _Sin comprometer ni ordenar. Ideas que respetan la constitución._
 - **Más de un día de previsión** — AEMET devuelve hasta 7 días en la misma respuesta; hoy solo se usa el primero, así que ampliarlo no cuesta peticiones extra.
 - **Optimización SEO** — metadatos, imagen de previsualización para redes (que sería el mapa del día, generado en el mismo pipeline).
 
-> Cada feature nueva se crea como `features/NNN-nombre-feature/` con `NNN-spec.md`, `NNN-plan.md` y `NNN-tasks.md` (número de la feature como prefijo del archivo, no solo de la carpeta) antes de tocar código.
+> Cada feature nueva se crea como `features/NNN-nombre-feature/` con `NNN-spec.md`, `NNN-plan.md` y `NNN-tasks.md` (número de la feature como prefijo del archivo, no solo de la carpeta) antes de tocar código. **El nombre de la carpeta va en inglés** (`AGENTS.md`) — nombres ya fijados para que no se repita en inglés/español mezclado: `001-project-setup`, `002-weather-data-pipeline`, `003-pokemon-assignment-engine`, `004-spain-map`, `005-header-and-legend`, `006-responsive-and-accessibility`, `007-professor-oak`.

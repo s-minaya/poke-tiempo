@@ -33,7 +33,7 @@ Antes de tocar código, el agente debe:
 ## Convenciones de código (resumen — ver tech-stack.md para el detalle)
 
 - Código (variables, funciones, componentes, tipos, nombres de archivo) **en inglés**. Comentarios y toda la documentación de `spec/` **en español**.
-- **Excepción deliberada:** los identificadores del dominio meteorológico y de Pokémon se escriben en español cuando corresponden a un valor que llega literal de AEMET o que se muestra al usuario (`estadoCielo`, `'despejado'`, `'poco_nuboso'`). Traducirlos a inglés obligaría a mantener un diccionario ida y vuelta sin ganar nada.
+- **Excepción deliberada:** los **valores literales** del dominio meteorológico y de Pokémon se escriben en español cuando corresponden a un valor que llega tal cual de una fuente o que se muestra al usuario (`'despejado'`, `'poco_nuboso'`). Los nombres estructurales (tipos, interfaces, campos, funciones) van siempre en inglés — `skyCondition: SkyCondition`, nunca `estadoCielo: EstadoCielo`. Traducir los valores a inglés obligaría a mantener un diccionario ida y vuelta sin ganar nada; los nombres estructurales no tienen ese problema.
 - Componentes React: **PascalCase**, siempre `function`, un componente = una responsabilidad. Cuando un componente supera aproximadamente 150–200 líneas de JSX y lógica combinadas, evaluar dividirlo antes de seguir ampliándolo.
 - Funciones y hooks: **camelCase**, nombre descriptivo de qué hacen.
 - Componentes no usados se **desmontan del DOM** (renderizado condicional), nunca `display: none`.
