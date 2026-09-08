@@ -7,9 +7,12 @@ Toda decisión de contenido (qué Pokémon, qué fenómeno, si hay alerta, qué 
 ## Arquitectura de capas (importante, no se difumina)
 
 ```
-002 (datos) → detecta y normaliza señales crudas (DANA si se puede, avisos si existen,
-              oleaje, precipitación, franjas...). Oak lee estas señales directamente
-              cuando las necesita (p. ej. para `alerta`), no a través de la 003.
+002 (datos) → detecta y normaliza señales crudas: temperatura, cielo, precipitación,
+              nieve, viento, tormenta, calima, niebla, mar, avisos oficiales. Oak lee
+              estas señales directamente cuando las necesita (p. ej. para `alerta`),
+              no a través de la 003. El contrato de la 002 NO representa DANA — no es
+              una responsabilidad actual de esta capa, solo una posible ampliación
+              futura si aparece una fuente fiable (ver roadmap.md).
 003 (asignación) → transforma condiciones ya disponibles en Pokémon. No detecta nada.
 Oak (007) → lee el Pokémon/los Pokémon que decidió la 003 + las señales crudas de la
               002 que necesite, y decide cómo narrarlo. No reasigna ni reinterpreta
@@ -20,24 +23,31 @@ Oak (007) → lee el Pokémon/los Pokémon que decidió la 003 + las señales cr
 
 1. `src/domain/oak/types.ts` — tipos del dominio de Oak (`DayMode`, `Tone`, `Flavour`, `DialogueSlot`, `DayReport`, `OakHistoryEntry`, `OakToday`). **No declara ningún tipo para lo que devuelve la 003** — cuando esta feature se implemente de verdad, importará el tipo público que exporte `src/domain/` de la 003 en ese momento. Mientras la 003 no exista, esto se documenta como dependencia abierta, sin placeholder de tipo.
 2. `src/domain/oak/day-mode.ts` — tabla de elegibilidad por modo (ver más abajo) y selección con semilla determinista por fecha.
-3. `src/domain/oak/priority.ts` — protagonistas del día a partir de lo que devuelva la 003, con el criterio de prioridad `alerta > legendario de intensidad máxima > legendario base > fenómeno de scope amplio > resto` (el propio ranking de intensidad depende del contrato final de la 003).
-4. `src/domain/oak/leitmotifs.ts` — catálogo editable de gags recurrentes (`{ id, pokemon, region, phenomenon, cooldownDays }`), candidatos solo si el dato del día los justifica.
-5. `src/domain/oak/history.ts` — lectura/actualización de `src/data/oak-history.json` (últimos 7 días), y cálculo de cooldowns.
+3. `src/domain/oak/priority.ts` — protagonistas del día a partir de lo que devuelva la 003. **Sin ranking fijo todavía** — qué hace a un Pokémon "protagonista" depende de la metadata de prioridad/intensidad que 003 acabe exportando (si es que exporta alguna), no se inventa aquí un orden `legendario máximo > legendario base > ...` por adelantado. `alerta` **no participa en este ranking** — es un estado narrativo/de riesgo aparte, gestionado en `day-mode.ts`, sin relación con qué Pokémon protagoniza el día.
+4. `src/domain/oak/leitmotifs.ts` — catálogo editable de gags recurrentes (`{ id, pokemonId, region, phenomenon, cooldownDays }` — `pokemonId` es el identificador estable de la 003, no el nombre de presentación), candidatos solo si el dato del día los justifica.
+5. `src/domain/oak/history.ts` — **pura, sin I/O**: recibe el historial ya leído (`OakHistoryEntry[]`) como argumento y devuelve las decisiones/estado actualizado (cooldowns resueltos, nueva entrada a persistir). No lee ni escribe `src/data/oak-history.json` — eso es responsabilidad de `scripts/oak/`.
 6. `src/domain/oak/plan-dialogues.ts` — construye los 3 `DialogueSlot` repartiendo los hechos del día sin solapar.
 7. `src/domain/oak/fallback-templates.ts` — genera los 3 textos sin IA a partir del mismo `dialoguePlan`. Es pura (sin red), por eso vive en `domain/`, no en `scripts/`.
-8. `scripts/oak/build-day-report.ts` — **solo I/O**: lee `forecast.json` (002) y la salida de la 003 del filesystem, arma el `DayReport` llamando a las funciones puras de `domain/oak/`.
-9. `scripts/oak/generate.ts` — **solo I/O**: llama a Groq con el `DayReport`, valida la respuesta contra el schema de salida, decide si usa la redacción de IA o el fallback, y escribe `src/data/oak-today.json`.
+8. `scripts/oak/build-day-report.ts` — **solo I/O**: lee `forecast.json` (002) e invoca el motor de la 003 — como función pura importada, no como archivo en filesystem; no se asume que la 003 produzca ningún output propio en disco. Se adapta al contrato real de la 003 cuando exista. Arma el `DayReport` llamando a las funciones puras de `domain/oak/`.
+9. `scripts/oak/generate.ts` — **solo I/O**: lee `src/data/oak-history.json`, llama a Groq con el `DayReport`, valida la respuesta contra el schema de salida, decide si usa la redacción de IA o el fallback, y escribe `src/data/oak-today.json` **y** el historial actualizado (usando las funciones puras de `domain/oak/history.ts` para calcular qué escribir).
 10. `src/components/ProfessorOak/` — consumo del JSON en build-time, sin lógica narrativa propia. Se diseña cuando se implemente, no aquí.
 
 ## Modelo de datos
 
 ```ts
+// INCOMPLETO A PROPÓSITO — no se declara aún el campo de hechos concretos que cada
+// diálogo redacta. Sin él, `DialogueSlot` no está terminado: falta el payload que
+// Groq va a redactar. No se tipa como `unknown` (sería un pseudo-contrato disfrazado)
+// ni se omite en silencio — queda documentado como hueco explícito hasta que existan
+// la 002 y la 003. Cuando ambas existan, se diseña un tipo propio de Oak, algo como
+// `NarrativeFact[]` (Pokémon, lugar/fenómeno, valores y cualquier otro hecho
+// autorizado para ese diálogo), derivado de sus contratos reales — no antes.
 interface DialogueSlot {
   role: 'apertura' | 'foco' | 'cierre'
   mode: DayMode
   tone: Tone
   flavour: Flavour | null
-  facts: unknown[]              // hechos concretos que cubre este diálogo — forma exacta depende del contrato de la 003
+  // ← aquí va el payload factual (`NarrativeFact[]` o el nombre que se decida)
   leitmotif: string | null
   continuityNote: string | null
 }
@@ -54,7 +64,7 @@ interface OakHistoryEntry {      // solo IDs/categorías, nunca frases completas
   tone: Tone
   flavour: Flavour | null
   leitmotifIds: string[]
-  protagonists: string[]          // nombres de Pokémon
+  protagonists: string[]          // IDs estables de Pokémon (los de la 003), nunca nombres de presentación
   openingStyle: string             // ID de categoría de arranque, no el texto literal
 }
 
@@ -93,20 +103,26 @@ invasion, calma, consejo, misterio, fin_de_semana, efemeride
 | Modo | Depende de |
 |---|---|
 | `anomalia` | Histórico/climatología de referencia (no existe hoy) |
-| `alerta` | Señal fiable de avisos/riesgo en la 002 (no existe hoy) — el umbral exacto de qué activa `alerta` es una decisión de producto **posterior** a que exista el dato, no se fija aquí |
-| `relevo` | Franjas mañana/tarde en la 002 (no existe hoy) |
+| `alerta` | El dato ya existe en el contrato de la 002 (`alerts: AlertsAvailability`), pero falta el mapeo de los 74 lugares a zona oficial de aviso (implementación pendiente) y decidir qué nivel(es) lo activan (decisión de producto, ver `roadmap.md`) |
+| `relevo` | Franjas mañana/tarde — capacidad contemplada en el dominio de la 002, sin forma de dato comprometida todavía (ningún consumidor real hasta ahora) |
 | `migracion` | Información temporal/espacial suficiente (no existe hoy) |
 
-Cuando la 002 incorpore cada dato, se cambia `enabled: true` en un único sitio — el resto del motor no cambia.
+Cuando cada dependencia se resuelva, se cambia `enabled: true` en un único sitio — el resto del motor no cambia.
 
 ## Decisiones
 
-- **Groq como proveedor de IA** — capa gratuita real (sin tarjeta, ~14.400 peticiones/día, muy por encima de 1/día), soporta salida JSON estructurada. Detrás de una interfaz pequeña para poder cambiarlo sin tocar el resto del sistema.
+- **Proveedor de IA — requisitos arquitectónicos, no una cifra de proveedor concreta** (los límites de cualquier free tier dependen del modelo y cambian sin aviso, no se fijan como propiedad del sistema):
+  - proveedor/modelo configurable, detrás de una interfaz pequeña;
+  - permanece exclusivamente en capa gratuita — nunca se habilita billing/upgrade;
+  - una única generación diaria de los 3 diálogos (1 llamada, no 3);
+  - cualquier `429`, indisponibilidad o cambio de cuota activa el fallback local automáticamente;
+  - coste operativo de IA obligatorio: **0 €**.
+  - Groq es el candidato de partida (sin tarjeta, con modo de salida JSON estructurada), pero el sistema no depende de sus cifras concretas de cuota.
 - **`src/data/oak-today.json`**, no `public/` — mismo patrón que `forecast.json`: JSON estático empaquetado por Vite, no servido suelto.
-- **Historial de 7 días**, solo IDs/categorías — sin frases completas, sin base de datos, versionado en git como el propio `forecast.json`.
+- **Historial — retención mínima, no un número fijo.** Se retienen como mínimo los días que cubran el `cooldownDays` más largo configurado entre todos los leitmotifs (y el cooldown de modos/flavours, si es mayor) — no un "7 días" fijo que pueda quedarse corto el día que exista un leitmotiv con cooldown mayor. Solo IDs/categorías, nunca frases completas; sin base de datos, versionado en git como el propio `forecast.json`.
 
 ## Riesgos
 
 - **Acoplarse antes de tiempo al contrato de la 003** — mitigado no declarando ningún tipo propio para su salida; se importa literalmente lo que exporte cuando exista.
-- **Que `SkyCondition` (decisión de la 002) colapse información que Oak necesita** — señalado como decisión pendiente en `roadmap.md`, no asumido resuelto aquí.
+- **Que `SkyCondition` colapse información que Oak necesita** — resuelto en el contrato cerrado de la 002 (`features/002-weather-data-pipeline/002-plan.md`): cada eje meteorológico es un campo independiente, `SkyCondition` describe solo nubosidad.
 - **Coste de IA** — mitigado eligiendo un proveedor con capa gratuita real en vez de una de pago con límite bajo.

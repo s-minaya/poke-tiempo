@@ -25,13 +25,11 @@ _Orden razonado, no comprometido. Cada una necesita su spec antes de tocar códi
    >
    > Nota aparte para cuando se construya el script: existe un municipio español real llamado **"Andorra" (Teruel)**, sin relación con el país — cuidado al resolver nombres contra el maestro de municipios de AEMET.
 
-   > **Decisión de modelo de datos pendiente, importante:** la tabla de reglas de la 003 trabaja sobre **ejes simultáneos** (temperatura, cielo, precipitación, nieve, viento, tormenta, calima, mar...) que pueden darse a la vez en el mismo lugar y día. `SkyCondition`, tal como está descrito hoy en `tech-stack.md`, es un único valor cerrado por lugar — normalizar a eso demasiado pronto **descarta información que la 003 (y la futura 007, Profesor Oak) necesitan después**. `SkyCondition` puede seguir existiendo si resulta útil para algo (p. ej. el mapa), pero la 002 no debe usarlo como único mecanismo para representar fenómenos concurrentes. Se decide al diseñar la spec de esta feature, no aquí.
+   > **Contrato de datos cerrado.** Dominio por ejes simultáneos (temperatura, cielo, precipitación, nieve, viento, tormenta, calima, niebla, mar, avisos), arquitectura de fuente principal + complementarias por métrica (nunca un único `source` por forecast), y semántica `null` = "la fuente no puede detectarlo" vs. `false`/`0` = "lo detecta y confirma su ausencia". Detalle completo, tipos y ejemplos en `features/002-weather-data-pipeline/002-plan.md`. Sigue habiendo trabajo de implementación explícito pendiente (no de diseño): el mapeo de cada uno de los 74 lugares a su zona oficial de aviso en AEMET/IPMA.
    >
-   > **Campos que hoy le faltan al modelo de `CityForecast`** para que la 003 y la 007 funcionen de verdad: precipitación acumulada en mm (hoy solo hay probabilidad), nieve en cm, franjas mañana/tarde (sin esto, algunos modos narrativos de la 007 no se pueden habilitar), y avisos oficiales (estructura y niveles todavía sin definir — ver más abajo).
+   > **DANA — sigue sin señal fiable, deshabilitada.** No es una categoría de avisos oficiales de ninguna fuente (verificado contra el catálogo real de ambas) — no se infiere combinando lluvia+tormenta. La regla tormenta+DANA→Thundurus queda documentada pero sin campo en el dominio hasta que exista un criterio legítimo.
    >
-   > **DANA — capacidad pendiente, no asumida.** Si al diseñar esta feature aparece una fuente o criterio fiable para identificarla, se expone como señal (p. ej. `dana: boolean`) para que la 003 la use en su regla de Thundurus. Hasta entonces, ni la 003 ni la 007 asumen que existe.
-   >
-   > **Avisos oficiales — estructura sin definir.** Necesarios para oleaje muy fuerte (003) y para el modo `alerta` de la 007. Qué niveles activan qué, y de dónde sale el dato (AEMET tiene avisos por provincia, no está claro si IPMA/Open-Meteo tienen equivalente), se decide aquí, no se da por hecho en features posteriores.
+   > **Franjas mañana/tarde — capacidad contemplada, no comprometida.** Ninguna feature actual la consume (el modo `relevo` de la 007 depende de esto y sigue deshabilitado), así que no se fija forma de dato todavía — se diseña cuando haya un consumidor real.
 
 3. **003 · Motor de asignación de Pokémon** — la función pura que traduce una condición meteorológica en un Pokémon, con su tabla de reglas declarativa y su batería de tests. Se puede cerrar con un puñado de Pokémon de prueba: no hace falta tener la lista completa para dar la feature por hecha, porque ampliarla después es tocar datos, no código.
 
@@ -43,13 +41,13 @@ _Orden razonado, no comprometido. Cada una necesita su spec antes de tocar códi
    > - **Nieve** (cm): hasta 10cm Cryogonal · más de 10cm Abomasnow.
    > - **Viento** (km/h): 20-40 Hoppip · 40-60 Dragonite · 60-90 Rayquaza · más de 90 Tornadus.
    > - **Calima:** Hippowdon.
-   > - **Tormenta:** Zapdos — salvo que sea una DANA, en cuyo caso Thundurus. Esta distinción depende de que la 002 exponga una señal de DANA fiable (ver nota en el punto 2); mientras no exista, la regla no distingue y siempre sale Zapdos.
+   > - **Tormenta:** Zapdos — salvo que sea una DANA, en cuyo caso Thundurus. El contrato actual de la 002 no representa DANA y no está previsto que lo haga como parte de esa feature — es una posible ampliación futura si algún día aparece una fuente/criterio fiable (ver nota en el punto 2 y "Decisiones pendientes"); mientras tanto, la regla no distingue y siempre sale Zapdos.
    > - **Niebla:** Castform (forma hielo).
    > - **Oleaje:** Gyarados · oleaje muy fuerte (aviso rojo) → Mega Gyarados.
    >
-   > "Muy fuerte" se define contra el sistema de avisos de AEMET (nivel rojo), no contra un umbral numérico propio — al menos para oleaje; para el resto de categorías ya hay número exacto.
+   > "Muy fuerte" se define contra el sistema de avisos (nivel rojo, `phenomenon: 'costero'`), no contra un umbral numérico propio — al menos para oleaje; para el resto de categorías ya hay número exacto.
    >
-   > **Pendiente de resolver antes de dar esto por implementable: el oleaje necesita un producto de datos que hoy no tenemos.** AEMET publica altura de ola en su predicción marítima (modelo SWAN), pero por zona de costa (21 zonas), no por municipio — es un endpoint y una granularidad distintos a los que ya usamos para temperatura/viento/cielo, y solo aplica a los lugares costeros de los 74, no a todos. No se ha investigado si IPMA u Open-Meteo lo resuelven mejor para Portugal/Andorra.
+   > **Dato de oleaje resuelto en la 002** (Open-Meteo Marine para toda la costa de España y Portugal, avisos costeros vía AEMET/IPMA para "muy fuerte") — ver `features/002-weather-data-pipeline/002-plan.md`. Lo que sigue sin decidir, ya de producto de esta feature: **el umbral numérico de `waveHeightM` que activa Gyarados** (siempre hay alguna altura de ola, hace falta un corte real) y **qué métrica de viento usa la tabla** (`wind.speedKmh` sostenido vs `wind.gustKmh` de racha).
 
 4. **004 · Mapa de España** — el SVG base con las ciudades y sus sprites, proyección de coordenadas incluida. Primera feature que produce algo que se ve.
 
@@ -64,13 +62,14 @@ _Orden razonado, no comprometido. Cada una necesita su spec antes de tocar códi
 _Bloquean o condicionan alguna de las features de arriba. Ninguna se resuelve por iniciativa de un agente._
 
 - **Origen y licencia de los sprites** de la tabla de la 003 (Snorunt, Solrock, Castform y sus formas, Charmander/Charmeleon, Magmar, Groudon y Groudon primigenio, Altaria, Kyogre y Kyogre primigenio, Cryogonal, Abomasnow, Hoppip, Dragonite, Rayquaza, Tornadus, Hippowdon, Zapdos, Thundurus, Gyarados y Mega Gyarados). Puede seguir creciendo si aparecen más matices.
-- **Fuente de datos de oleaje** para la regla de Gyarados/Mega Gyarados (003) — ver nota en el punto 3 de "Orden previsto". Sin esto, esa regla no es implementable tal cual.
+- **Umbral numérico de `waveHeightM` para Gyarados** (003) — el dato ya existe (002), falta el corte de producto.
+- **Qué métrica de viento usa la tabla de la 003** — `wind.speedKmh` (sostenido) vs `wind.gustKmh` (racha).
 - **Paleta de color.**
 - **Alta en meteo.ad.** Se descartó como fuente para Andorra (exige registro manual e IP fija, ver `tech-stack.md`), pero si en algún momento se quiere la fuente oficial en vez de Open-Meteo, el alta la tiene que hacer una persona, no un agente.
-- **Cómo representar ejes meteorológicos simultáneos** en el modelo de datos de la 002 sin que `SkyCondition` los colapse — ver nota en el punto 2 de "Orden previsto".
-- **Señal de DANA** — capacidad pendiente, se expone en la 002 solo si aparece una fuente/criterio fiable.
-- **Estructura de avisos oficiales** (niveles, qué los activa, de qué fuente) — necesaria para oleaje muy fuerte (003) y para el modo `alerta` de Profesor Oak (007). El umbral de qué nivel activa `alerta` es una decisión de producto que se toma después de que exista el dato, no antes.
-- **Franjas mañana/tarde** en el modelo de datos de la 002 — sin esto, el modo `relevo` de la 007 no puede habilitarse.
+- **Señal de DANA** — capacidad futura, fuera del alcance actual de la 002 (confirmado: no es una categoría de avisos oficiales de AEMET ni de IPMA). Se añadiría como ampliación explícita el día que exista una fuente/criterio fiable, no como parte de esta ronda de la feature.
+- **Mapeo de los 74 lugares a su zona oficial de aviso** (AEMET e IPMA usan zonas propias, distintas entre sí y de nuestra lista de lugares) — configuración explícita a construir en la implementación de la 002, nunca aproximada.
+- **Umbral de nivel de aviso que activa el modo `alerta`** de Profesor Oak (007) — el dato y su estructura ya existen (002); qué nivel(es) lo disparan es decisión de producto de la 007.
+- **Franjas mañana/tarde** — capacidad contemplada en el dominio de la 002 sin comprometer forma de dato; se diseña cuando exista un consumidor real (el modo `relevo` de la 007 sigue deshabilitado por esto).
 
 ## Backlog / ideas 💡
 
