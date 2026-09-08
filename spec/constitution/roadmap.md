@@ -4,11 +4,11 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 
 ## Hecho ✅
 
-_Nada todavía. El proyecto acaba de arrancar._
+**001 · Setup base del proyecto** — estructura de carpetas, Vite + React + TypeScript, `_breakpoints.scss`, `_variables.scss`, `_reset.scss`, ESLint + Stylelint, Vitest + React Testing Library, workflow de despliegue a GitHub Pages. Ver `features/001-setup-base-proyecto/`.
 
 ## Siguiente 🔜
 
-**001 · Setup base del proyecto** — estructura de carpetas, Vite + React + TypeScript, `_breakpoints.scss`, `_variables.scss`, `_reset.scss`, ESLint + Stylelint, Vitest + React Testing Library, configuración de despliegue a GitHub Pages.
+**002 · Pipeline de datos (AEMET + IPMA + Open-Meteo)** — ver el detalle en "Orden previsto" más abajo.
 
 ## Orden previsto 📋
 
@@ -27,6 +27,22 @@ _Orden razonado, no comprometido. Cada una necesita su spec antes de tocar códi
 
 3. **003 · Motor de asignación de Pokémon** — la función pura que traduce una condición meteorológica en un Pokémon, con su tabla de reglas declarativa y su batería de tests. Se puede cerrar con un puñado de Pokémon de prueba: no hace falta tener la lista completa para dar la feature por hecha, porque ampliarla después es tocar datos, no código.
 
+   > **Reglas de asignación confirmadas por el propietario de la cuenta original.** No son una propuesta: es la tabla real que usa Poketiempo, y define franjas mucho más finas que las 12 categorías de `EstadoCielo` en `tech-stack.md` — cada categoría se resuelve internamente por umbral numérico. El motor de la 003 se diseña contra esta tabla directamente.
+   >
+   > - **Temperatura** (un único eje continuo, cubre frío y calor — no son "soleado" y "caluroso" por separado): hasta 7° Snorunt · 8-14° Solrock · 15-25° Castform (forma sol) · 26-29° Charmander · 30-33° Charmeleon · 34-39° Magmar · 40-43° Groudon · más de 44° Groudon primigenio.
+   > - **Nubes:** poco nuboso → Altaria · nuboso o muy nuboso → Castform (forma normal/nube).
+   > - **Lluvia** (mm acumulados): hasta 10mm Castform (forma lluvia) · hasta 60mm Kyogre · más de 60mm Kyogre primigenio.
+   > - **Nieve** (cm): hasta 10cm Cryogonal · más de 10cm Abomasnow.
+   > - **Viento** (km/h): 20-40 Hoppip · 40-60 Dragonite · 60-90 Rayquaza · más de 90 Tornadus.
+   > - **Calima:** Hippowdon.
+   > - **Tormenta:** Zapdos — salvo que sea una DANA, en cuyo caso Thundurus.
+   > - **Niebla:** Castform (forma hielo).
+   > - **Oleaje:** Gyarados · oleaje muy fuerte (aviso rojo) → Mega Gyarados.
+   >
+   > "Muy fuerte" se define contra el sistema de avisos de AEMET (nivel rojo), no contra un umbral numérico propio — al menos para oleaje; para el resto de categorías ya hay número exacto.
+   >
+   > **Pendiente de resolver antes de dar esto por implementable: el oleaje necesita un producto de datos que hoy no tenemos.** AEMET publica altura de ola en su predicción marítima (modelo SWAN), pero por zona de costa (21 zonas), no por municipio — es un endpoint y una granularidad distintos a los que ya usamos para temperatura/viento/cielo, y solo aplica a los lugares costeros de los 74, no a todos. No se ha investigado si IPMA u Open-Meteo lo resuelven mejor para Portugal/Andorra.
+
 4. **004 · Mapa de España** — el SVG base con las ciudades y sus sprites, proyección de coordenadas incluida. Primera feature que produce algo que se ve.
 
 5. **005 · Cabecera y leyenda** — título, fecha de previsión y la columna de Pokémon del día con su descripción.
@@ -37,8 +53,8 @@ _Orden razonado, no comprometido. Cada una necesita su spec antes de tocar códi
 
 _Bloquean o condicionan alguna de las features de arriba. Ninguna se resuelve por iniciativa de un agente._
 
-- **La lista de Pokémon.** Se irá descubriendo poco a poco. El motor de la 003 está pensado para que ampliarla no toque código.
-- **Origen y licencia de los sprites.**
+- **Origen y licencia de los sprites** de la tabla de la 003 (Snorunt, Solrock, Castform y sus formas, Charmander/Charmeleon, Magmar, Groudon y Groudon primigenio, Altaria, Kyogre y Kyogre primigenio, Cryogonal, Abomasnow, Hoppip, Dragonite, Rayquaza, Tornadus, Hippowdon, Zapdos, Thundurus, Gyarados y Mega Gyarados). Puede seguir creciendo si aparecen más matices.
+- **Fuente de datos de oleaje** para la regla de Gyarados/Mega Gyarados (003) — ver nota en el punto 3 de "Orden previsto". Sin esto, esa regla no es implementable tal cual.
 - **Paleta de color.**
 - **Alta en meteo.ad.** Se descartó como fuente para Andorra (exige registro manual e IP fija, ver `tech-stack.md`), pero si en algún momento se quiere la fuente oficial en vez de Open-Meteo, el alta la tiene que hacer una persona, no un agente.
 
