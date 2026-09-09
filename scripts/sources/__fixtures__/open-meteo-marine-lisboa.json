@@ -1,0 +1,29 @@
+{
+  "latitude": 38.625,
+  "longitude": -9.374985,
+  "generationtime_ms": 0.1138448715209961,
+  "utc_offset_seconds": 3600,
+  "timezone": "Europe/Lisbon",
+  "timezone_abbreviation": "GMT+1",
+  "elevation": 0,
+  "daily_units": {
+    "time": "iso8601",
+    "wave_height_max": "m",
+    "wave_period_max": "s",
+    "wave_direction_dominant": "°"
+  },
+  "daily": {
+    "time": [
+      "2026-09-08"
+    ],
+    "wave_height_max": [
+      1.52
+    ],
+    "wave_period_max": [
+      9.05
+    ],
+    "wave_direction_dominant": [
+      299
+    ]
+  }
+}

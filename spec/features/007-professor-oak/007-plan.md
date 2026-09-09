@@ -103,11 +103,17 @@ invasion, calma, consejo, misterio, fin_de_semana, efemeride
 | Modo | Depende de |
 |---|---|
 | `anomalia` | Histórico/climatología de referencia (no existe hoy) |
-| `alerta` | El dato ya existe en el contrato de la 002 (`alerts: AlertsAvailability`), pero falta el mapeo de los 74 lugares a zona oficial de aviso (implementación pendiente) y decidir qué nivel(es) lo activan (decisión de producto, ver `roadmap.md`) |
+| `alerta` | El dato ya existe en el contrato de la 002 (`alerts: AlertsAvailability`) y el mapeo de los 74 lugares a zona oficial ya está implementado (002, Bloque 7); falta decidir qué nivel(es) lo activan (decisión de producto, ver `roadmap.md`) y resolver el requisito de cobertura más allá de los 74 proxies — ver nota debajo de esta tabla |
 | `relevo` | Franjas mañana/tarde — capacidad contemplada en el dominio de la 002, sin forma de dato comprometida todavía (ningún consumidor real hasta ahora) |
 | `migracion` | Información temporal/espacial suficiente (no existe hoy) |
 
 Cuando cada dependencia se resuelva, se cambia `enabled: true` en un único sitio — el resto del motor no cambia.
+
+**Cobertura de avisos más allá de los 74 proxies — pendiente de resolver cuando se implemente `alerta`, no ahora.** Cada uno de los 74 lugares usa un único punto/proxy representativo (Mallorca → Palma, Tenerife → Santa Cruz, Cantabria → Santander, País Vasco → Bilbao/Bizkaia...), y `LocationForecast.alerts` solo lleva los avisos de la(s) zona(s) oficial(es) de ese proxy concreto — nunca las de todo el territorio que el lugar representa visualmente en el mapa. Es una decisión deliberada de la 002 (cierre del Bloque 7): `Location.alertZoneIds` no se amplía a todas las zonas de una isla/CCAA precisamente para no mezclar el forecast de una ciudad con un aviso ocurrido en otra parte — el punto de Mallorca representa el tiempo de Palma, no el de toda la isla.
+
+Eso es correcto para el forecast, pero es una limitación real para Oak: un aviso rojo en, por ejemplo, la Sierra de Tramuntana no aparecería en `alerts` de "Mallorca" si su zona oficial no es la de Palma. Oak no debe limitar sus comentarios sobre avisos a `LocationForecast.alerts` — durante su generación diaria necesita poder consultar el **conjunto completo de avisos oficiales activos** (AEMET + IPMA, antes de filtrar por lugar) para poder destacar avisos relevantes — especialmente nivel rojo — aunque afecten a una zona que no coincide con el proxy de ninguno de los 74 lugares.
+
+El propio pipeline de la 002 ya obtiene ese conjunto completo antes de recortarlo por lugar: `fetchAemetAreaAlerts` + `normalizeAemetAlert` (`scripts/sources/aemet-alerts.ts`) y `fetchIpmaWarnings` + `normalizeIpmaAlert` (`scripts/sources/ipma.ts`) dan todos los avisos activos de un área/país; el recorte a `Location.alertZoneIds` (`selectAlertsForZones`, `src/domain/alerts.ts`) es un paso aparte, posterior. Cómo le llega ese conjunto sin filtrar a Oak (si se persiste en algún sitio que su script de generación pueda leer, o si Oak vuelve a consultar las fuentes) es una decisión de diseño de **esta** feature, no de la 002 — se toma cuando se implemente, sin comprometer ahora ninguna forma de dato ni infraestructura nueva.
 
 ## Decisiones
 

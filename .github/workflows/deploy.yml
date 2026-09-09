@@ -1,12 +1,14 @@
 name: Deploy
 
 on:
+  schedule:
+    - cron: '0 6 * * *'
   push:
     branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -24,9 +26,35 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+
+      # Solo en cron/manual: un push normal no vuelve a pedir la previsión
+      # (ya viene en el commit). Va antes de lint/test/build para que la
+      # previsión de hoy pase por la misma validación que el resto del código.
+      - name: Fetch forecast
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: npm run fetch:forecast
+        env:
+          AEMET_API_KEY: ${{ secrets.AEMET_API_KEY }}
+
       - run: npm run lint
       - run: npm run test
       - run: npm run build
+
+      # Después de que lint/test/build hayan pasado: si cualquiera de los
+      # tres falla, el job se para aquí y este forecast.json nunca llega a
+      # main. Registro histórico en git — no dispara otro workflow: el push
+      # usa el GITHUB_TOKEN por defecto, y GitHub no re-ejecuta workflows a
+      # partir de un push hecho con ese token, así que el propio run sigue
+      # hacia el deploy sin esperar a nada externo.
+      - name: Commit forecast.json
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/forecast.json
+          git diff --staged --quiet || git commit -m "chore(datos): actualizar previsión $(date -u +%F)"
+          git push
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

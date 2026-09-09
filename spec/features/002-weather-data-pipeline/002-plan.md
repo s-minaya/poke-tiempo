@@ -1,6 +1,6 @@
 # 002 · Pipeline de datos meteorológicos — Plan
 
-**Estado:** propuesta — contrato de datos cerrado en discusión, pendiente de aprobación final antes de implementar.
+**Estado:** implementado ✅
 
 ## Enfoque
 
@@ -10,7 +10,7 @@ Arquitectura de fuentes: **principal + complementarias**, nunca `source: 'x'` a 
 
 | Zona | Principal | Complementa (solo cuando la principal no puede dar la unidad real) |
 |---|---|---|
-| España (65) | AEMET | Open-Meteo → `snow.cm` (AEMET solo da nieve en mm de equivalente en agua, no se convierte) |
+| España (65) | AEMET | Open-Meteo → `precipitation.mm` (la horaria de AEMET para "hoy" solo cubre desde la hora de generación hasta el final del día — nunca el día completo — así que su suma no es un acumulado diario válido), `snow.cm` (AEMET solo da nieve en mm de equivalente en agua, no se convierte) |
 | Portugal (8) | IPMA | Open-Meteo → `precipitation.mm`, `snow.cm`, `wind.speedKmh`/`gustKmh` (IPMA no da mm de lluvia, ni cm de nieve, ni viento en km/h — solo clases/probabilidad) |
 | Andorra (1) | Open-Meteo | — (única fuente) |
 
@@ -51,9 +51,9 @@ interface Location {
 - **Configuración manual estable** (un archivo propio, el nombre exacto no importa — p. ej. `scripts/config/locations.manual.ts`): todo lo que es una decisión humana, no un dato consultable en ningún catálogo — `id`, `name`, `country`, `latitude`, `longitude`, `timezone`, `primarySource`, `coastal`, `marineCoordinates`, `alertZoneIds`. Este archivo sí se edita a mano cuando hace falta (añadir un lugar, corregir un huso horario) — es la única fuente de verdad humana.
 - **IDs resueltos automáticamente**: `sourceIds` (código INE para AEMET, `globalIdLocal` para IPMA) — el generador los busca cruzando la configuración manual contra el maestro de municipios de AEMET y el catálogo de `api.ipma.pt`, en vez de que alguien los tipee a mano.
 
-`npm run build:locations` (o `build:capitales`, el nombre es secundario) lee la configuración manual, resuelve los `sourceIds`, y escribe `src/data/locations.ts` ya combinado — ese archivo final no se toca directamente, igual que no se edita `forecast.json` a mano.
+`npm run build:locations` lee la configuración manual, resuelve los `sourceIds`, y escribe `src/data/locations.ts` ya combinado — ese archivo final no se toca directamente, igual que no se edita `forecast.json` a mano.
 
-**`alertZoneIds` es una lista, no un único id — no se asume `Location → una sola zona`.** Algunos de los 74 lugares representan regiones enteras (País Vasco es el caso claro: un único punto para Álava/Guipúzcoa/Vizcaya, que en el sistema de avisos de AEMET son zonas distintas). Si consultar avisos para "País Vasco" significa consultar varias zonas oficiales y quedarse con el nivel más alto activo (u otro criterio), es una decisión a verificar caso por caso durante la implementación de esta feature contra el catálogo real de zonas — no algo que se resuelva por adivinación geográfica aquí. El tipo ya soporta el caso; el contenido de la tabla se construye con el catálogo real delante.
+**`alertZoneIds` es una lista, no un único id — no se asume `Location → una sola zona`.** Regla fija: los avisos terrestres de un lugar corresponden a la zona oficial de su punto/proxy representativo, nunca a todas las zonas de la isla/CCAA que ese lugar represente visualmente en el mapa — un lugar costero añade además la zona litoral/marítima asociada a sus `marineCoordinates`. País Vasco es el único caso que necesita tres zonas, y no por representar tres provincias: el municipio de Bilbao (su proxy) cae en la zona de aviso "Bizkaia interior", sin compañera costera, así que se añade también "Bizkaia litoral" (la zona que sí cubre el punto de `marineCoordinates`) y su compañera marítima. El resto de lugares costeros lleva exactamente dos zonas (la suya + la misma con sufijo "C", el patrón real confirmado contra `avisos_cap`); el resto de lugares de interior, una sola.
 
 ### Ejes meteorológicos — cada uno independiente
 
@@ -84,7 +84,7 @@ interface Degradation {
 }
 ```
 
-`degradations` solo lista métricas para las que **existía un complemento configurado y se intentó** pero falló hoy — no aparece nada para `calima` en Portugal/Andorra (ahí nunca hay complemento configurado, no es una degradación puntual, es que esa métrica no se persigue con esa fuente, punto). Tampoco aparece nada para `precipitation.mm` en España (AEMET ya lo da directo, sin complemento que pueda fallar). Si `degradations` está vacío o ausente, todos los `null` del resto del forecast son "no aplica/sin capacidad", no "falló algo hoy".
+`degradations` solo lista métricas para las que **existía un complemento configurado y se intentó** pero falló hoy — no aparece nada para `calima` en Portugal/Andorra (ahí nunca hay complemento configurado, no es una degradación puntual, es que esa métrica no se persigue con esa fuente, punto). Si `degradations` está vacío o ausente, todos los `null` del resto del forecast son "no aplica/sin capacidad", no "falló algo hoy".
 
 ```ts
 interface Marine {
@@ -290,7 +290,6 @@ Un fallo sistémico de complemento **no incrementa** `meta.failedLocations` ni e
 
 ## Riesgos
 
-- **Mapeo lugar → zona(s) oficial(es) de aviso** (AEMET y también IPMA) no existe todavía. `Location.alertZoneIds` ya soporta varias zonas por lugar (necesario al menos para País Vasco), pero el contenido de la tabla — incluido qué otros lugares además de País Vasco puedan necesitar más de una zona — se construye contra el catálogo real de zonas durante la implementación, nunca por proximidad geográfica aproximada.
-- **`AlertPhenomenon: 'desconocido'`** como válvula de escape si aparece una categoría de cualquiera de las dos fuentes que no mapea limpio — se revisa cuando ocurra, no se fuerza una categoría existente por parecido.
+- **`AlertPhenomenon: 'desconocido'`** como válvula de escape si aparece una categoría de cualquiera de las dos fuentes que no mapea limpio — no se fuerza una categoría existente por parecido. Ocurre de verdad para tres códigos reales de AEMET sin equivalente en el dominio (`AL` aludes, `GA` galernas, `RI` rissagas); IPMA no tiene ninguno sin mapear en su catálogo actual.
 - **Umbral de Gyarados sin definir** — bloquea implementar esa regla concreta de la 003 hasta que exista un número real, igual que ya pasaba con "oleaje muy fuerte".
 - **Umbrales de tolerancia a fallos** (`MAX_FAILED_LOCATIONS_RATIO = 0.10`, `SYSTEMIC_COMPLEMENT_FAILURE_RATIO = 0.50`) — aprobados como punto de partida, nombrados como constantes explícitas para poder revisarlos con datos reales de ejecuciones, no cifras enterradas en el código.

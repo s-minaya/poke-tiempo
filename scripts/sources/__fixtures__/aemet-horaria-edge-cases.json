@@ -1,0 +1,116 @@
+[
+  {
+    "origen": {
+      "productor": "Agencia Estatal de Meteorología - AEMET. Gobierno de España",
+      "web": "https://www.aemet.es",
+      "enlace": "https://www.aemet.es/es/eltiempo/prediccion/municipios/horas/jaca-id22130",
+      "language": "es",
+      "copyright": "© AEMET. Autorizado el uso de la información y su reproducción citando a AEMET como autora de la misma.",
+      "notaLegal": "https://www.aemet.es/es/nota_legal"
+    },
+    "elaborado": "2026-01-15T06:03:41",
+    "nombre": "Jaca",
+    "provincia": "Huesca",
+    "prediccion": {
+      "dia": [
+        {
+          "estadoCielo": [
+            { "value": "81", "periodo": "08", "descripcion": "Niebla" },
+            { "value": "82", "periodo": "09", "descripcion": "Bruma" },
+            { "value": "34", "periodo": "10", "descripcion": "Nuboso con nieve" },
+            { "value": "14", "periodo": "11", "descripcion": "Nuboso" },
+            { "value": "14", "periodo": "12", "descripcion": "Nuboso" },
+            { "value": "52", "periodo": "13", "descripcion": "Nuboso con tormenta" },
+            { "value": "83", "periodo": "14", "descripcion": "Calima" },
+            { "value": "12", "periodo": "15", "descripcion": "Poco nuboso" }
+          ],
+          "precipitacion": [
+            { "value": "0", "periodo": "08" },
+            { "value": "0", "periodo": "09" },
+            { "value": "1.2", "periodo": "10" },
+            { "value": "0.4", "periodo": "11" },
+            { "value": "0", "periodo": "12" },
+            { "value": "3.6", "periodo": "13" },
+            { "value": "0", "periodo": "14" },
+            { "value": "0", "periodo": "15" }
+          ],
+          "probPrecipitacion": [
+            { "value": "60", "periodo": "0814" },
+            { "value": "40", "periodo": "1420" }
+          ],
+          "probTormenta": [
+            { "value": "50", "periodo": "0814" },
+            { "value": "10", "periodo": "1420" }
+          ],
+          "nieve": [
+            { "value": "0", "periodo": "08" },
+            { "value": "0", "periodo": "09" },
+            { "value": "2.5", "periodo": "10" },
+            { "value": "0", "periodo": "11" },
+            { "value": "0", "periodo": "12" },
+            { "value": "0", "periodo": "13" },
+            { "value": "0", "periodo": "14" },
+            { "value": "0", "periodo": "15" }
+          ],
+          "probNieve": [
+            { "value": "30", "periodo": "0814" },
+            { "value": "0", "periodo": "1420" }
+          ],
+          "temperatura": [
+            { "value": "2", "periodo": "08" },
+            { "value": "3", "periodo": "09" },
+            { "value": "4", "periodo": "10" },
+            { "value": "5", "periodo": "11" },
+            { "value": "7", "periodo": "12" },
+            { "value": "8", "periodo": "13" },
+            { "value": "9", "periodo": "14" },
+            { "value": "8", "periodo": "15" }
+          ],
+          "sensTermica": [
+            { "value": "0", "periodo": "08" },
+            { "value": "1", "periodo": "09" },
+            { "value": "2", "periodo": "10" },
+            { "value": "3", "periodo": "11" },
+            { "value": "5", "periodo": "12" },
+            { "value": "6", "periodo": "13" },
+            { "value": "7", "periodo": "14" },
+            { "value": "6", "periodo": "15" }
+          ],
+          "humedadRelativa": [
+            { "value": "90", "periodo": "08" },
+            { "value": "88", "periodo": "09" },
+            { "value": "85", "periodo": "10" },
+            { "value": "80", "periodo": "11" },
+            { "value": "70", "periodo": "12" },
+            { "value": "65", "periodo": "13" },
+            { "value": "40", "periodo": "14" },
+            { "value": "38", "periodo": "15" }
+          ],
+          "vientoAndRachaMax": [
+            { "direccion": ["N"], "velocidad": ["10"], "periodo": "08" },
+            { "value": "18", "periodo": "08" },
+            { "direccion": ["N"], "velocidad": ["12"], "periodo": "09" },
+            { "value": "20", "periodo": "09" },
+            { "direccion": ["NO"], "velocidad": ["25"], "periodo": "10" },
+            { "value": "45", "periodo": "10" },
+            { "direccion": ["NO"], "velocidad": ["30"], "periodo": "11" },
+            { "value": "65", "periodo": "11" },
+            { "direccion": ["O"], "velocidad": ["22"], "periodo": "12" },
+            { "value": "40", "periodo": "12" },
+            { "direccion": ["O"], "velocidad": ["18"], "periodo": "13" },
+            { "value": "35", "periodo": "13" },
+            { "direccion": ["SO"], "velocidad": ["10"], "periodo": "14" },
+            { "value": "20", "periodo": "14" },
+            { "direccion": ["SO"], "velocidad": ["8"], "periodo": "15" },
+            { "value": "15", "periodo": "15" }
+          ],
+          "fecha": "2026-01-15T00:00:00",
+          "orto": "08:24",
+          "ocaso": "18:12"
+        }
+      ]
+    },
+    "id": "22130",
+    "version": "1.0"
+  }
+]

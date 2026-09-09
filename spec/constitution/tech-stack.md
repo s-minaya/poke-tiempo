@@ -55,7 +55,7 @@ Motivos, para que nadie los reabra por costumbre:
 
 - `src/components/` — componentes reutilizables. Un componente por carpeta, con su `.tsx`, `.scss` y `.test.tsx` del mismo nombre. El `.tsx` importa siempre su propio `.scss`.
 - `src/domain/` — lógica pura del proyecto: tipos compartidos y el motor de asignación de Pokémon. Sin React ni DOM. Es lo único que se testea de forma exhaustiva.
-- `src/data/` — `capitales.ts` (generado) y `forecast.json` (generado a diario). Ninguno se edita a mano.
+- `src/data/` — `locations.ts` (generado) y `forecast.json` (generado a diario). Ninguno se edita a mano.
 - `src/styles/abstracts/` — `_breakpoints.scss`, `_variables.scss`, `_reset.scss` (reseteo base con `font-size: 62.5%`).
 - `src/styles/main.scss` — estilos globales.
 - `src/test/setup.ts` — setup de Vitest.
@@ -69,7 +69,7 @@ Motivos, para que nadie los reabra por costumbre:
 - `npm run lint` — ESLint (TS/TSX, flat config) + Stylelint (Sass).
 - `npm run build` — compila para producción (`dist/`). `npm run preview` para previsualizar.
 - `npm run fetch:forecast` — descarga la previsión del día de las tres fuentes (AEMET, IPMA, Open-Meteo) y reescribe `src/data/forecast.json`. Necesita `AEMET_API_KEY`.
-- `npm run build:capitales` — regenera `src/data/capitales.ts` a partir de la lista fija de 74 lugares (no del maestro completo de municipios de AEMET, que solo cubriría España). Solo hace falta al cambiar la lista de lugares.
+- `npm run build:locations` — regenera `src/data/locations.ts` a partir de la lista fija de 74 lugares (no del maestro completo de municipios de AEMET, que solo cubriría España). Solo hace falta al cambiar la lista de lugares.
 
 ## Modelo de datos / dominio
 

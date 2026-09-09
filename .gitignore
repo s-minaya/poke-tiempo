@@ -25,6 +25,6 @@ npm-debug.log*
 test-results/
 playwright-report/
 
-# NOTA: src/data/forecast.json y src/data/capitales.ts SÍ se versionan.
+# NOTA: src/data/forecast.json y src/data/locations.ts SÍ se versionan.
 # Son generados, pero el sitio se construye a partir de ellos y el commit
 # diario del bot es lo que deja constancia de la previsión de cada día.

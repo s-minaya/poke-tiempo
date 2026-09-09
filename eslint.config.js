@@ -28,4 +28,11 @@ export default defineConfig([
       globals: vitest.environments.env.globals,
     },
   },
+  {
+    // scripts/ solo corre en Node (build time), nunca en el navegador.
+    files: ['scripts/**/*.ts'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])
