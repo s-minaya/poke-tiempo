@@ -3,23 +3,10 @@ import { describe, expect, it } from 'vitest'
 import {
   buildMeta,
   computeGroupFailureRatio,
-  computePrimaryFailureRatio,
   decideAbort,
   hasSystemicComplementFailure,
-  MAX_FAILED_LOCATIONS_RATIO,
   SYSTEMIC_COMPLEMENT_FAILURE_RATIO,
 } from './fault-tolerance.ts'
-
-describe('computePrimaryFailureRatio', () => {
-  it.each([
-    { total: 74, failed: 0, expected: 0 },
-    { total: 74, failed: 7, expected: 7 / 74 },
-    { total: 74, failed: 74, expected: 1 },
-    { total: 0, failed: 0, expected: 0 },
-  ])('total=$total failed=$failed -> $expected', ({ total, failed, expected }) => {
-    expect(computePrimaryFailureRatio(total, failed)).toBeCloseTo(expected, 10)
-  })
-})
 
 describe('computeGroupFailureRatio', () => {
   it.each([
@@ -75,50 +62,38 @@ describe('hasSystemicComplementFailure — cuenta intentos por lugar, no entrada
   })
 })
 
-describe('decideAbort — dos condiciones independientes, nunca mezcladas en una cifra', () => {
-  it('ninguna condición superada: no aborta', () => {
-    const result = decideAbort(0.05, false)
+describe('decideAbort — dos condiciones independientes, nunca mezcladas en una cifra; tolerancia cero a lugares fallidos', () => {
+  it('sin lugares fallidos ni fallo sistémico: no aborta', () => {
+    const result = decideAbort(0, false)
     expect(result.shouldAbort).toBe(false)
     expect(result.reason).toBeUndefined()
   })
 
-  it('solo primaryFailureRatio superado: aborta por esa razón', () => {
-    const result = decideAbort(0.15, false)
+  it('un único lugar fallido ya aborta — no hay margen tolerable', () => {
+    const result = decideAbort(1, false)
     expect(result.shouldAbort).toBe(true)
-    expect(result.reason).toBe('primary_failure_ratio')
-    expect(result.hasSystemicComplementFailure).toBe(false)
+    expect(result.reason).toBe('location_failure')
+    expect(result.failedLocationsCount).toBe(1)
   })
 
-  it('solo fallo sistémico de complemento (primaryFailureRatio bajo): aborta igual, por esa razón', () => {
-    const result = decideAbort(0.02, true)
+  it('solo fallo sistémico de complemento (sin lugares fallidos): aborta igual, por esa razón', () => {
+    const result = decideAbort(0, true)
     expect(result.shouldAbort).toBe(true)
     expect(result.reason).toBe('systemic_complement_failure')
-    expect(result.primaryFailureRatio).toBeCloseTo(0.02, 10)
+    expect(result.failedLocationsCount).toBe(0)
   })
 
-  it('las dos condiciones a la vez: aborta con razón "both", sin combinar los ratios en un número', () => {
-    const result = decideAbort(0.2, true)
+  it('las dos condiciones a la vez: aborta con razón "both", sin combinar nada en un número', () => {
+    const result = decideAbort(3, true)
     expect(result.shouldAbort).toBe(true)
     expect(result.reason).toBe('both')
-    // Cada condición se conserva tal cual se recibió, no una mezcla.
-    expect(result.primaryFailureRatio).toBeCloseTo(0.2, 10)
+    expect(result.failedLocationsCount).toBe(3)
     expect(result.hasSystemicComplementFailure).toBe(true)
-  })
-
-  it('exactamente en el umbral de primaryFailureRatio no aborta por sí solo — es un ">", no un ">="', () => {
-    const result = decideAbort(MAX_FAILED_LOCATIONS_RATIO, false)
-    expect(result.shouldAbort).toBe(false)
-  })
-
-  it('respeta un umbral de primaryFailureRatio distinto al de partida', () => {
-    expect(decideAbort(0.15, false, 0.2).shouldAbort).toBe(false)
-    expect(decideAbort(0.15, false, 0.1).shouldAbort).toBe(true)
   })
 })
 
 describe('constantes', () => {
-  it('los valores de partida son los aprobados', () => {
-    expect(MAX_FAILED_LOCATIONS_RATIO).toBe(0.1)
+  it('el umbral sistémico de complemento sigue siendo el aprobado', () => {
     expect(SYSTEMIC_COMPLEMENT_FAILURE_RATIO).toBe(0.5)
   })
 })

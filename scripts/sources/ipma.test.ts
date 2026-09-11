@@ -27,11 +27,22 @@ function dailyWithType(idWeatherType: number): IpmaDailyResponse {
 
 describe('normalizeIpma — día real sin fenómenos (Lisboa)', () => {
   const dailyLisboa = readFixture<IpmaDailyResponse>('ipma-daily-lisboa.json')
-  const result = normalizeIpma(dailyLisboa)
+  const result = normalizeIpma(dailyLisboa, '2026-09-08')
 
-  it('lee fecha y temperatura del primer día', () => {
+  it('lee fecha y temperatura del día pedido', () => {
     expect(result.date).toBe('2026-09-08')
     expect(result.temperature).toEqual({ maxC: 28.2, minC: 18.3 })
+  })
+
+  it('selecciona el día por fecha, no por posición: el fixture trae 5 días, se pide el segundo', () => {
+    const nextDay = normalizeIpma(dailyLisboa, '2026-09-09')
+    expect(nextDay.date).toBe('2026-09-09')
+    expect(nextDay.temperature).toEqual({ maxC: 26.5, minC: 18.3 })
+    expect(nextDay.precipitation?.probabilityPercent).toBe(6)
+  })
+
+  it('targetDate ausente de la ventana de IPMA: falla en vez de caer al primer día', () => {
+    expect(() => normalizeIpma(dailyLisboa, '2026-10-01')).toThrow(/2026-10-01/)
   })
 
   it('lee la probabilidad de precipitación (nunca mm)', () => {
@@ -54,31 +65,31 @@ describe('normalizeIpma — día real sin fenómenos (Lisboa)', () => {
 
 describe('normalizeIpma — códigos de fenómeno (sin nubosidad asociada)', () => {
   it('tormenta (19): sky null, storm true', () => {
-    const result = normalizeIpma(dailyWithType(19))
+    const result = normalizeIpma(dailyWithType(19), '2026-01-15')
     expect(result.sky).toBeNull()
     expect(result.storm).toBe(true)
     expect(result.primarySourceDescription).toBe('Trovoada')
   })
 
   it('lluvia y posible tormenta (23) también cuenta como tormenta', () => {
-    expect(normalizeIpma(dailyWithType(23)).storm).toBe(true)
+    expect(normalizeIpma(dailyWithType(23), '2026-01-15').storm).toBe(true)
   })
 
   it('niebla (17 y 26): sky null, fog true', () => {
-    expect(normalizeIpma(dailyWithType(17)).fog).toBe(true)
-    expect(normalizeIpma(dailyWithType(26)).fog).toBe(true)
-    expect(normalizeIpma(dailyWithType(17)).sky).toBeNull()
+    expect(normalizeIpma(dailyWithType(17), '2026-01-15').fog).toBe(true)
+    expect(normalizeIpma(dailyWithType(26), '2026-01-15').fog).toBe(true)
+    expect(normalizeIpma(dailyWithType(17), '2026-01-15').sky).toBeNull()
   })
 
   it('neblina (16, mist) no cuenta como niebla ni como calima', () => {
-    const result = normalizeIpma(dailyWithType(16))
+    const result = normalizeIpma(dailyWithType(16), '2026-01-15')
     expect(result.fog).toBe(false)
     expect(result.calima).toBeNull()
   })
 
   it('nieve (18, 28, 29, 30): snow.present true, sky null', () => {
     for (const code of [18, 28, 29, 30]) {
-      const result = normalizeIpma(dailyWithType(code))
+      const result = normalizeIpma(dailyWithType(code), '2026-01-15')
       expect(result.snow?.present).toBe(true)
       expect(result.sky).toBeNull()
     }
@@ -86,7 +97,7 @@ describe('normalizeIpma — códigos de fenómeno (sin nubosidad asociada)', () 
 
   it('sin información (-99, 0): sky/storm/fog/snow.present quedan null, no false', () => {
     for (const code of [-99, 0]) {
-      const result = normalizeIpma(dailyWithType(code))
+      const result = normalizeIpma(dailyWithType(code), '2026-01-15')
       expect(result.sky).toBeNull()
       expect(result.storm).toBeNull()
       expect(result.fog).toBeNull()
@@ -95,7 +106,7 @@ describe('normalizeIpma — códigos de fenómeno (sin nubosidad asociada)', () 
   })
 
   it('código desconocido (fuera del catálogo): se trata como sin información, no como fenómenos ausentes', () => {
-    const result = normalizeIpma(dailyWithType(999))
+    const result = normalizeIpma(dailyWithType(999), '2026-01-15')
     expect(result.sky).toBeNull()
     expect(result.storm).toBeNull()
     expect(result.fog).toBeNull()
@@ -106,12 +117,12 @@ describe('normalizeIpma — códigos de fenómeno (sin nubosidad asociada)', () 
 
 describe('normalizeIpma — códigos de solo nubosidad', () => {
   it('4 (muy nublado/encoberto) mapea a cubierto', () => {
-    expect(normalizeIpma(dailyWithType(4)).sky).toBe('cubierto')
+    expect(normalizeIpma(dailyWithType(4), '2026-01-15').sky).toBe('cubierto')
   })
 
   it('25 y 27 (nublado) mapean a nuboso', () => {
-    expect(normalizeIpma(dailyWithType(25)).sky).toBe('nuboso')
-    expect(normalizeIpma(dailyWithType(27)).sky).toBe('nuboso')
+    expect(normalizeIpma(dailyWithType(25), '2026-01-15').sky).toBe('nuboso')
+    expect(normalizeIpma(dailyWithType(27), '2026-01-15').sky).toBe('nuboso')
   })
 })
 

@@ -16,23 +16,34 @@ const hourlyEdgeCases = readFixture<AemetHourlyResponse[]>('aemet-horaria-edge-c
 
 describe('normalizeAemetDaily', () => {
   it('lee la temperatura máxima/mínima oficial del día', () => {
-    const result = normalizeAemetDaily(dailyMadrid)
+    const result = normalizeAemetDaily(dailyMadrid, '2026-09-08')
     expect(result.temperature).toEqual({ maxC: 35, minC: 23 })
   })
 
   it('toma la probabilidad de precipitación del periodo 00-24', () => {
-    const result = normalizeAemetDaily(dailyMadrid)
+    const result = normalizeAemetDaily(dailyMadrid, '2026-09-08')
     expect(result.precipitationProbabilityPercent).toBe(0)
   })
 
   it('recorta la fecha a YYYY-MM-DD', () => {
-    const result = normalizeAemetDaily(dailyMadrid)
+    const result = normalizeAemetDaily(dailyMadrid, '2026-09-08')
     expect(result.date).toBe('2026-09-08')
+  })
+
+  it('selecciona el día por fecha, no por posición: el fixture trae 2026-09-08 primero pero se pide 2026-09-09', () => {
+    const result = normalizeAemetDaily(dailyMadrid, '2026-09-09')
+    expect(result.date).toBe('2026-09-09')
+    expect(result.temperature).toEqual({ maxC: 22, minC: 14 })
+    expect(result.precipitationProbabilityPercent).toBe(60)
+  })
+
+  it('targetDate ausente de la ventana de AEMET: falla en vez de caer al primer día', () => {
+    expect(() => normalizeAemetDaily(dailyMadrid, '2026-09-30')).toThrow(/2026-09-30/)
   })
 })
 
 describe('normalizeAemetHourly — día real sin fenómenos (Madrid)', () => {
-  const result = normalizeAemetHourly(hourlyMadrid)
+  const result = normalizeAemetHourly(hourlyMadrid, '2026-09-08')
 
   it('no detecta tormenta, niebla, calima ni nieve', () => {
     expect(result.storm).toBe(false)
@@ -51,10 +62,16 @@ describe('normalizeAemetHourly — día real sin fenómenos (Madrid)', () => {
     expect(result.windSpeedKmh).toBe(23) // periodo 16
     expect(result.windGustKmh).toBe(43) // periodo 15
   })
+
+  it('selecciona el día por fecha, no por posición: el fixture trae un segundo día (2026-09-09) con tormenta', () => {
+    const nextDay = normalizeAemetHourly(hourlyMadrid, '2026-09-09')
+    expect(nextDay.storm).toBe(true)
+    expect(nextDay.sky).toBe('nuboso')
+  })
 })
 
 describe('normalizeAemetHourly — día con fenómenos (fixture de bordes)', () => {
-  const result = normalizeAemetHourly(hourlyEdgeCases)
+  const result = normalizeAemetHourly(hourlyEdgeCases, '2026-01-15')
 
   it('detecta tormenta (código 52 en alguna hora)', () => {
     expect(result.storm).toBe(true)
@@ -94,7 +111,7 @@ describe('normalizeAemetHourly — día con fenómenos (fixture de bordes)', () 
       },
     }
 
-    expect(normalizeAemetHourly(hourly).snowPresent).toBe(true)
+    expect(normalizeAemetHourly(hourly, '2026-01-15').snowPresent).toBe(true)
   })
 
   it('el cielo representativo es el de la hora más cercana al mediodía (12 -> Nuboso)', () => {
@@ -111,7 +128,21 @@ describe('normalizeAemetHourly — día con fenómenos (fixture de bordes)', () 
 describe('normalizeAemetHourly — sin datos horarios', () => {
   it('devuelve todo null en vez de fabricar un valor', () => {
     const empty: AemetHourlyResponse = { prediccion: { dia: [] } }
-    const result = normalizeAemetHourly(empty)
+    const result = normalizeAemetHourly(empty, '2026-09-08')
+    expect(result).toEqual({
+      sky: null,
+      snowPresent: null,
+      windSpeedKmh: null,
+      windGustKmh: null,
+      storm: null,
+      calima: null,
+      fog: null,
+      primarySourceDescription: null,
+    })
+  })
+
+  it('targetDate ausente de la ventana horaria: degrada a null en vez de fallar (la diaria ya cubrió temperature)', () => {
+    const result = normalizeAemetHourly(hourlyMadrid, '2026-09-30')
     expect(result).toEqual({
       sky: null,
       snowPresent: null,
@@ -127,13 +158,13 @@ describe('normalizeAemetHourly — sin datos horarios', () => {
 
 describe('normalizeAemet', () => {
   it('combina diaria y horaria en un bloque parcial de LocationForecast', () => {
-    const result = normalizeAemet(dailyMadrid, hourlyMadrid)
+    const result = normalizeAemet(dailyMadrid, hourlyMadrid, '2026-09-08')
 
     expect(result.date).toBe('2026-09-08')
     expect(result.temperature).toEqual({ maxC: 35, minC: 23 })
     expect(result.sky).toBe('despejado')
-    // mm queda null: la horaria de AEMET nunca cubre el día completo para
-    // "hoy" — lo complementa Open-Meteo (Bloque 5).
+    // mm queda null: ver comentario de cabecera de aemet.ts — lo complementa
+    // Open-Meteo (Bloque 5).
     expect(result.precipitation).toEqual({ mm: null, probabilityPercent: 0 })
     // AEMET nunca da snow.cm directo: cm queda null, present viene de la
     // hora — lo completa Open-Meteo como complemento (Bloque 5).
@@ -142,5 +173,13 @@ describe('normalizeAemet', () => {
     expect(result.calima).toBe(false)
     expect(result.fog).toBe(false)
     expect(result.primarySourceDescription).toBe('Despejado')
+  })
+
+  it('selecciona ambos bloques (diaria y horaria) por la misma targetDate, no por posición', () => {
+    const result = normalizeAemet(dailyMadrid, hourlyMadrid, '2026-09-09')
+
+    expect(result.date).toBe('2026-09-09')
+    expect(result.temperature).toEqual({ maxC: 22, minC: 14 })
+    expect(result.storm).toBe(true)
   })
 })

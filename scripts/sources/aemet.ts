@@ -8,12 +8,10 @@ import { fetchAemetJson } from './aemet-client.ts'
  * estado del cielo (que también revela tormenta/niebla/calima/nieve) y el
  * viento real por hora.
  *
- * `precipitation.mm` NO sale de AEMET: su horaria para "hoy" solo incluye
- * las horas desde el momento de generación en adelante (AEMET no rellena
- * hacia atrás las horas ya transcurridas del día), así que sumar sus cubos
- * horarios da un acumulado parcial, no el del día completo — sea cual sea
- * la hora a la que corra el pipeline. Ese campo queda `null` aquí y lo
- * complementa Open-Meteo (ver `002-plan.md`).
+ * `precipitation.mm` NO sale de AEMET: su horaria no da un campo de
+ * precipitación en mm por hora en el que se pueda confiar para sumar un
+ * acumulado diario fiable (decisión documentada en `002-plan.md`). Ese
+ * campo queda `null` aquí y lo complementa Open-Meteo.
  */
 
 // --- Formas mínimas de la respuesta real de AEMET (solo lo que se usa) ----
@@ -144,14 +142,24 @@ function findRepresentativeHour<T extends { periodo: string }>(entries: T[]): T 
 
 // --- Normalización ------------------------------------------------------
 
+// AEMET devuelve varios días por petición (la ventana completa que cubre su
+// predicción, no solo "hoy") — nunca se asume qué posición ocupa `targetDate`
+// dentro de ese array, se busca por `fecha` (`002-plan.md` → `targetDate`).
+function findDayByDate<T extends { fecha: string }>(days: T[], targetDate: string): T | undefined {
+  return days.find((day) => day.fecha.slice(0, 10) === targetDate)
+}
+
 export interface AemetDailyNormalized {
   date: string
   temperature: Temperature
   precipitationProbabilityPercent: number | null
 }
 
-export function normalizeAemetDaily(daily: AemetDailyResponse): AemetDailyNormalized {
-  const day = daily.prediccion.dia[0]
+export function normalizeAemetDaily(daily: AemetDailyResponse, targetDate: string): AemetDailyNormalized {
+  const day = findDayByDate(daily.prediccion.dia, targetDate)
+  if (!day) {
+    throw new Error(`AEMET diaria: no hay predicción para ${targetDate}`)
+  }
   const dayProbability = day.probPrecipitacion.find((entry) => entry.periodo === '00-24')
 
   return {
@@ -183,8 +191,8 @@ const EMPTY_HOURLY_NORMALIZED: AemetHourlyNormalized = {
   primarySourceDescription: null,
 }
 
-export function normalizeAemetHourly(hourly: AemetHourlyResponse): AemetHourlyNormalized {
-  const day = hourly.prediccion.dia[0]
+export function normalizeAemetHourly(hourly: AemetHourlyResponse, targetDate: string): AemetHourlyNormalized {
+  const day = findDayByDate(hourly.prediccion.dia, targetDate)
   if (!day || day.estadoCielo.length === 0) {
     return EMPTY_HOURLY_NORMALIZED
   }
@@ -230,16 +238,16 @@ export type AemetNormalizedForecast = WeatherBlock
 export function normalizeAemet(
   daily: AemetDailyResponse,
   hourly: AemetHourlyResponse,
+  targetDate: string,
 ): AemetNormalizedForecast {
-  const dailyNormalized = normalizeAemetDaily(daily)
-  const hourlyNormalized = normalizeAemetHourly(hourly)
+  const dailyNormalized = normalizeAemetDaily(daily, targetDate)
+  const hourlyNormalized = normalizeAemetHourly(hourly, targetDate)
 
   return {
     date: dailyNormalized.date,
     temperature: dailyNormalized.temperature,
     sky: hourlyNormalized.sky,
-    // mm queda null: la horaria de AEMET para "hoy" nunca cubre el día
-    // completo (ver comentario de cabecera) — lo complementa Open-Meteo
+    // mm queda null: ver comentario de cabecera — lo complementa Open-Meteo
     // (Bloque 5), igual que en Portugal.
     precipitation: {
       mm: null,

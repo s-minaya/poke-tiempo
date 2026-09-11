@@ -656,6 +656,26 @@
           "fecha": "2026-09-08T00:00:00",
           "orto": "07:48",
           "ocaso": "20:35"
+        },
+        {
+          "estadoCielo": [
+            {
+              "value": "62",
+              "periodo": "12",
+              "descripcion": "Tormenta"
+            }
+          ],
+          "nieve": [],
+          "vientoAndRachaMax": [
+            {
+              "direccion": ["N"],
+              "velocidad": ["8"],
+              "periodo": "12"
+            }
+          ],
+          "fecha": "2026-09-09T00:00:00",
+          "orto": "07:49",
+          "ocaso": "20:33"
         }
       ]
     },

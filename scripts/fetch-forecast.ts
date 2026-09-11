@@ -9,22 +9,27 @@ import type {
   MarineAvailability,
   OfficialAlert,
 } from '../src/domain/types.ts'
-import { buildMeta, computePrimaryFailureRatio, decideAbort, hasSystemicComplementFailure } from '../src/domain/fault-tolerance.ts'
+import { computeTargetDate } from '../src/domain/target-date.ts'
+import { buildMeta, decideAbort, hasSystemicComplementFailure } from '../src/domain/fault-tolerance.ts'
 import type { ComplementGroupTally } from '../src/domain/fault-tolerance.ts'
+import { checkForecastReadiness } from '../src/domain/forecast-readiness.ts'
 import { selectAlertsForZones } from '../src/domain/alerts.ts'
 import { locations } from '../src/data/locations.ts'
 import { orchestrateLocationWeather } from './orchestrate-location.ts'
+import { AemetAuthError } from './sources/aemet-client.ts'
 import type { AemetRawAlert } from './sources/aemet-alerts.ts'
 import { areaCodeForZone, fetchAemetAreaAlerts, normalizeAemetAlert } from './sources/aemet-alerts.ts'
 import { fetchIpmaWarnings, normalizeIpmaAlert } from './sources/ipma.ts'
 import { fetchOpenMeteoMarine, normalizeOpenMeteoMarine } from './sources/open-meteo-marine.ts'
 
 /**
- * Entrypoint del pipeline: orquesta las tres fuentes para los 74 lugares
- * (Bloques 2-5), oleaje (Bloque 4) y avisos (Bloque 7), aplica la política
- * de tolerancia a fallos (Bloque 6) y escribe `src/data/forecast.json` — o
- * no escribe nada si el aborto se dispara, dejando en línea la previsión
- * del día anterior. Nunca se llama desde `src/` en runtime.
+ * Entrypoint del pipeline: calcula `targetDate` (mañana, `Europe/Madrid`,
+ * `002-plan.md`) una única vez, orquesta las tres fuentes para los 74
+ * lugares — con fallback completo de Open-Meteo si la principal falla —,
+ * oleaje y avisos, aplica la política de tolerancia a fallos y escribe
+ * `src/data/forecast.json` — o no escribe nada si el aborto se dispara,
+ * dejando en línea la previsión anterior. Nunca se llama desde `src/` en
+ * runtime.
  */
 
 // Nº de lugares procesados en paralelo. El throttle real de AEMET lo impone
@@ -123,7 +128,7 @@ interface MarineResult {
   failed: boolean
 }
 
-async function buildMarineAvailability(location: Location): Promise<MarineResult> {
+async function buildMarineAvailability(location: Location, targetDate: string): Promise<MarineResult> {
   if (!location.coastal || !location.marineCoordinates) {
     return { availability: { status: 'not_applicable' }, attempted: false, failed: false }
   }
@@ -133,8 +138,13 @@ async function buildMarineAvailability(location: Location): Promise<MarineResult
       location.marineCoordinates.latitude,
       location.marineCoordinates.longitude,
       location.timezone,
+      targetDate,
     )
-    return { availability: { status: 'ok', data: normalizeOpenMeteoMarine(raw) }, attempted: true, failed: false }
+    return {
+      availability: { status: 'ok', data: normalizeOpenMeteoMarine(raw, targetDate) },
+      attempted: true,
+      failed: false,
+    }
   } catch (error) {
     console.error(`Marine, "${location.id}":`, error)
     return { availability: { status: 'error' }, attempted: true, failed: true }
@@ -160,18 +170,25 @@ function complementGroupFor(location: Location): string | null {
 async function buildLocationForecast(
   location: Location,
   aemetApiKey: string,
+  targetDate: string,
   aemetAlertsByArea: Map<string, AemetRawAlert[] | null>,
   ipmaAlerts: OfficialAlert[] | null,
 ): Promise<LocationResult> {
-  // Fallo de fuente principal: se propaga (no se captura aquí), lo excluye
-  // el bucle de arriba.
-  const weather = await orchestrateLocationWeather(location, aemetApiKey)
-  const marine = await buildMarineAvailability(location)
+  // Fallo de fuente principal Y del fallback de Open-Meteo: se propaga (no
+  // se captura aquí), lo excluye el bucle de arriba — tolerancia cero
+  // (`002-plan.md`). `AemetAuthError` también se propaga hasta aquí sin
+  // capturar, y de ahí hasta `run()`, que aborta el proceso entero.
+  const weather = await orchestrateLocationWeather(location, aemetApiKey, targetDate)
+  const marine = await buildMarineAvailability(location, targetDate)
   const alerts = buildAlertsAvailability(location, aemetAlertsByArea, ipmaAlerts)
 
   const forecast: LocationForecast = {
     locationId: location.id,
-    date: weather.block.date,
+    // `targetDate`, no `weather.block.date`: ambos deberían coincidir por
+    // construcción (las fuentes seleccionan su bloque por esa misma fecha),
+    // pero el forecast final se escribe con la fecha de referencia del
+    // pipeline, no con el eco de lo que devolvió la fuente.
+    date: targetDate,
     temperature: weather.block.temperature,
     sky: weather.block.sky,
     precipitation: weather.block.precipitation,
@@ -189,13 +206,16 @@ async function buildLocationForecast(
 
   return {
     forecast,
-    complementGroup: complementGroupFor(location),
+    // Un lugar que usó el fallback completo de Open-Meteo no cuenta como
+    // intento de complemento: Open-Meteo ya sustituyó a la principal, no la
+    // está complementando (`orchestrate-location.ts`).
+    complementGroup: weather.usedFallback ? null : complementGroupFor(location),
     // Un lugar cuenta como fallo del complemento tanto si la petición entera
     // falló (weather.complementAttempt === 'error') como si respondió pero
     // le faltó alguna de las métricas que debía complementar (degradación
-    // parcial) — degradations ya representa exactamente eso (Bloque 5), así
-    // que basta con mirar si hay alguna, sin duplicar el criterio. Sigue
-    // siendo un único hecho por lugar (booleano), no una cuenta por métrica.
+    // parcial) — degradations ya representa exactamente eso, así que basta
+    // con mirar si hay alguna, sin duplicar el criterio. Sigue siendo un
+    // único hecho por lugar (booleano), no una cuenta por métrica.
     complementFailed: weather.degradations.length > 0,
     marineAttempted: marine.attempted,
     marineFailed: marine.failed,
@@ -210,6 +230,9 @@ async function run(): Promise<void> {
     throw new Error('Falta AEMET_API_KEY en el entorno (.env en local, Secrets en Actions)')
   }
 
+  const targetDate = computeTargetDate(new Date())
+  console.log(`targetDate: ${targetDate}`)
+
   const [aemetAlertsByArea, ipmaAlerts] = await Promise.all([
     prefetchAemetAreaAlerts(locations, apiKey),
     prefetchIpmaAlerts(),
@@ -222,7 +245,7 @@ async function run(): Promise<void> {
 
   await mapWithConcurrency(locations, LOCATION_CONCURRENCY, async (location) => {
     try {
-      const result = await buildLocationForecast(location, apiKey, aemetAlertsByArea, ipmaAlerts)
+      const result = await buildLocationForecast(location, apiKey, targetDate, aemetAlertsByArea, ipmaAlerts)
       locationForecasts.push(result.forecast)
 
       if (result.complementGroup) {
@@ -236,7 +259,14 @@ async function run(): Promise<void> {
         if (result.marineFailed) marineTally.failed += 1
       }
     } catch (error) {
-      console.error(`Fuente principal, "${location.id}":`, error)
+      // AemetAuthError nunca se cuenta como un lugar fallido más: se
+      // relanza sin capturar, aborta `mapWithConcurrency` entero (y con él
+      // `run()`) de inmediato — una key caducada no es un fallo por lugar,
+      // es un fallo de todo el run (`002-plan.md`).
+      if (error instanceof AemetAuthError) {
+        throw error
+      }
+      console.error(`Fuente principal + fallback, "${location.id}":`, error)
       failedLocationIds.push(location.id)
     }
   })
@@ -245,13 +275,11 @@ async function run(): Promise<void> {
     complementTallies['open-meteo-marine'] = marineTally
   }
 
-  const primaryFailureRatio = computePrimaryFailureRatio(locations.length, failedLocationIds.length)
   const systemicComplementFailure = hasSystemicComplementFailure(complementTallies)
-  const decision = decideAbort(primaryFailureRatio, systemicComplementFailure)
+  const decision = decideAbort(failedLocationIds.length, systemicComplementFailure)
 
   console.log(
     `Lugares: ${locationForecasts.length}/${locations.length} ok. ` +
-      `primaryFailureRatio=${primaryFailureRatio.toFixed(3)} ` +
       `hasSystemicComplementFailure=${systemicComplementFailure}`,
   )
   if (failedLocationIds.length > 0) {
@@ -264,8 +292,22 @@ async function run(): Promise<void> {
     return
   }
 
+  // Última comprobación, aparte de la tolerancia a fallos de arriba: ningún
+  // lugar se publica sin Pokémon (`002-plan.md`). No se inventa uno por
+  // defecto — si esto falla, el dataset entero es inválido y se aborta sin
+  // tocar el `forecast.json` anterior.
+  const readiness = checkForecastReadiness(
+    locations.map((location) => location.id),
+    locationForecasts,
+  )
+  if (!readiness.ready) {
+    console.error(`Abortando (dataset inválido: ${readiness.reason}) — no se escribe forecast.json.`)
+    process.exitCode = 1
+    return
+  }
+
   const forecast: Forecast = {
-    date: new Date().toISOString().slice(0, 10),
+    date: targetDate,
     generatedAt: new Date().toISOString(),
     locations: locationForecasts,
     meta: buildMeta(locations.length, failedLocationIds),
@@ -273,7 +315,7 @@ async function run(): Promise<void> {
 
   const outputPath = fileURLToPath(new URL('../src/data/forecast.json', import.meta.url))
   await writeFile(outputPath, `${JSON.stringify(forecast, null, 2)}\n`, 'utf-8')
-  console.log(`forecast.json escrito: ${forecast.meta.successfulLocations}/${forecast.meta.totalLocations} lugares.`)
+  console.log(`forecast.json escrito: ${forecast.meta.successfulLocations}/${forecast.meta.totalLocations} lugares (${targetDate}).`)
 }
 
 run().catch((error: unknown) => {

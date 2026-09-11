@@ -246,6 +246,33 @@
           },
           "uvMax": 7,
           "fecha": "2026-09-08T00:00:00"
+        },
+        {
+          "probPrecipitacion": [
+            {
+              "value": 60,
+              "periodo": "00-24"
+            }
+          ],
+          "cotaNieveProv": [],
+          "estadoCielo": [
+            {
+              "value": "24",
+              "periodo": "12-24",
+              "descripcion": "Nuboso"
+            }
+          ],
+          "viento": [],
+          "rachaMax": [],
+          "temperatura": {
+            "maxima": 22,
+            "minima": 14,
+            "dato": []
+          },
+          "sensTermica": { "maxima": 22, "minima": 14, "dato": [] },
+          "humedadRelativa": { "maxima": 70, "minima": 40, "dato": [] },
+          "uvMax": 3,
+          "fecha": "2026-09-09T00:00:00"
         }
       ]
     },

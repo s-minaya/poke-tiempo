@@ -152,7 +152,7 @@ export type WeatherBlock = Pick<
 export interface Forecast {
   date: string // fecha de la previsión
   generatedAt: string // ISO datetime — cuándo corrió el pipeline
-  locations: LocationForecast[] // puede tener menos de 74 entradas si alguna falló por completo
+  locations: LocationForecast[] // tolerancia cero: si esto se llegó a escribir, tiene las 74 (002-plan.md)
   meta: {
     totalLocations: number
     successfulLocations: number

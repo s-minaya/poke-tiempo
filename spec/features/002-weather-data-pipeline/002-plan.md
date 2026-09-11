@@ -6,15 +6,67 @@
 
 AEMET, IPMA y Open-Meteo se normalizan a un único dominio (`src/domain/`), sin backend ni llamadas desde el navegador — todo corre en `scripts/` en build time, tal como fija `tech-stack.md`. El principio rector: **el dominio representa datos meteorológicos reales, nunca números fabricados para homogeneizar fuentes.** Cuando una fuente no puede dar un dato con la unidad que necesita el resto del sistema, el campo es `null` y, si existe otra fuente que sí pueda darlo con garantías, se complementa — nunca se convierte ni se aproxima.
 
-Arquitectura de fuentes: **principal + complementarias**, nunca `source: 'x'` a nivel de todo el forecast.
+Arquitectura de fuentes: **principal + complementarias**, nunca `source: 'x'` a nivel de todo el forecast. Cuando la fuente principal de un lugar falla del todo (no una métrica suelta — el bloque entero, tras sus reintentos), Open-Meteo deja de ser solo complemento numérico y se intenta como **fallback de bloque completo**, exactamente el mismo camino que ya usa como fuente única de Andorra (`normalizeOpenMeteoPrimary`). Si responde, `provenance.primary` pasa a `'open-meteo'` para ese lugar — la trazabilidad refleja la fuente real, no la que se planeaba usar.
 
-| Zona | Principal | Complementa (solo cuando la principal no puede dar la unidad real) |
-|---|---|---|
-| España (65) | AEMET | Open-Meteo → `precipitation.mm` (la horaria de AEMET para "hoy" solo cubre desde la hora de generación hasta el final del día — nunca el día completo — así que su suma no es un acumulado diario válido), `snow.cm` (AEMET solo da nieve en mm de equivalente en agua, no se convierte) |
-| Portugal (8) | IPMA | Open-Meteo → `precipitation.mm`, `snow.cm`, `wind.speedKmh`/`gustKmh` (IPMA no da mm de lluvia, ni cm de nieve, ni viento en km/h — solo clases/probabilidad) |
-| Andorra (1) | Open-Meteo | — (única fuente) |
+| Zona | Principal | Complementa (solo cuando la principal no puede dar la unidad real) | Si la principal falla del todo |
+|---|---|---|---|
+| España (65) | AEMET | Open-Meteo → `precipitation.mm` (la horaria de AEMET no da un campo de mm por hora del que se pueda fiar un acumulado diario), `snow.cm` (AEMET solo da nieve en mm de equivalente en agua, no se convierte) | Open-Meteo como bloque completo (fallback) |
+| Portugal (8) | IPMA | Open-Meteo → `precipitation.mm`, `snow.cm`, `wind.speedKmh`/`gustKmh` (IPMA no da mm de lluvia, ni cm de nieve, ni viento en km/h — solo clases/probabilidad) | Open-Meteo como bloque completo (fallback) |
+| Andorra (1) | Open-Meteo | — (única fuente) | — (ya es Open-Meteo) |
+
+**Excepción explícita:** un fallo de autenticación de AEMET (401/403 — key caducada) no dispara el fallback por lugar. Se propaga y aborta el run entero de inmediato — si se enmascarara con Open-Meteo, los 65 lugares de España pasarían a `provenance.primary: 'open-meteo'` en silencio y una credencial rota podría pasar semanas sin que nadie se entere, justo lo que `tech-stack.md` pide evitar ("el script falla de forma ruidosa ante un 401/403"). El resto de fallos de AEMET/IPMA (red, HTTP≠2xx, timeout) sí disparan el fallback. `AemetAuthError` tiene que atravesar la lógica de fallback sin que ningún `catch` genérico la absorba: el `catch` que envuelve el intento de fuente principal comprueba primero `error instanceof AemetAuthError` y la relanza antes de intentar nada con Open-Meteo — test dedicado que lo comprueba explícitamente.
+
+**Un `sourceIds` ausente tampoco dispara el fallback — es un error de configuración, no un fallo de proveedor.** Si `locations.manual.ts` tiene un lugar mal configurado (falta el `municipioId` o el `globalIdLocal`), eso no es "AEMET/IPMA no respondió hoy": es un dato que nunca debió llegar a producción. `assertSourceIdConfigured` comprueba esto **antes** de entrar en el `try/catch` que activa el fallback — un lugar así falla directo, sin que Open-Meteo llegue a intentarse, para que el error de configuración no quede enmascarado detrás de un `provenance.primary: 'open-meteo'` aparentemente sano. Test dedicado por fuente.
+
+**El fallback completo y el complemento numérico son mutuamente excluyentes para un mismo lugar en la misma ejecución.** Cuando Open-Meteo actúa como fallback (la principal falló del todo), esa llamada **sustituye** a la principal — no cuenta además como un intento de complemento (`complementGroupFor`/`ComplementGroupTally`): contarla dos veces inflaría el denominador y el numerador del umbral de fallo sistémico con la misma petición. Un lugar en fallback nunca genera `degradations` tampoco (el bloque de Open-Meteo ya trae unidades reales en todo lo que sabe dar, igual que Andorra) — `LocationWeatherResult` gana un campo `usedFallback: boolean` para que `fetch-forecast.ts` sepa que ese lugar no participa en el tally de complemento de su grupo, sea cual sea `location.primarySource`.
 
 **Marine, estrategia separada de lo anterior:** predicción física del mar (altura, periodo, dirección) → **Open-Meteo Marine para todas las localidades costeras de España y Portugal**, uniforme — evita normalizar dos sistemas de zonas geográficas marítimas (SWAN de AEMET y oceanografía de IPMA) solo para un número. Los **avisos costeros oficiales** siguen viniendo de AEMET/IPMA, vía `alerts` con `phenomenon: 'costero'` — la oficialidad se conserva ahí, no en el dato físico.
+
+## `targetDate` — una fecha, calculada una vez, seleccionada explícitamente en cada fuente
+
+**Cambio de producto:** PokéTiempo muestra la previsión de **mañana**, no la de hoy. El pipeline corre a las 06:00 UTC y genera el día siguiente.
+
+**"Mañana" se calcula respecto a `Europe/Madrid`, no a UTC** — a las 06:00 UTC son las 07:00/08:00 en Madrid (según horario de verano/invierno), así que en el cron de producción da el mismo resultado que calcularlo en UTC; la diferencia importa para una ejecución manual cerca de medianoche, donde UTC y Madrid pueden discrepar en qué día es "hoy" — y por tanto en qué día es "mañana". Sin añadir una librería de fechas: `Intl.DateTimeFormat` (parte del runtime de Node, sin dependencia nueva) da los componentes año/mes/día de "ahora" en esa zona horaria; sumar un día es aritmética de calendario simple una vez que ya se tienen esos tres números, sin tocar offsets horarios reales (evita el típico bug de DST de sumar 24h en milisegundos):
+
+```ts
+// src/domain/target-date.ts (nuevo, puro, testeable con `now` inyectado)
+const REFERENCE_TIMEZONE = 'Europe/Madrid'
+
+export function computeTargetDate(now: Date): string {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: REFERENCE_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  const parts = formatter.formatToParts(now)
+  const year = Number(parts.find((p) => p.type === 'year')!.value)
+  const month = Number(parts.find((p) => p.type === 'month')!.value)
+  const day = Number(parts.find((p) => p.type === 'day')!.value)
+
+  // A partir de aquí es aritmética de calendario pura (Date.UTC normaliza
+  // "día 32" al mes siguiente solo), no una instancia real de tiempo — no
+  // hay zona horaria que pueda desplazarla.
+  const tomorrow = new Date(Date.UTC(year, month - 1, day + 1))
+  return tomorrow.toISOString().slice(0, 10)
+}
+```
+
+`fetch-forecast.ts` calcula `targetDate = computeTargetDate(new Date())` **una sola vez**, al principio de `run()`, y lo pasa a todo lo demás — es la única fecha calendario de referencia para los 74 lugares de los tres países, no una por zona horaria de cada lugar (Canarias, Ceuta/Melilla y la península no comparten huso, pero el pipeline no calcula un `targetDate` distinto para cada uno). `Forecast.date` y cada `LocationForecast.date` se escriben como ese mismo `targetDate`, no como el `date`/`fecha`/`forecastDate`/`time` que devuelva cada fuente (esos se usan para *encontrar* el bloque correcto, nunca para *decidir* qué fecha lleva el forecast final).
+
+**Ninguna fuente selecciona por posición.** Las cuatro fuentes con datos multi-día seleccionan el bloque cuya fecha coincide con `targetDate`, nunca `[0]`/`[1]` a ciegas:
+
+| Fuente | Selección |
+|---|---|
+| AEMET diaria | `prediccion.dia.find(d => d.fecha.slice(0,10) === targetDate)` |
+| AEMET horaria | `prediccion.dia.find(d => d.fecha.slice(0,10) === targetDate)` — sus franjas ya pertenecen solo a ese día por construcción de AEMET, no hace falta filtrar franja a franja |
+| IPMA diaria | `data.find(d => d.forecastDate === targetDate)` |
+| Open-Meteo (weather) | `start_date=targetDate&end_date=targetDate` en la petición **y** verificación de que `daily.time[0] === targetDate` en la respuesta (defensa en profundidad: no basta con haberlo pedido, se comprueba que la fuente devolvió lo pedido) |
+| Open-Meteo Marine | Mismo patrón que Open-Meteo weather — `start_date`/`end_date` + verificación por `daily.time[0]` |
+
+**Si el día buscado no aparece en la ventana que devuelve la fuente** (AEMET/IPMA no llegaran a cubrir mañana, o Open-Meteo respondiera con una fecha distinta a la pedida) → se trata como **fallo de esa fuente para ese lugar**, con el mismo camino que cualquier otro fallo: dispara el fallback de Open-Meteo si era la principal, o degrada la métrica si era un complemento.
+
+**Avisos oficiales — sin cambios en su lógica, solo en el valor que ahora reciben.** `alerts` sigue viniendo de AEMET/IPMA sin selección por fecha (un aviso no es "de un día", es una ventana `startsAt`/`endsAt`); la comprobación de que un aviso "aplica hoy" (en `assignPokemon`, 003) sigue comparando contra `forecast.date` — al ser ahora `targetDate`, sigue funcionando igual, sin tocar `isActiveOnDate` ni `hasActiveRedCoastalAlert`.
 
 ## Dominio (`src/domain/`)
 
@@ -66,7 +118,7 @@ interface Wind { speedKmh: number | null; gustKmh: number | null }
 
 **Coherencia entre métricas del mismo eje cuando se mezclan fuentes.** `snow.present` e `snow.cm` no pueden salir de fuentes distintas sin control — el caso real a evitar: AEMET/IPMA dicen "no nieva" (`present: false`) mientras el complemento Open-Meteo da `cm > 0` para el mismo lugar y día. Regla: **cuando `snow.cm` tiene un valor real (no `null`), `snow.present` se deriva de ese mismo valor** (`cm > 0`) en vez de tomarse independiente de la fuente principal — un único origen de verdad para el eje, no dos fuentes opinando sobre el mismo hecho. Solo cuando `snow.cm` es `null` (ninguna fuente cuantitativa disponible), `present` cae de vuelta a la señal categórica de la fuente principal (AEMET/IPMA vía su código de cielo). `provenance` no necesita una entrada separada para `snow.present` cuando se deriva de `snow.cm` — es implícita, viene del mismo sitio.
 
-**Semántica global de `null` (corregida — la versión anterior contradecía la política de fallos):**
+**Semántica global de `null`:**
 
 - `null` = **no existe un valor normalizado fiable disponible** para esa métrica, sea cual sea la razón (la fuente no tiene capacidad estructural, o sí la tiene pero el complemento de hoy falló, o el dato simplemente falta). `null` **no** implica "esta fuente nunca puede darlo" — solo que ahora mismo no hay un valor del que fiarse.
 - `false`/`0` = la métrica **se ha podido evaluar** y confirma ausencia/cero. Solo se usa cuando de verdad hubo una evaluación, nunca como valor por defecto ante la duda.
@@ -233,7 +285,7 @@ Nótese: `precipitation.probabilityPercent` **no** aparece en `complementary` �
 interface Forecast {
   date: string                        // fecha de la previsión
   generatedAt: string                  // ISO datetime — cuándo corrió el pipeline
-  locations: LocationForecast[]         // puede tener menos de 74 entradas si alguna falló por completo
+  locations: LocationForecast[]         // tolerancia cero: si esto se llegó a escribir, tiene las 74
   meta: {
     totalLocations: number               // 74, constante conocida de la lista de lugares
     successfulLocations: number           // cuántas entradas hay en `locations` (incluye las degradadas)
@@ -246,31 +298,41 @@ interface Forecast {
 
 ## Política de tolerancia a fallos
 
-Tres niveles de fallo, cada uno con comportamiento distinto — no todo "fallo" es igual:
+Con el fallback de por medio, un lugar sin weather no es tolerable: es un fallo real. La política queda así:
 
-1. **Falla la fuente principal de un lugar** (AEMET/IPMA/Open-Meteo no responde, o el lugar no aparece en su catálogo) → **el lugar entero se excluye** de `locations` este run. Se registra en `meta.failedLocations`. Cuenta para el umbral de aborto de despliegue por fuente principal.
-2. **Falla una fuente complementaria de forma aislada** (Open-Meteo como enriquecimiento de `precipitation`/`snow`/`wind` para Portugal o `snow` para España, u Open-Meteo Marine para un lugar costero, en un lugar suelto) → **el lugar sigue siendo válido**, se incluye en `locations`, pero degradado: la métrica queda `null` y se anota en `degradations`. No cuenta para el umbral de aborto por fuente principal — pero sí alimenta el umbral sistémico (punto siguiente).
-3. **Falla la consulta de avisos** para un lugar cuya fuente principal los soporta (AEMET/IPMA) → `alerts.status: 'error'` en ese lugar. Mismo criterio que el punto 2: no invalida el lugar por sí solo.
+1. **Falla la fuente principal de un lugar** (AEMET/IPMA no responde tras sus reintentos, HTTP≠2xx, o el lugar no aparece en su catálogo) → se intenta **Open-Meteo como fallback de bloque completo** (ver "Enfoque" arriba) para ese lugar, salvo que el fallo sea un `AemetAuthError` (401/403), que aborta el run entero de inmediato sin fallback. Si el fallback responde, el lugar se incluye con normalidad, `provenance.primary: 'open-meteo'`. Si el fallback también falla, el lugar queda sin weather, y eso aborta el run (punto siguiente) — no se excluye en silencio.
+2. **Falla una fuente complementaria de forma aislada** (Open-Meteo como enriquecimiento de `precipitation`/`snow`/`wind` para un lugar cuya fuente principal SÍ respondió) → **el lugar sigue siendo válido**, se incluye en `locations`, pero degradado: la métrica queda `null` y se anota en `degradations`. No afecta a la tolerancia cero del punto 1 — alimenta, aparte, el umbral sistémico (punto siguiente).
+3. **Falla la consulta de avisos** para un lugar cuya fuente principal los soporta (AEMET/IPMA) → `alerts.status: 'error'` en ese lugar. Independiente de los otros dos puntos: no invalida el `weather` del lugar.
 
-**Fallo sistémico de un complemento — distinto de fallos aislados, pero es una condición de aborto independiente, no se mezcla con el conteo de fuente principal.** Un puñado de lugares sueltos degradados es tolerable; que un complemento falle para casi todos los lugares que dependen de él no debería desplegarse en silencio (ejemplo del enunciado: Open-Meteo cae y Portugal entero pierde precipitación/nieve/viento cuantitativos de golpe). Regla simple, sin health-checks: por cada combinación (fuente complementaria, grupo de lugares que la usan — p. ej. *Open-Meteo para Portugal*, *Open-Meteo para nieve en España*, *Open-Meteo Marine*), se calcula la proporción de intentos fallidos sobre el total de lugares a los que se le intenta ese complemento.
+**Fallo sistémico de un complemento — condición de aborto independiente.** Un puñado de lugares sueltos degradados es tolerable; que un complemento falle para casi todos los lugares que dependen de él no debería desplegarse en silencio (ejemplo: Open-Meteo cae y Portugal entero pierde precipitación/nieve/viento cuantitativos de golpe). Regla simple, sin health-checks: por cada combinación (fuente complementaria, grupo de lugares que la usan — p. ej. *Open-Meteo para Portugal*, *Open-Meteo para nieve en España*, *Open-Meteo Marine*), se calcula la proporción de intentos fallidos sobre el total de lugares a los que se le intenta ese complemento.
 
 **Dos condiciones de aborto independientes, nunca convertidas en una sola cifra artificial:**
 
 ```ts
-const MAX_FAILED_LOCATIONS_RATIO = 0.10           // 10% de 74 ≈ 7 lugares — punto de partida, revisable con datos reales
 const SYSTEMIC_COMPLEMENT_FAILURE_RATIO = 0.50
 
 if (
-  primaryFailureRatio > MAX_FAILED_LOCATIONS_RATIO ||
-  hasSystemicComplementFailure   // algún grupo de complemento superó SYSTEMIC_COMPLEMENT_FAILURE_RATIO
+  failedLocationIds.length > 0 ||   // cualquier lugar sin weather (principal + fallback fallidos) — tolerancia cero
+  hasSystemicComplementFailure       // algún grupo de complemento superó SYSTEMIC_COMPLEMENT_FAILURE_RATIO
 ) {
   abort()
 }
 ```
 
-Un fallo sistémico de complemento **no incrementa** `meta.failedLocations` ni el conteo de fallos de fuente principal — es su propia señal, evaluada aparte. Cualquiera de las dos condiciones aborta igual: el script termina con error y el workflow **no despliega** — GitHub Pages sigue sirviendo el `forecast.json` del día anterior. Si ninguna se cumple, el pipeline continúa y publica con los lugares fallidos ausentes de `locations` (visibles en `meta.failedLocations`) y las degradaciones puntuales anotadas en cada lugar.
+`src/domain/fault-tolerance.ts` no calcula ningún ratio de fuente principal: no hay ratio que calcular cuando el umbral es "cero fallos". `decideAbort` recibe el número de lugares fallidos (tras fallback), no un ratio; `AbortReason` incluye `'location_failure'` junto a `'systemic_complement_failure'` y `'both'`.
 
-**Lugar mínimamente válido:** un `LocationForecast` se escribe si su fuente principal devuelve al menos `temperature` — es el único campo obligatorio del contrato. Todo lo demás puede faltar (quedar `null`, `degradations`, o `error` en marine/alerts) sin invalidar el lugar.
+Un fallo sistémico de complemento **no incrementa** `meta.failedLocations` — es su propia señal, evaluada aparte. Cualquiera de las dos condiciones aborta igual: el script termina con error y el workflow **no despliega** — GitHub Pages sigue sirviendo el `forecast.json` de la ejecución anterior. **Con la tolerancia cero, un forecast que se llega a escribir siempre tiene `successfulLocations === 74`** — `meta.failedLocations` solo aparecería poblado en los logs de una ejecución que abortó, nunca en un `forecast.json` real.
+
+**Lugar mínimamente válido:** un `LocationForecast` se escribe si su fuente principal **o su fallback** devuelve al menos `temperature` — es el único campo obligatorio del contrato. Todo lo demás puede faltar (quedar `null`, `degradations`, o `error` en marine/alerts) sin invalidar el lugar.
+
+**Última comprobación, justo antes de `writeFile` — ninguna de las 74 ubicaciones se publica sin Pokémon.** La tolerancia cero de arriba garantiza que no falten `LocationForecast`, pero no comprueba, aparte, que lo que llegó sea exactamente correcto ni que cada lugar produzca de verdad una asignación. `checkForecastReadiness` (`src/domain/forecast-readiness.ts`, función pura) hace esa última pasada:
+
+1. `locationForecasts.length === expectedLocationIds.length` (74).
+2. Ningún `locationId` duplicado (un duplicado implica, con la longitud ya correcta, que algún lugar esperado quedó fuera sin que `meta.failedLocations` lo reflejara).
+3. El conjunto de `locationId` presentes coincide exactamente con los 74 esperados (ids ajenos, no solo duplicados, también invalidan).
+4. `assignPokemon(locationForecast)` (003) devuelve al menos un `PokedexId` para cada uno.
+
+Si cualquiera falla, el dataset entero se considera inválido: se aborta sin escribir, sin inventar un Pokémon por defecto ni publicar un subconjunto — el `forecast.json` anterior sigue en línea. En la práctica, con el motor de 003 actual (`temperature.maxC` siempre asigna), el punto 4 no debería disparar nunca — pero la función no asume eso: si 003 cambiara alguna día y dejara un hueco, esta comprobación sigue protegiendo la publicación.
 
 ## Qué alimenta cada regla de la 003 (y qué queda pendiente de decidir ahí, no aquí)
 
@@ -292,4 +354,7 @@ Un fallo sistémico de complemento **no incrementa** `meta.failedLocations` ni e
 
 - **`AlertPhenomenon: 'desconocido'`** como válvula de escape si aparece una categoría de cualquiera de las dos fuentes que no mapea limpio — no se fuerza una categoría existente por parecido. Ocurre de verdad para tres códigos reales de AEMET sin equivalente en el dominio (`AL` aludes, `GA` galernas, `RI` rissagas); IPMA no tiene ninguno sin mapear en su catálogo actual.
 - **Umbral de Gyarados sin definir** — bloquea implementar esa regla concreta de la 003 hasta que exista un número real, igual que ya pasaba con "oleaje muy fuerte".
-- **Umbrales de tolerancia a fallos** (`MAX_FAILED_LOCATIONS_RATIO = 0.10`, `SYSTEMIC_COMPLEMENT_FAILURE_RATIO = 0.50`) — aprobados como punto de partida, nombrados como constantes explícitas para poder revisarlos con datos reales de ejecuciones, no cifras enterradas en el código.
+- **Umbral de tolerancia a fallos restante** (`SYSTEMIC_COMPLEMENT_FAILURE_RATIO = 0.50`) — punto de partida, nombrado como constante explícita para poder revisarlo con datos reales de ejecuciones.
+- **La tolerancia cero puede abortar un run entero por un fallo puntual que antes se toleraba** — si Open-Meteo también estuviera caído para los mismos lugares que fallan en AEMET/IPMA en el mismo run, el pipeline aborta y GitHub Pages sigue sirviendo la previsión anterior en vez de publicar con algún lugar ausente. Es el comportamiento pedido explícitamente (74/74 o nada).
+- **`computeTargetDate` depende de la hora real del entorno de ejecución (convertida a `Europe/Madrid`), no de un parámetro fijo** — en local (`npm run fetch:forecast` a mano) puede dar un `targetDate` distinto según cuándo se ejecute, sobre todo cerca de medianoche en Madrid; en producción corre siempre a las 06:00 UTC vía el cron (bien lejos de esa frontera en cualquier horario), así que el cálculo es estable ahí. No se parametriza con una fecha de referencia explícita porque no hay ningún caso de uso real que la necesite todavía.
+- **IPMA reintenta con el mismo patrón que `open-meteo.ts`** (3 intentos, backoff exponencial simple) — sin la complejidad del throttle de `aemet-client.ts`, porque IPMA no tiene rate limit documentado ni key.

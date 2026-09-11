@@ -71,18 +71,46 @@ async function fetchJson<T>(url: URL): Promise<T> {
   throw lastError
 }
 
+/**
+ * `start_date`/`end_date` en vez de `forecast_days` — se pide explícitamente
+ * el día que hace falta (`targetDate`), no "el primero que venga". La
+ * normalización, aun así, no se fía a ciegas de que la API haya devuelto
+ * justo lo pedido: busca `targetDate` dentro de `daily.time` (defensa en
+ * profundidad, `002-plan.md`).
+ */
 export async function fetchOpenMeteoDaily(
   latitude: number,
   longitude: number,
   timezone: string,
+  targetDate: string,
 ): Promise<OpenMeteoDailyResponse> {
   const url = new URL('https://api.open-meteo.com/v1/forecast')
   url.searchParams.set('latitude', String(latitude))
   url.searchParams.set('longitude', String(longitude))
   url.searchParams.set('timezone', timezone)
-  url.searchParams.set('forecast_days', '1')
+  url.searchParams.set('start_date', targetDate)
+  url.searchParams.set('end_date', targetDate)
   url.searchParams.set('daily', DAILY_PARAMS)
   return fetchJson<OpenMeteoDailyResponse>(url)
+}
+
+// --- Selección por fecha, nunca por posición --------------------------------
+
+// `time` no es siempre el mismo tamaño que el resto de arrays si la API
+// respondiera con algo distinto a lo pedido — buscar el índice por fecha, en
+// vez de asumir `[0]`, es lo que hace que ese caso falle limpio en vez de
+// leer en silencio el día equivocado.
+function findDayIndex(time: string[], targetDate: string): number {
+  const index = time.indexOf(targetDate)
+  if (index === -1) {
+    throw new Error(`Open-Meteo: no hay datos para ${targetDate} (fechas disponibles: ${time.join(', ')})`)
+  }
+  return index
+}
+
+function valueAt(values: number[], index: number): number | null {
+  const value = values[index]
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
 // --- Complemento numérico (España/Portugal) --------------------------------
@@ -94,21 +122,17 @@ export interface OpenMeteoComplement {
   windGustKmh: number | null
 }
 
-function todayValue(values: number[]): number | null {
-  const value = values[0]
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
-
-export function normalizeOpenMeteoComplement(daily: OpenMeteoDailyResponse): OpenMeteoComplement {
+export function normalizeOpenMeteoComplement(daily: OpenMeteoDailyResponse, targetDate: string): OpenMeteoComplement {
   const day = daily.daily
-  const rain = todayValue(day.rain_sum)
-  const showers = todayValue(day.showers_sum)
+  const index = findDayIndex(day.time, targetDate)
+  const rain = valueAt(day.rain_sum, index)
+  const showers = valueAt(day.showers_sum, index)
 
   return {
     precipitationMm: rain !== null && showers !== null ? rain + showers : null,
-    snowCm: todayValue(day.snowfall_sum),
-    windSpeedKmh: todayValue(day.wind_speed_10m_max),
-    windGustKmh: todayValue(day.wind_gusts_10m_max),
+    snowCm: valueAt(day.snowfall_sum, index),
+    windSpeedKmh: valueAt(day.wind_speed_10m_max, index),
+    windGustKmh: valueAt(day.wind_gusts_10m_max, index),
   }
 }
 
@@ -165,19 +189,20 @@ const SNOW_WMO_CODES = new Set([71, 73, 75, 77, 85, 86])
 
 export type OpenMeteoNormalizedForecast = WeatherBlock
 
-export function normalizeOpenMeteoPrimary(daily: OpenMeteoDailyResponse): OpenMeteoNormalizedForecast {
+export function normalizeOpenMeteoPrimary(daily: OpenMeteoDailyResponse, targetDate: string): OpenMeteoNormalizedForecast {
   const day = daily.daily
-  const weatherCode = day.weather_code[0]
+  const index = findDayIndex(day.time, targetDate)
+  const weatherCode = day.weather_code[index]
   const hasInfo = weatherCode in WMO_DESCRIPTIONS
-  const complement = normalizeOpenMeteoComplement(daily)
+  const complement = normalizeOpenMeteoComplement(daily, targetDate)
 
   return {
-    date: day.time[0],
-    temperature: { maxC: day.temperature_2m_max[0], minC: day.temperature_2m_min[0] },
+    date: day.time[index],
+    temperature: { maxC: day.temperature_2m_max[index], minC: day.temperature_2m_min[index] },
     sky: hasInfo ? (CLOUD_ONLY_WMO_CODES[weatherCode] ?? null) : null,
     precipitation: {
       mm: complement.precipitationMm,
-      probabilityPercent: todayValue(day.precipitation_probability_max),
+      probabilityPercent: valueAt(day.precipitation_probability_max, index),
     },
     snow: {
       cm: complement.snowCm,

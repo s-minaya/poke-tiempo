@@ -2,19 +2,22 @@ import type { Forecast } from './types.ts'
 
 /**
  * Política de tolerancia a fallos (`002-plan.md`): dos condiciones de aborto
- * **independientes**, nunca convertidas en una sola cifra. Fallo de fuente
- * principal excluye el lugar entero y cuenta para `primaryFailureRatio`;
- * fallo de una fuente complementaria degrada solo esa métrica y nunca
- * cuenta ahí — alimenta, aparte, el ratio de fallo sistémico de su propio
- * grupo (fuente complementaria × lugares que la usan).
+ * **independientes**, nunca convertidas en una sola cifra.
+ *
+ * **Tolerancia cero a lugares sin weather.** Con el fallback completo de
+ * Open-Meteo de por medio (`scripts/orchestrate-location.ts`), un lugar solo
+ * queda fuera de `locations` si falló tanto en su fuente principal como en
+ * el fallback — y eso ya no es tolerable: `forecast.json` solo se escribe
+ * con los 74 lugares. No hay ratio que calcular cuando el umbral es "cero".
+ *
+ * El fallo de una fuente **complementaria** (Open-Meteo enriqueciendo
+ * `precipitation`/`snow`/`wind` para un lugar cuya principal sí respondió)
+ * es un problema distinto, sin cambios: degrada solo esa métrica sin
+ * invalidar el lugar, y alimenta, aparte, el ratio de fallo sistémico de su
+ * propio grupo (fuente complementaria × lugares que la usan).
  */
 
-export const MAX_FAILED_LOCATIONS_RATIO = 0.1
 export const SYSTEMIC_COMPLEMENT_FAILURE_RATIO = 0.5
-
-export function computePrimaryFailureRatio(totalLocations: number, failedLocationsCount: number): number {
-  return totalLocations === 0 ? 0 : failedLocationsCount / totalLocations
-}
 
 /**
  * Un intento de complemento por lugar (no por métrica): el complemento de
@@ -35,7 +38,9 @@ export function computeGroupFailureRatio(tally: ComplementGroupTally): number {
 /**
  * `tallies` es un intento por lugar y grupo (p. ej. "open-meteo→españa",
  * "open-meteo→portugal", "open-meteo-marine") — nunca una cuenta de
- * `Degradation[]`. Ver la nota de `ComplementGroupTally`.
+ * `Degradation[]`. Ver la nota de `ComplementGroupTally`. Un lugar que usó
+ * el fallback completo (`usedFallback: true`) no entra en ningún grupo — ver
+ * `orchestrate-location.ts`.
  */
 export function hasSystemicComplementFailure(
   tallies: Record<string, ComplementGroupTally>,
@@ -44,12 +49,12 @@ export function hasSystemicComplementFailure(
   return Object.values(tallies).some((tally) => computeGroupFailureRatio(tally) > ratioThreshold)
 }
 
-export type AbortReason = 'primary_failure_ratio' | 'systemic_complement_failure' | 'both'
+export type AbortReason = 'location_failure' | 'systemic_complement_failure' | 'both'
 
 export interface AbortDecision {
   shouldAbort: boolean
   reason?: AbortReason
-  primaryFailureRatio: number
+  failedLocationsCount: number
   hasSystemicComplementFailure: boolean
 }
 
@@ -58,25 +63,21 @@ export interface AbortDecision {
  * su cuenta — esta función solo las combina con OR para la decisión final,
  * nunca las mezcla en una cifra intermedia.
  */
-export function decideAbort(
-  primaryFailureRatio: number,
-  systemicComplementFailure: boolean,
-  maxFailedLocationsRatio: number = MAX_FAILED_LOCATIONS_RATIO,
-): AbortDecision {
-  const primaryExceeded = primaryFailureRatio > maxFailedLocationsRatio
+export function decideAbort(failedLocationsCount: number, systemicComplementFailure: boolean): AbortDecision {
+  const hasFailedLocations = failedLocationsCount > 0
   const reason: AbortReason | undefined =
-    primaryExceeded && systemicComplementFailure
+    hasFailedLocations && systemicComplementFailure
       ? 'both'
-      : primaryExceeded
-        ? 'primary_failure_ratio'
+      : hasFailedLocations
+        ? 'location_failure'
         : systemicComplementFailure
           ? 'systemic_complement_failure'
           : undefined
 
   return {
-    shouldAbort: primaryExceeded || systemicComplementFailure,
+    shouldAbort: hasFailedLocations || systemicComplementFailure,
     reason,
-    primaryFailureRatio,
+    failedLocationsCount,
     hasSystemicComplementFailure: systemicComplementFailure,
   }
 }

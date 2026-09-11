@@ -9,6 +9,7 @@ import type { Marine } from '../../src/domain/types.ts'
  */
 
 interface OpenMeteoMarineDailyBlock {
+  time: string[]
   wave_height_max: number[]
   wave_period_max: number[]
   wave_direction_dominant: number[]
@@ -44,31 +45,48 @@ async function fetchJson<T>(url: URL): Promise<T> {
   throw lastError
 }
 
+/**
+ * `start_date`/`end_date` en vez de `forecast_days` — mismo motivo que
+ * `open-meteo.ts`: se pide explícitamente `targetDate`, y la normalización
+ * comprueba igualmente que la fecha devuelta es la pedida (defensa en
+ * profundidad, `002-plan.md`).
+ */
 export async function fetchOpenMeteoMarine(
   latitude: number,
   longitude: number,
   timezone: string,
+  targetDate: string,
 ): Promise<OpenMeteoMarineResponse> {
   const url = new URL('https://marine-api.open-meteo.com/v1/marine')
   url.searchParams.set('latitude', String(latitude))
   url.searchParams.set('longitude', String(longitude))
   url.searchParams.set('timezone', timezone)
-  url.searchParams.set('forecast_days', '1')
+  url.searchParams.set('start_date', targetDate)
+  url.searchParams.set('end_date', targetDate)
   url.searchParams.set('daily', 'wave_height_max,wave_period_max,wave_direction_dominant')
   return fetchJson<OpenMeteoMarineResponse>(url)
 }
 
-function todayValue(values: number[]): number | null {
-  const value = values[0]
+function findDayIndex(time: string[], targetDate: string): number {
+  const index = time.indexOf(targetDate)
+  if (index === -1) {
+    throw new Error(`Open-Meteo Marine: no hay datos para ${targetDate} (fechas disponibles: ${time.join(', ')})`)
+  }
+  return index
+}
+
+function valueAt(values: number[], index: number): number | null {
+  const value = values[index]
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
-export function normalizeOpenMeteoMarine(marine: OpenMeteoMarineResponse): Marine {
+export function normalizeOpenMeteoMarine(marine: OpenMeteoMarineResponse, targetDate: string): Marine {
   const day = marine.daily
+  const index = findDayIndex(day.time, targetDate)
   return {
-    waveHeightM: todayValue(day.wave_height_max),
-    wavePeriodS: todayValue(day.wave_period_max),
-    waveDirectionDeg: todayValue(day.wave_direction_dominant),
+    waveHeightM: valueAt(day.wave_height_max, index),
+    wavePeriodS: valueAt(day.wave_period_max, index),
+    waveDirectionDeg: valueAt(day.wave_direction_dominant, index),
     source: 'open-meteo',
   }
 }

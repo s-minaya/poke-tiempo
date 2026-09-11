@@ -38,23 +38,48 @@ export interface IpmaWarningEntry {
 }
 
 // --- Cliente -------------------------------------------------------------
+//
+// Reintentos ante fallos transitorios (antes no tenía ninguno: un blip de
+// red excluía el lugar a la primera) — mismo patrón que `open-meteo.ts`
+// (backoff exponencial simple), sin el throttle de `aemet-client.ts` porque
+// IPMA no tiene rate limit documentado ni key. La política de fallback
+// (`002-plan.md`) asume que "falla tras sus reintentos" es cierto para las
+// tres fuentes, no solo AEMET.
+
+const MAX_ATTEMPTS = 3
+const RETRY_BASE_DELAY_MS = 500
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function fetchJson<T>(url: string): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`${url}: HTTP ${response.status}`)
+      }
+      return (await response.json()) as T
+    } catch (error) {
+      lastError = error
+      if (attempt < MAX_ATTEMPTS) {
+        await sleep(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1))
+      }
+    }
+  }
+  throw lastError
+}
 
 export async function fetchIpmaDaily(globalIdLocal: number): Promise<IpmaDailyResponse> {
-  const response = await fetch(
+  return fetchJson<IpmaDailyResponse>(
     `https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/${globalIdLocal}.json`,
   )
-  if (!response.ok) {
-    throw new Error(`IPMA forecast/daily/${globalIdLocal}: HTTP ${response.status}`)
-  }
-  return (await response.json()) as IpmaDailyResponse
 }
 
 export async function fetchIpmaWarnings(): Promise<IpmaWarningEntry[]> {
-  const response = await fetch('https://api.ipma.pt/open-data/forecast/warnings/warnings_www.json')
-  if (!response.ok) {
-    throw new Error(`IPMA warnings_www: HTTP ${response.status}`)
-  }
-  return (await response.json()) as IpmaWarningEntry[]
+  return fetchJson<IpmaWarningEntry[]>('https://api.ipma.pt/open-data/forecast/warnings/warnings_www.json')
 }
 
 // --- Catálogo de idWeatherType --------------------------------------------
@@ -131,8 +156,11 @@ const NO_INFO_WEATHER_TYPES = new Set([-99, 0])
 
 export type IpmaNormalizedForecast = WeatherBlock
 
-export function normalizeIpma(daily: IpmaDailyResponse): IpmaNormalizedForecast {
-  const day = daily.data[0]
+export function normalizeIpma(daily: IpmaDailyResponse, targetDate: string): IpmaNormalizedForecast {
+  const day = daily.data.find((entry) => entry.forecastDate === targetDate)
+  if (!day) {
+    throw new Error(`IPMA: no hay predicción para ${targetDate}`)
+  }
   const weatherType = day.idWeatherType
   const isKnownCode = weatherType in WEATHER_TYPE_DESCRIPTIONS
   const hasInfo = isKnownCode && !NO_INFO_WEATHER_TYPES.has(weatherType)
