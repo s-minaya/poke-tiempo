@@ -97,7 +97,7 @@ El contrato de datos completo (tipos, ejes meteorológicos simultáneos, provena
 
 ## Convenciones de rendimiento (React)
 
-- Toda lista renderizada con `.map()` que tenga interacción por fila usa callbacks estables (`useCallback`, id como argumento, no capturado en closure) y el componente de fila envuelto en `React.memo`. **Aplica directamente al mapa:** son ~52 marcadores con hover/foco.
+- Toda lista renderizada con `.map()` que tenga interacción por fila usa callbacks estables (`useCallback`, id como argumento, no capturado en closure) y el componente de fila envuelto en `React.memo`. **Aplica directamente al mapa:** son 74 marcadores con hover/foco.
 - `loading="lazy"` en `<img>` dentro de listas **solo cuando el contenido está por debajo del pliegue**. Los sprites del mapa no lo llevan: están todos visibles en la carga inicial y diferirlos empeoraría la carga percibida. La lista de respaldo en móvil sí lo lleva.
 - Ningún cálculo derivado (`filter`/`sort`/`map` sobre los datos) va sin `useMemo` si el componente se re-renderiza por motivos ajenos a ese cálculo.
 

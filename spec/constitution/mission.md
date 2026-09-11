@@ -23,7 +23,7 @@ La pantalla es una sola y tiene cuatro piezas:
 
 - **La broma se entiende sin explicación** — si alguien necesita leer la leyenda para pillar de qué va, la asignación de Pokémon está mal elegida.
 - **Sin backend ni servicios de pago** — el proyecto se sostiene con un repositorio de GitHub y nada más. Cualquier feature que requiera un servidor, una base de datos o una suscripción se replantea.
-- **Mobile-first de verdad** — se diseña y construye primero para 320px. Un mapa de 52 ciudades no cabe ahí, así que la versión pequeña necesita su propia solución, no una miniatura ilegible.
+- **Mobile-first de verdad** — se diseña y construye primero para 320px. Un mapa de 74 lugares no cabe ahí, así que la versión pequeña necesita su propia solución, no una miniatura ilegible.
 - **Accesibilidad no es un extra** — la información que da el mapa tiene que estar disponible también en texto. HTML semántico, contraste, foco visible y alternativas textuales son parte de la definición de "hecho".
 - **Sobriedad técnica** — sin dependencias innecesarias, sin overengineering. Es un mapa con imágenes, no una aplicación compleja: si una librería no resuelve un problema real que ya existe, no entra.
 - **Mantenible por humanos** — componentes con una responsabilidad, nombres descriptivos, lógica de dominio separada de la presentación.

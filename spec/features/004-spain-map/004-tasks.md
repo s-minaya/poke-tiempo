@@ -21,7 +21,7 @@
 
 - [x] `src/components/SpainMap/sprite-sources.ts` — imports estáticos de `src/assets/sprites/`.
 - [x] `src/components/SpainMap/components/LocationMarker.tsx` + `.scss` + `.test.tsx` — `SPRITE_SIZE = 62`, `role="img"` + `aria-label`/`<title>` con el nombre del lugar, memoizado (`React.memo`).
-- [x] `src/components/SpainMap/components/TerritoryInset.tsx` + `.scss` + `.test.tsx` — recuadro reutilizable (hoy solo Canarias): `<svg>` anidado con su propio `viewBox`, `role="group"`, marco opcional (`frame`) como `<path>` con esquina superior derecha achaflanada.
+- [x] `src/components/SpainMap/components/TerritoryInset.tsx` + `.scss` — recuadro reutilizable (hoy solo Canarias): `<svg>` anidado con su propio `viewBox`, `role="group"`, marco opcional (`frame`) como `<path>` con esquina superior derecha achaflanada. Sin `TerritoryInset.test.tsx` propio — cubierto indirectamente por `SpainMap.test.tsx` (rol de grupo, nombre accesible "Canarias", marcadores dentro del recuadro).
 - [x] `src/components/SpainMap/SpainMap.tsx` + `.scss` + `.test.tsx` — silueta principal, fronteras internas (trazo fino, `aria-hidden`), grupo decorativo de Marruecos/Argelia (`clip-path`, `aria-hidden`, sin `LocationMarker`), los 74 `LocationMarker` y el `TerritoryInset` de Canarias. `role="group"` en el `<svg>` raíz (nunca `role="img"`, que colapsaría los 74 marcadores como descendientes de una única imagen para tecnología de asistencia).
 - [x] Montado en `App.tsx` con `forecast.json` (`resolveJsonModule` en `tsconfig.app.json`).
 - [x] Responsive vía `viewBox` fijo + SCSS (`width: 100%; height: auto`, dos topes de `max-width` desde desktop/desktop grande) — sin JS de recálculo de layout.

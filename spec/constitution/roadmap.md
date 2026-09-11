@@ -50,6 +50,7 @@ _Bloquean o condicionan alguna de las features de arriba. Ninguna se resuelve po
 
 _Sin comprometer ni ordenar. Ideas que respetan la constitución._
 
+- **Portada de entrada** — `Loader` → portada/landing → botón "Empezar" → aplicación. Ese botón serviría también como la interacción explícita del usuario que los navegadores exigen antes de habilitar el audio de Profesor Oak (007). `src/components/Loader/` ya existe como pieza aislada a la espera de esta feature (sin montar en `App.tsx`); no representa una espera de red — `forecast.json` ya llega generado estáticamente en build time — así que su uso previsto es precarga/preparación de assets de esa pantalla de entrada, no datos meteorológicos.
 - **Histórico de previsiones** — guardar un `forecast.json` por día en vez de sobrescribir. No necesita base de datos: el propio historial de git ya versiona cada día, y un archivo por fecha permitiría navegar hacia atrás.
 - **Más de un día de previsión** — AEMET devuelve hasta 7 días en la misma respuesta; hoy solo se usa el correspondiente a `targetDate` (mañana), así que ampliarlo no cuesta peticiones extra.
 - **Optimización SEO** — metadatos, imagen de previsualización para redes (que sería el mapa del día, generado en el mismo pipeline).

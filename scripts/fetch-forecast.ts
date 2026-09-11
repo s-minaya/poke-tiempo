@@ -1,5 +1,5 @@
 import { writeFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import type {
   AlertsAvailability,
@@ -59,7 +59,7 @@ async function mapWithConcurrency<T, R>(
 
 // --- Avisos: se piden una vez por área/país y se reparten por lugar --------
 
-async function prefetchAemetAreaAlerts(
+export async function prefetchAemetAreaAlerts(
   targets: Location[],
   apiKey: string,
 ): Promise<Map<string, AemetRawAlert[] | null>> {
@@ -76,6 +76,13 @@ async function prefetchAemetAreaAlerts(
     try {
       byArea.set(areaCode, await fetchAemetAreaAlerts(areaCode, apiKey))
     } catch (error) {
+      // Un 401/403 (key caducada) no es "hoy no hay avisos": es la misma
+      // credencial rota que usa el weather de AEMET, y tiene que abortar el
+      // run igual de ruidoso — nunca quedar absorbido como un simple
+      // `alerts.status: 'error'` (tech-stack.md → Despliegue).
+      if (error instanceof AemetAuthError) {
+        throw error
+      }
       console.error(`Avisos AEMET, área ${areaCode}:`, error)
       byArea.set(areaCode, null)
     }
@@ -318,7 +325,17 @@ async function run(): Promise<void> {
   console.log(`forecast.json escrito: ${forecast.meta.successfulLocations}/${forecast.meta.totalLocations} lugares (${targetDate}).`)
 }
 
-run().catch((error: unknown) => {
-  console.error(error)
-  process.exitCode = 1
-})
+// Solo se auto-ejecuta cuando el archivo se lanza directamente (`tsx
+// scripts/fetch-forecast.ts`), nunca al importarlo (p. ej. desde un test que
+// solo necesita `prefetchAemetAreaAlerts`) — equivalente al
+// `if __name__ == "__main__":` de Python. `process.argv[1]` puede faltar
+// (algunos runners no lo rellenan), así que la comprobación no asume que
+// exista.
+const isMainModule = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href
+
+if (isMainModule) {
+  run().catch((error: unknown) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+}

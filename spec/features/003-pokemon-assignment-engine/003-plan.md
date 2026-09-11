@@ -76,7 +76,7 @@ Un único módulo de dominio, sin dependencias externas ni abstracciones genéri
 2. Si no, y `marine.status === 'ok'` y `marine.data.waveHeightM !== null` y `waveHeightM >= 1.25` → Gyarados.
 3. En cualquier otro caso → ninguno.
 
-> Umbral de 1,25 m: coincide con el paso de "marejada" a "fuerte marejada" en la escala Douglas de estado de la mar (AEMET/Puertos del Estado). Con los datos reales del pipeline (26 lugares costeros, `forecast.json` del 2026-09-08) dispara en 8 de 26 lugares.
+> Umbral de 1,25 m: coincide con el paso de "marejada" a "fuerte marejada" en la escala Douglas de estado de la mar (AEMET/Puertos del Estado). Con los datos reales del pipeline (28 lugares costeros, `forecast.json` del 2026-09-08) dispara en 8 de esos lugares.
 
 ## Decisiones
 
