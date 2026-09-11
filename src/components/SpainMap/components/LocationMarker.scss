@@ -1,0 +1,7 @@
+.location-marker {
+  &__sprite {
+    // Sin interacción propia todavía (004): solo evita que un arrastre
+    // cerca de un sprite dispare la selección de texto del navegador.
+    user-select: none;
+  }
+}

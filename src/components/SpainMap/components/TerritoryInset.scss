@@ -1,0 +1,15 @@
+.territory-inset {
+  &__frame {
+    fill: none;
+    stroke: currentcolor;
+    stroke-opacity: 0.75;
+    stroke-width: 2.5;
+  }
+
+  &__landmass {
+    fill: currentcolor;
+    fill-opacity: 0.12;
+    stroke: currentcolor;
+    stroke-width: 1;
+  }
+}
