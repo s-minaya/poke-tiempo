@@ -1,18 +1,102 @@
 {
   "date": "2026-09-16",
-  "generatedAt": "2026-09-15T07:07:16.102Z",
+  "generatedAt": "2026-09-15T10:43:34.599Z",
   "locations": [
     {
-      "locationId": "a-coruna",
+      "locationId": "cantabria",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 22,
+        "maxC": 21,
         "minC": 17
       },
       "sky": "nuboso",
       "precipitation": {
-        "mm": 0.1,
-        "probabilityPercent": 40
+        "mm": 9.9,
+        "probabilityPercent": 100
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 20,
+        "gustKmh": 32
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 1.64,
+          "wavePeriodS": 8.75,
+          "waveDirectionDeg": 326,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Muy nuboso con lluvia escasa"
+    },
+    {
+      "locationId": "la-rioja",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 23,
+        "minC": 13
+      },
+      "sky": "cubierto",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 100
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 22,
+        "gustKmh": 36
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Cubierto con lluvia escasa"
+    },
+    {
+      "locationId": "a-coruna",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 23,
+        "minC": 17
+      },
+      "sky": "cubierto",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 65
       },
       "snow": {
         "cm": 0,
@@ -20,7 +104,7 @@
       },
       "wind": {
         "speedKmh": 21,
-        "gustKmh": 40
+        "gustKmh": 38
       },
       "storm": false,
       "calima": false,
@@ -45,7 +129,7 @@
           "snow.cm": "open-meteo"
         }
       },
-      "primarySourceDescription": "Muy nuboso"
+      "primarySourceDescription": "Cubierto"
     },
     {
       "locationId": "lugo",
@@ -54,18 +138,18 @@
         "maxC": 21,
         "minC": 12
       },
-      "sky": "despejado",
+      "sky": "poco_nuboso",
       "precipitation": {
         "mm": 0,
-        "probabilityPercent": 15
+        "probabilityPercent": 20
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 21,
-        "gustKmh": 45
+        "speedKmh": 22,
+        "gustKmh": 47
       },
       "storm": false,
       "calima": false,
@@ -84,7 +168,7 @@
           "snow.cm": "open-meteo"
         }
       },
-      "primarySourceDescription": "Despejado"
+      "primarySourceDescription": "Poco nuboso"
     },
     {
       "locationId": "ourense",
@@ -103,8 +187,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 22,
-        "gustKmh": 43
+        "speedKmh": 21,
+        "gustKmh": 41
       },
       "storm": false,
       "calima": false,
@@ -142,7 +226,7 @@
         "maxC": 26,
         "minC": 15
       },
-      "sky": "despejado",
+      "sky": "poco_nuboso",
       "precipitation": {
         "mm": 0,
         "probabilityPercent": 0
@@ -152,8 +236,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 24,
-        "gustKmh": 47
+        "speedKmh": 25,
+        "gustKmh": 48
       },
       "storm": false,
       "calima": false,
@@ -178,337 +262,13 @@
           "snow.cm": "open-meteo"
         }
       },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "oviedo",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 22,
-        "minC": 14
-      },
-      "sky": "nuboso",
-      "precipitation": {
-        "mm": 6.2,
-        "probabilityPercent": 100
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 16,
-        "gustKmh": 29
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Muy nuboso"
-    },
-    {
-      "locationId": "gijon",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 23,
-        "minC": 16
-      },
-      "sky": "poco_nuboso",
-      "precipitation": {
-        "mm": 3.2,
-        "probabilityPercent": 100
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 22,
-        "gustKmh": 31
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 1.8,
-          "wavePeriodS": 9.05,
-          "waveDirectionDeg": 325,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
       "primarySourceDescription": "Poco nuboso"
-    },
-    {
-      "locationId": "jaca",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 26,
-        "minC": 10
-      },
-      "sky": "cubierto",
-      "precipitation": {
-        "mm": 0.3,
-        "probabilityPercent": 60
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 18,
-        "gustKmh": 36
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Cubierto"
-    },
-    {
-      "locationId": "benasque",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 23,
-        "minC": 6
-      },
-      "sky": "cubierto",
-      "precipitation": {
-        "mm": 2.2,
-        "probabilityPercent": 100
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 4,
-        "gustKmh": 20
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Cubierto con lluvia escasa"
-    },
-    {
-      "locationId": "teruel",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 29,
-        "minC": 10
-      },
-      "sky": "poco_nuboso",
-      "precipitation": {
-        "mm": 3,
-        "probabilityPercent": 85
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 27,
-        "gustKmh": 97
-      },
-      "storm": true,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Poco nuboso"
-    },
-    {
-      "locationId": "cantabria",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 21,
-        "minC": 16
-      },
-      "sky": "cubierto",
-      "precipitation": {
-        "mm": 9.9,
-        "probabilityPercent": 100
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 21,
-        "gustKmh": 34
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 1.64,
-          "wavePeriodS": 8.75,
-          "waveDirectionDeg": 326,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Cubierto"
-    },
-    {
-      "locationId": "la-rioja",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 23,
-        "minC": 14
-      },
-      "sky": "cubierto",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 100
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 21,
-        "gustKmh": 37
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Cubierto con lluvia escasa"
-    },
-    {
-      "locationId": "alcaniz",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 28,
-        "minC": 15
-      },
-      "sky": "nuboso",
-      "precipitation": {
-        "mm": 0.1,
-        "probabilityPercent": 30
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 36,
-        "gustKmh": 54
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Nuboso"
     },
     {
       "locationId": "pais-vasco",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 23,
+        "maxC": 22,
         "minC": 15
       },
       "sky": "cubierto",
@@ -547,165 +307,7 @@
           "snow.cm": "open-meteo"
         }
       },
-      "primarySourceDescription": "Cubierto con lluvia escasa"
-    },
-    {
-      "locationId": "castellon",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 30,
-        "minC": 21
-      },
-      "sky": "nuboso",
-      "precipitation": {
-        "mm": 2.4000000000000004,
-        "probabilityPercent": 45
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 21,
-        "gustKmh": 50
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.58,
-          "wavePeriodS": 4.15,
-          "waveDirectionDeg": 131,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Muy nuboso"
-    },
-    {
-      "locationId": "barcelona",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 29,
-        "minC": 20
-      },
-      "sky": "cubierto",
-      "precipitation": {
-        "mm": 12.6,
-        "probabilityPercent": 100
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 15,
-        "gustKmh": 29
-      },
-      "storm": true,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.62,
-          "wavePeriodS": 3.8,
-          "waveDirectionDeg": 175,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "lluvia",
-            "sourcePhenomenon": "Lluvias",
-            "startsAt": "2026-09-16T18:00:00+02:00",
-            "endsAt": "2026-09-16T23:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "690804"
-          },
-          {
-            "level": "amarillo",
-            "phenomenon": "tormenta",
-            "sourcePhenomenon": "Tormentas",
-            "startsAt": "2026-09-16T18:00:00+02:00",
-            "endsAt": "2026-09-16T23:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "690804"
-          }
-        ]
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
       "primarySourceDescription": "Cubierto"
-    },
-    {
-      "locationId": "lleida",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 32,
-        "minC": 17
-      },
-      "sky": "nuboso",
-      "precipitation": {
-        "mm": 0.1,
-        "probabilityPercent": 25
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 23,
-        "gustKmh": 46
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "temperatura_maxima",
-            "sourcePhenomenon": "Temperaturas máximas",
-            "startsAt": "2026-09-15T13:00:00+02:00",
-            "endsAt": "2026-09-15T20:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "692503"
-          }
-        ]
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Muy nuboso"
     },
     {
       "locationId": "navarra",
@@ -724,8 +326,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 24,
-        "gustKmh": 45
+        "speedKmh": 23,
+        "gustKmh": 44
       },
       "storm": false,
       "calima": false,
@@ -747,243 +349,23 @@
       "primarySourceDescription": "Muy nuboso"
     },
     {
-      "locationId": "girona",
+      "locationId": "huesca",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 31,
-        "minC": 18
-      },
-      "sky": "poco_nuboso",
-      "precipitation": {
-        "mm": 19.5,
-        "probabilityPercent": 100
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 18,
-        "gustKmh": 40
-      },
-      "storm": true,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "lluvia",
-            "sourcePhenomenon": "Lluvias",
-            "startsAt": "2026-09-16T14:00:00+02:00",
-            "endsAt": "2026-09-16T23:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "691702"
-          },
-          {
-            "level": "amarillo",
-            "phenomenon": "tormenta",
-            "sourcePhenomenon": "Tormentas",
-            "startsAt": "2026-09-16T14:00:00+02:00",
-            "endsAt": "2026-09-16T23:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "691702"
-          }
-        ]
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Intervalos nubosos con lluvia escasa"
-    },
-    {
-      "locationId": "murcia",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 34,
-        "minC": 19
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 15
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 26,
-        "gustKmh": 45
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "leon",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 23,
-        "minC": 10
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 0
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 23,
-        "gustKmh": 40
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "burgos",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 22,
-        "minC": 10
-      },
-      "sky": "cubierto",
-      "precipitation": {
-        "mm": 0.1,
-        "probabilityPercent": 55
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 30,
-        "gustKmh": 46
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Cubierto"
-    },
-    {
-      "locationId": "tarragona",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 30,
-        "minC": 20
-      },
-      "sky": "poco_nuboso",
-      "precipitation": {
-        "mm": 3.2,
-        "probabilityPercent": 45
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 12,
-        "gustKmh": 26
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.42,
-          "wavePeriodS": 4.35,
-          "waveDirectionDeg": 187,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Poco nuboso"
-    },
-    {
-      "locationId": "palencia",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 23,
-        "minC": 11
+        "maxC": 28,
+        "minC": 15
       },
       "sky": "cubierto",
       "precipitation": {
         "mm": 0,
-        "probabilityPercent": 0
+        "probabilityPercent": 60
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 27,
+        "speedKmh": 22,
         "gustKmh": 43
       },
       "storm": false,
@@ -1003,46 +385,7 @@
           "snow.cm": "open-meteo"
         }
       },
-      "primarySourceDescription": "Cubierto"
-    },
-    {
-      "locationId": "zamora",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 26,
-        "minC": 14
-      },
-      "sky": "cubierto",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 0
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 30,
-        "gustKmh": 45
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Cubierto"
+      "primarySourceDescription": "Cubierto con lluvia escasa"
     },
     {
       "locationId": "zaragoza",
@@ -1051,10 +394,10 @@
         "maxC": 27,
         "minC": 17
       },
-      "sky": "nuboso",
+      "sky": "cubierto",
       "precipitation": {
-        "mm": 0.3,
-        "probabilityPercent": 30
+        "mm": 0.1,
+        "probabilityPercent": 65
       },
       "snow": {
         "cm": 0,
@@ -1100,30 +443,30 @@
           "snow.cm": "open-meteo"
         }
       },
-      "primarySourceDescription": "Muy nuboso"
+      "primarySourceDescription": "Cubierto con lluvia escasa"
     },
     {
-      "locationId": "huesca",
+      "locationId": "oviedo",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 27.3,
-        "minC": 17.8
+        "maxC": 21,
+        "minC": 14
       },
-      "sky": "cubierto",
+      "sky": "nuboso",
       "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 23
+        "mm": 6.2,
+        "probabilityPercent": 100
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 27.4,
-        "gustKmh": 60.8
+        "speedKmh": 17,
+        "gustKmh": 29
       },
       "storm": false,
-      "calima": null,
+      "calima": false,
       "fog": false,
       "marine": {
         "status": "not_applicable"
@@ -1133,29 +476,556 @@
         "alerts": []
       },
       "provenance": {
-        "primary": "open-meteo"
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
       },
-      "primarySourceDescription": "Overcast"
+      "primarySourceDescription": "Nuboso con lluvia escasa"
     },
     {
-      "locationId": "guadalajara",
+      "locationId": "benasque",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 29,
-        "minC": 15
+        "maxC": 23,
+        "minC": 6
       },
-      "sky": "despejado",
+      "sky": "nuboso",
       "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 20
+        "mm": 2.2,
+        "probabilityPercent": 100
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 30,
+        "speedKmh": 4,
+        "gustKmh": 14
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Nuboso con lluvia escasa"
+    },
+    {
+      "locationId": "jaca",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 26,
+        "minC": 10
+      },
+      "sky": "cubierto",
+      "precipitation": {
+        "mm": 0.3,
+        "probabilityPercent": 80
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 11,
+        "gustKmh": 25
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Cubierto"
+    },
+    {
+      "locationId": "lleida",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 32,
+        "minC": 17
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 35
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 20,
+        "gustKmh": 53
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "temperatura_maxima",
+            "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-15T13:00:00+02:00",
+            "endsAt": "2026-09-15T20:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "692503"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Poco nuboso"
+    },
+    {
+      "locationId": "girona",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 31,
+        "minC": 18
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 21.3,
+        "probabilityPercent": 100
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 16,
+        "gustKmh": 41
+      },
+      "storm": true,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "691702"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "691702"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "691702"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Intervalos nubosos con lluvia escasa"
+    },
+    {
+      "locationId": "teruel",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 29,
+        "minC": 10
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 3.3000000000000003,
+        "probabilityPercent": 95
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 36,
+        "gustKmh": 69
+      },
+      "storm": true,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T21:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "624401"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T21:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "624401"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Poco nuboso"
+    },
+    {
+      "locationId": "valencia",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 29,
+        "minC": 20
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 1.6,
+        "probabilityPercent": 85
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 35,
+        "gustKmh": 60
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.58,
+          "wavePeriodS": 4,
+          "waveDirectionDeg": 92,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "naranja",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T16:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "774602"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T16:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "774602"
+          },
+          {
+            "level": "naranja",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-16T16:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "774602"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Poco nuboso"
+    },
+    {
+      "locationId": "tarragona",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 30,
+        "minC": 20
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 70
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 23,
+        "gustKmh": 41
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.42,
+          "wavePeriodS": 4.35,
+          "waveDirectionDeg": 187,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T18:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "694303"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T18:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "694303"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-16T18:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "694303"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Poco nuboso"
+    },
+    {
+      "locationId": "alcaniz",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 28,
+        "minC": 15
+      },
+      "sky": "nuboso",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 50
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 33,
         "gustKmh": 51
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Muy nuboso"
+    },
+    {
+      "locationId": "alicante",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 31,
+        "minC": 20
+      },
+      "sky": "despejado",
+      "precipitation": {
+        "mm": 0.3,
+        "probabilityPercent": 65
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 19,
+        "gustKmh": 35
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.24,
+          "wavePeriodS": 2.7,
+          "waveDirectionDeg": 177,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Despejado"
+    },
+    {
+      "locationId": "gijon",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 20.8,
+        "minC": 17.4
+      },
+      "sky": null,
+      "precipitation": {
+        "mm": 3.2,
+        "probabilityPercent": 70
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 15.7,
+        "gustKmh": 36
+      },
+      "storm": false,
+      "calima": null,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 1.8,
+          "wavePeriodS": 9.05,
+          "waveDirectionDeg": 325,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "open-meteo"
+      },
+      "primarySourceDescription": "Moderate drizzle"
+    },
+    {
+      "locationId": "leon",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 23,
+        "minC": 10
+      },
+      "sky": "despejado",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 0
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 25,
+        "gustKmh": 43
       },
       "storm": false,
       "calima": false,
@@ -1177,13 +1047,52 @@
       "primarySourceDescription": "Despejado"
     },
     {
+      "locationId": "palencia",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 23,
+        "minC": 11
+      },
+      "sky": "cubierto",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 0
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 28,
+        "gustKmh": 45
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Cubierto"
+    },
+    {
       "locationId": "salamanca",
       "date": "2026-09-16",
       "temperature": {
         "maxC": 25,
         "minC": 12
       },
-      "sky": "nuboso",
+      "sky": "cubierto",
       "precipitation": {
         "mm": 0,
         "probabilityPercent": 0
@@ -1213,27 +1122,91 @@
           "snow.cm": "open-meteo"
         }
       },
-      "primarySourceDescription": "Muy nuboso"
+      "primarySourceDescription": "Cubierto"
     },
     {
-      "locationId": "avila",
+      "locationId": "castellon",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 24,
-        "minC": 10
+        "maxC": 30,
+        "minC": 21
       },
-      "sky": "cubierto",
+      "sky": "poco_nuboso",
       "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 10
+        "mm": 6.199999999999999,
+        "probabilityPercent": 80
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 21,
-        "gustKmh": 39
+        "speedKmh": 27,
+        "gustKmh": 65
+      },
+      "storm": true,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.58,
+          "wavePeriodS": 4.15,
+          "waveDirectionDeg": 131,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T16:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "771204"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-16T16:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "771204"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Poco nuboso"
+    },
+    {
+      "locationId": "burgos",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 22,
+        "minC": 10
+      },
+      "sky": "cubierto",
+      "precipitation": {
+        "mm": 0.1,
+        "probabilityPercent": 90
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 30,
+        "gustKmh": 52
       },
       "storm": false,
       "calima": false,
@@ -1255,342 +1228,16 @@
       "primarySourceDescription": "Cubierto"
     },
     {
-      "locationId": "segovia",
+      "locationId": "avila",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 25,
-        "minC": 12
-      },
-      "sky": "nuboso",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 20
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 20,
-        "gustKmh": 35
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Muy nuboso"
-    },
-    {
-      "locationId": "soria",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 21,
-        "minC": 9
-      },
-      "sky": "nuboso",
-      "precipitation": {
-        "mm": 0.6,
-        "probabilityPercent": 20
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 27,
-        "gustKmh": 45
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Muy nuboso"
-    },
-    {
-      "locationId": "cuenca",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 33,
-        "minC": 16
-      },
-      "sky": "poco_nuboso",
-      "precipitation": {
-        "mm": 2.9,
-        "probabilityPercent": 75
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 28,
-        "gustKmh": 48
-      },
-      "storm": true,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "temperatura_maxima",
-            "sourcePhenomenon": "Temperaturas máximas",
-            "startsAt": "2026-09-15T13:00:00+02:00",
-            "endsAt": "2026-09-15T20:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "681602"
-          }
-        ]
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Nubes altas"
-    },
-    {
-      "locationId": "tarancon",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 32,
-        "minC": 18
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 2.1,
-        "probabilityPercent": 30
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 29,
-        "gustKmh": 51
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "valencia",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 28.1,
-        "minC": 20.1
-      },
-      "sky": null,
-      "precipitation": {
-        "mm": 1.1,
-        "probabilityPercent": 40
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 21.5,
-        "gustKmh": 47.5
-      },
-      "storm": false,
-      "calima": null,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.58,
-          "wavePeriodS": 4,
-          "waveDirectionDeg": 92,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "open-meteo"
-      },
-      "primarySourceDescription": "Slight rain showers"
-    },
-    {
-      "locationId": "alicante",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 27.7,
-        "minC": 18.4
+        "maxC": 24,
+        "minC": 10
       },
       "sky": "cubierto",
       "precipitation": {
         "mm": 0,
-        "probabilityPercent": 13
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 12.6,
-        "gustKmh": 28.1
-      },
-      "storm": false,
-      "calima": null,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.24,
-          "wavePeriodS": 2.7,
-          "waveDirectionDeg": 177,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "open-meteo"
-      },
-      "primarySourceDescription": "Overcast"
-    },
-    {
-      "locationId": "albacete",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 34,
-        "minC": 18
-      },
-      "sky": "poco_nuboso",
-      "precipitation": {
-        "mm": 1.6,
-        "probabilityPercent": 85
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 20,
-        "gustKmh": 46
-      },
-      "storm": true,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Poco nuboso"
-    },
-    {
-      "locationId": "caceres",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 33,
-        "minC": 19
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 5
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 27,
-        "gustKmh": 49
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "toledo",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 33,
-        "minC": 18
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 15
+        "probabilityPercent": 45
       },
       "snow": {
         "cm": 0,
@@ -1617,27 +1264,461 @@
           "snow.cm": "open-meteo"
         }
       },
-      "primarySourceDescription": "Despejado"
+      "primarySourceDescription": "Cubierto"
     },
     {
-      "locationId": "ciudad-real",
+      "locationId": "barcelona",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 34,
-        "minC": 19
+        "maxC": 26.6,
+        "minC": 21.4
       },
-      "sky": "despejado",
+      "sky": null,
       "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 20
+        "mm": 13,
+        "probabilityPercent": 75
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 20,
-        "gustKmh": 38
+        "speedKmh": 17.6,
+        "gustKmh": 41.4
+      },
+      "storm": true,
+      "calima": null,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.62,
+          "wavePeriodS": 3.8,
+          "waveDirectionDeg": 175,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "naranja",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T18:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "690804"
+          },
+          {
+            "level": "naranja",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T18:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "690804"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-16T18:00:00+02:00",
+            "endsAt": "2026-09-16T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "690804"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "open-meteo"
+      },
+      "primarySourceDescription": "Thunderstorm"
+    },
+    {
+      "locationId": "tarancon",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 32,
+        "minC": 18
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 1.8,
+        "probabilityPercent": 60
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 39,
+        "gustKmh": 57
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Poco nuboso"
+    },
+    {
+      "locationId": "valladolid",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 25,
+        "minC": 13
+      },
+      "sky": "cubierto",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 0
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 31,
+        "gustKmh": 48
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Cubierto"
+    },
+    {
+      "locationId": "zamora",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 26,
+        "minC": 14
+      },
+      "sky": "cubierto",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 0
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 31,
+        "gustKmh": 46
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Cubierto"
+    },
+    {
+      "locationId": "guadalajara",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 29,
+        "minC": 15
+      },
+      "sky": "despejado",
+      "precipitation": {
+        "mm": 0.9,
+        "probabilityPercent": 55
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 34,
+        "gustKmh": 52
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Despejado"
+    },
+    {
+      "locationId": "cuenca",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 33,
+        "minC": 16
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 1.9,
+        "probabilityPercent": 95
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 35,
+        "gustKmh": 64
+      },
+      "storm": true,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "temperatura_maxima",
+            "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-15T13:00:00+02:00",
+            "endsAt": "2026-09-15T20:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "681602"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T21:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "681602"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T21:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "681602"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Poco nuboso"
+    },
+    {
+      "locationId": "albacete",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 34,
+        "minC": 18
+      },
+      "sky": "despejado",
+      "precipitation": {
+        "mm": 2.1,
+        "probabilityPercent": 100
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 43,
+        "gustKmh": 65
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T21:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "680201"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T21:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "680201"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Despejado"
+    },
+    {
+      "locationId": "murcia",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 30.7,
+        "minC": 17.3
+      },
+      "sky": null,
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 15
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 17.1,
+        "gustKmh": 35.6
+      },
+      "storm": false,
+      "calima": null,
+      "fog": true,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "open-meteo"
+      },
+      "primarySourceDescription": "Fog"
+    },
+    {
+      "locationId": "madrid",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 29,
+        "minC": 17
+      },
+      "sky": "despejado",
+      "precipitation": {
+        "mm": 0.3,
+        "probabilityPercent": 55
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 34,
+        "gustKmh": 55
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "temperatura_maxima",
+            "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-15T13:00:00+02:00",
+            "endsAt": "2026-09-15T20:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "722802"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Despejado"
+    },
+    {
+      "locationId": "caceres",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 33,
+        "minC": 19
+      },
+      "sky": "despejado",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 0
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 28,
+        "gustKmh": 52
       },
       "storm": false,
       "calima": false,
@@ -1668,15 +1749,15 @@
       "sky": "despejado",
       "precipitation": {
         "mm": 0,
-        "probabilityPercent": 5
+        "probabilityPercent": 0
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 32,
-        "gustKmh": 54
+        "speedKmh": 33,
+        "gustKmh": 57
       },
       "storm": false,
       "calima": false,
@@ -1708,45 +1789,6 @@
       "primarySourceDescription": "Despejado"
     },
     {
-      "locationId": "valladolid",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 25,
-        "minC": 13
-      },
-      "sky": "cubierto",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 5
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 31,
-        "gustKmh": 48
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Cubierto"
-    },
-    {
       "locationId": "badajoz",
       "date": "2026-09-16",
       "temperature": {
@@ -1763,8 +1805,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 18,
-        "gustKmh": 32
+        "speedKmh": 27,
+        "gustKmh": 43
       },
       "storm": false,
       "calima": false,
@@ -1814,15 +1856,15 @@
       "sky": "despejado",
       "precipitation": {
         "mm": 0,
-        "probabilityPercent": 5
+        "probabilityPercent": 0
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 20,
-        "gustKmh": 37
+        "speedKmh": 28,
+        "gustKmh": 46
       },
       "storm": false,
       "calima": false,
@@ -1852,45 +1894,6 @@
             "officialZoneId": "700601"
           }
         ]
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "manzanares",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 35,
-        "minC": 17
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 25
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 23,
-        "gustKmh": 42
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
       },
       "provenance": {
         "primary": "aemet",
@@ -1919,7 +1922,7 @@
       },
       "wind": {
         "speedKmh": 26,
-        "gustKmh": 43
+        "gustKmh": 41
       },
       "storm": false,
       "calima": false,
@@ -1947,27 +1950,27 @@
       "primarySourceDescription": "Despejado"
     },
     {
-      "locationId": "jaen",
+      "locationId": "segovia",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 35,
-        "minC": 22
+        "maxC": 22.4,
+        "minC": 13
       },
-      "sky": "despejado",
+      "sky": "cubierto",
       "precipitation": {
         "mm": 0,
-        "probabilityPercent": 15
+        "probabilityPercent": 10
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 23,
-        "gustKmh": 40
+        "speedKmh": 22.5,
+        "gustKmh": 44.3
       },
       "storm": false,
-      "calima": false,
+      "calima": null,
       "fog": false,
       "marine": {
         "status": "not_applicable"
@@ -1975,6 +1978,95 @@
       "alerts": {
         "status": "ok",
         "alerts": []
+      },
+      "provenance": {
+        "primary": "open-meteo"
+      },
+      "primarySourceDescription": "Overcast"
+    },
+    {
+      "locationId": "soria",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 18.1,
+        "minC": 12
+      },
+      "sky": null,
+      "precipitation": {
+        "mm": 1.7,
+        "probabilityPercent": 68
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 28.1,
+        "gustKmh": 55.4
+      },
+      "storm": false,
+      "calima": null,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "open-meteo"
+      },
+      "primarySourceDescription": "Slight rain showers"
+    },
+    {
+      "locationId": "huescar",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 33,
+        "minC": 15
+      },
+      "sky": "despejado",
+      "precipitation": {
+        "mm": 1.5,
+        "probabilityPercent": 90
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 24,
+        "gustKmh": 56
+      },
+      "storm": true,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T21:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "611802"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-16T14:00:00+02:00",
+            "endsAt": "2026-09-16T21:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "611802"
+          }
+        ]
       },
       "provenance": {
         "primary": "aemet",
@@ -1986,11 +2078,11 @@
       "primarySourceDescription": "Despejado"
     },
     {
-      "locationId": "sevilla",
+      "locationId": "cordoba",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 35,
-        "minC": 19
+        "maxC": 37,
+        "minC": 18
       },
       "sky": "despejado",
       "precipitation": {
@@ -2002,8 +2094,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 29,
-        "gustKmh": 47
+        "speedKmh": 28,
+        "gustKmh": 42
       },
       "storm": false,
       "calima": false,
@@ -2018,19 +2110,10 @@
             "level": "amarillo",
             "phenomenon": "temperatura_maxima",
             "sourcePhenomenon": "Temperaturas máximas",
-            "startsAt": "2026-09-14T13:00:00+02:00",
-            "endsAt": "2026-09-14T20:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "614102"
-          },
-          {
-            "level": "amarillo",
-            "phenomenon": "temperatura_maxima",
-            "sourcePhenomenon": "Temperaturas máximas",
             "startsAt": "2026-09-15T13:00:00+02:00",
             "endsAt": "2026-09-15T20:59:59+02:00",
             "source": "aemet",
-            "officialZoneId": "614102"
+            "officialZoneId": "611402"
           }
         ]
       },
@@ -2050,7 +2133,7 @@
         "maxC": 30,
         "minC": 20
       },
-      "sky": "despejado",
+      "sky": "poco_nuboso",
       "precipitation": {
         "mm": 0,
         "probabilityPercent": 0
@@ -2060,12 +2143,12 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 19,
-        "gustKmh": 27
+        "speedKmh": 22,
+        "gustKmh": 32
       },
       "storm": false,
       "calima": false,
-      "fog": false,
+      "fog": true,
       "marine": {
         "status": "ok",
         "data": {
@@ -2086,7 +2169,7 @@
           "snow.cm": "open-meteo"
         }
       },
-      "primarySourceDescription": "Despejado"
+      "primarySourceDescription": "Poco nuboso"
     },
     {
       "locationId": "granada",
@@ -2097,16 +2180,16 @@
       },
       "sky": "despejado",
       "precipitation": {
-        "mm": 0.6,
-        "probabilityPercent": 10
+        "mm": 0.1,
+        "probabilityPercent": 0
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 23,
-        "gustKmh": 39
+        "speedKmh": 25,
+        "gustKmh": 43
       },
       "storm": false,
       "calima": false,
@@ -2128,81 +2211,30 @@
       "primarySourceDescription": "Despejado"
     },
     {
-      "locationId": "cadiz",
+      "locationId": "jaen",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 26,
-        "minC": 21
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 0
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 24,
-        "gustKmh": 38
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.8,
-          "wavePeriodS": 5.6,
-          "waveDirectionDeg": 276,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "melilla",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 31,
+        "maxC": 35,
         "minC": 22
       },
       "sky": "despejado",
       "precipitation": {
         "mm": 0,
-        "probabilityPercent": 0
+        "probabilityPercent": 10
       },
       "snow": {
         "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 16,
-        "gustKmh": 26
+        "speedKmh": 26,
+        "gustKmh": 45
       },
       "storm": false,
       "calima": false,
       "fog": false,
       "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.16,
-          "wavePeriodS": 4.05,
-          "waveDirectionDeg": 54,
-          "source": "open-meteo"
-        }
+        "status": "not_applicable"
       },
       "alerts": {
         "status": "ok",
@@ -2235,11 +2267,11 @@
       },
       "wind": {
         "speedKmh": 14,
-        "gustKmh": 28
+        "gustKmh": 27
       },
       "storm": false,
       "calima": false,
-      "fog": false,
+      "fog": true,
       "marine": {
         "status": "ok",
         "data": {
@@ -2263,11 +2295,116 @@
       "primarySourceDescription": "Despejado"
     },
     {
-      "locationId": "cordoba",
+      "locationId": "toledo",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 37,
-        "minC": 18
+        "maxC": 29.2,
+        "minC": 19
+      },
+      "sky": "cubierto",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 13
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 26.3,
+        "gustKmh": 60.8
+      },
+      "storm": false,
+      "calima": null,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "open-meteo"
+      },
+      "primarySourceDescription": "Overcast"
+    },
+    {
+      "locationId": "ciudad-real",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 31.8,
+        "minC": 18.6
+      },
+      "sky": "cubierto",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 10
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 16.9,
+        "gustKmh": 34.2
+      },
+      "storm": false,
+      "calima": null,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "open-meteo"
+      },
+      "primarySourceDescription": "Overcast"
+    },
+    {
+      "locationId": "manzanares",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 31.4,
+        "minC": 19.4
+      },
+      "sky": "cubierto",
+      "precipitation": {
+        "mm": 0.1,
+        "probabilityPercent": 15
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 23.8,
+        "gustKmh": 42.1
+      },
+      "storm": false,
+      "calima": null,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "open-meteo"
+      },
+      "primarySourceDescription": "Overcast"
+    },
+    {
+      "locationId": "ceuta",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 27,
+        "minC": 19
       },
       "sky": "despejado",
       "precipitation": {
@@ -2279,67 +2416,18 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 22,
-        "gustKmh": 37
+        "speedKmh": 30,
+        "gustKmh": 50
       },
       "storm": false,
       "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "temperatura_maxima",
-            "sourcePhenomenon": "Temperaturas máximas",
-            "startsAt": "2026-09-15T13:00:00+02:00",
-            "endsAt": "2026-09-15T20:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "611402"
-          }
-        ]
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "ibiza",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 30,
-        "minC": 20
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 20
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 15,
-        "gustKmh": 30
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
+      "fog": true,
       "marine": {
         "status": "ok",
         "data": {
-          "waveHeightM": 0.38,
-          "wavePeriodS": 3.25,
-          "waveDirectionDeg": 238,
+          "waveHeightM": 0.64,
+          "wavePeriodS": 5.4,
+          "waveDirectionDeg": 312,
           "source": "open-meteo"
         }
       },
@@ -2355,170 +2443,6 @@
         }
       },
       "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "madrid",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 27.9,
-        "minC": 19
-      },
-      "sky": "cubierto",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 5
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 20.9,
-        "gustKmh": 52.9
-      },
-      "storm": false,
-      "calima": null,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "temperatura_maxima",
-            "sourcePhenomenon": "Temperaturas máximas",
-            "startsAt": "2026-09-15T13:00:00+02:00",
-            "endsAt": "2026-09-15T20:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "722802"
-          }
-        ]
-      },
-      "provenance": {
-        "primary": "open-meteo"
-      },
-      "primarySourceDescription": "Overcast"
-    },
-    {
-      "locationId": "mallorca",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 30,
-        "minC": 20
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0.4,
-        "probabilityPercent": 75
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 19,
-        "gustKmh": 41
-      },
-      "storm": true,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.32,
-          "wavePeriodS": 3.75,
-          "waveDirectionDeg": 250,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "lluvia",
-            "sourcePhenomenon": "Lluvias",
-            "startsAt": "2026-09-16T13:00:00+02:00",
-            "endsAt": "2026-09-16T18:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "645404"
-          },
-          {
-            "level": "amarillo",
-            "phenomenon": "tormenta",
-            "sourcePhenomenon": "Tormentas",
-            "startsAt": "2026-09-16T13:00:00+02:00",
-            "endsAt": "2026-09-16T18:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "645404"
-          }
-        ]
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "menorca",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 28,
-        "minC": 20
-      },
-      "sky": "poco_nuboso",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 15
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 19,
-        "gustKmh": 33
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.88,
-          "wavePeriodS": 4.9,
-          "waveDirectionDeg": 351,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "costero",
-            "sourcePhenomenon": "Costeros",
-            "startsAt": "2026-09-17T00:00:00+02:00",
-            "endsAt": "2026-09-17T11:59:59+02:00",
-            "source": "aemet",
-            "officialZoneId": "645501C"
-          }
-        ]
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Poco nuboso"
     },
     {
       "locationId": "la-palma",
@@ -2537,8 +2461,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 25,
-        "gustKmh": 47
+        "speedKmh": 23,
+        "gustKmh": 43
       },
       "storm": false,
       "calima": false,
@@ -2566,13 +2490,13 @@
       "primarySourceDescription": "Poco nuboso"
     },
     {
-      "locationId": "porto",
+      "locationId": "melilla",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 25.6,
-        "minC": 15.2
+        "maxC": 31,
+        "minC": 22
       },
-      "sky": "poco_nuboso",
+      "sky": "despejado",
       "precipitation": {
         "mm": 0,
         "probabilityPercent": 0
@@ -2582,18 +2506,18 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 21.8,
-        "gustKmh": 49.7
+        "speedKmh": 14,
+        "gustKmh": 25
       },
       "storm": false,
-      "calima": null,
+      "calima": false,
       "fog": false,
       "marine": {
         "status": "ok",
         "data": {
-          "waveHeightM": 2.4,
-          "wavePeriodS": 7.75,
-          "waveDirectionDeg": 324,
+          "waveHeightM": 0.16,
+          "wavePeriodS": 4.05,
+          "waveDirectionDeg": 54,
           "source": "open-meteo"
         }
       },
@@ -2602,21 +2526,283 @@
         "alerts": []
       },
       "provenance": {
-        "primary": "ipma",
+        "primary": "aemet",
         "complementary": {
           "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo",
-          "wind.speedKmh": "open-meteo",
-          "wind.gustKmh": "open-meteo"
+          "snow.cm": "open-meteo"
         }
       },
-      "primarySourceDescription": "Céu pouco nublado"
+      "primarySourceDescription": "Despejado"
+    },
+    {
+      "locationId": "la-gomera",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 34,
+        "minC": 26
+      },
+      "sky": "despejado",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 0
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 39,
+        "gustKmh": 56
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.9,
+          "wavePeriodS": 8.45,
+          "waveDirectionDeg": 286,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "temperatura_maxima",
+            "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-15T10:00:00+01:00",
+            "endsAt": "2026-09-15T17:59:59+01:00",
+            "source": "aemet",
+            "officialZoneId": "659401"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "temperatura_maxima",
+            "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-16T10:00:00+01:00",
+            "endsAt": "2026-09-16T19:59:59+01:00",
+            "source": "aemet",
+            "officialZoneId": "659401"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Despejado"
+    },
+    {
+      "locationId": "ibiza",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 30,
+        "minC": 20
+      },
+      "sky": "despejado",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 30
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 14,
+        "gustKmh": 28
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.38,
+          "wavePeriodS": 3.25,
+          "waveDirectionDeg": 238,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "naranja",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-17T00:00:00+02:00",
+            "endsAt": "2026-09-17T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "645301"
+          },
+          {
+            "level": "naranja",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-17T00:00:00+02:00",
+            "endsAt": "2026-09-17T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "645301"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Despejado"
+    },
+    {
+      "locationId": "mallorca",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 30,
+        "minC": 20
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 1.1,
+        "probabilityPercent": 90
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 25,
+        "gustKmh": 40
+      },
+      "storm": true,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.32,
+          "wavePeriodS": 3.75,
+          "waveDirectionDeg": 250,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "naranja",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-17T00:00:00+02:00",
+            "endsAt": "2026-09-17T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "645404"
+          },
+          {
+            "level": "naranja",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-17T00:00:00+02:00",
+            "endsAt": "2026-09-17T23:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "645404"
+          },
+          {
+            "level": "naranja",
+            "phenomenon": "lluvia",
+            "sourcePhenomenon": "Lluvias",
+            "startsAt": "2026-09-16T13:00:00+02:00",
+            "endsAt": "2026-09-16T20:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "645404"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "tormenta",
+            "sourcePhenomenon": "Tormentas",
+            "startsAt": "2026-09-16T13:00:00+02:00",
+            "endsAt": "2026-09-16T20:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "645404"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Intervalos nubosos"
+    },
+    {
+      "locationId": "sevilla",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 32.2,
+        "minC": 19
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 0
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 21.7,
+        "gustKmh": 49.3
+      },
+      "storm": false,
+      "calima": null,
+      "fog": false,
+      "marine": {
+        "status": "not_applicable"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "temperatura_maxima",
+            "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-14T13:00:00+02:00",
+            "endsAt": "2026-09-14T20:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "614102"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "temperatura_maxima",
+            "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-15T13:00:00+02:00",
+            "endsAt": "2026-09-15T20:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "614102"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "open-meteo"
+      },
+      "primarySourceDescription": "Mainly clear"
     },
     {
       "locationId": "vila-real",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 28,
+        "maxC": 27.7,
         "minC": 15.2
       },
       "sky": "poco_nuboso",
@@ -2629,8 +2815,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 15.1,
-        "gustKmh": 43.6
+        "speedKmh": 14.5,
+        "gustKmh": 40.7
       },
       "storm": false,
       "calima": null,
@@ -2657,8 +2843,8 @@
       "locationId": "leiria",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 24.9,
-        "minC": 14.3
+        "maxC": 25.3,
+        "minC": 15.8
       },
       "sky": "poco_nuboso",
       "precipitation": {
@@ -2670,8 +2856,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 23.1,
-        "gustKmh": 52.9
+        "speedKmh": 23.3,
+        "gustKmh": 52.6
       },
       "storm": false,
       "calima": null,
@@ -2698,8 +2884,8 @@
       "locationId": "guarda",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 23.8,
-        "minC": 12.5
+        "maxC": 23.3,
+        "minC": 12.2
       },
       "sky": "poco_nuboso",
       "precipitation": {
@@ -2711,8 +2897,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 30.7,
-        "gustKmh": 65.5
+        "speedKmh": 31.3,
+        "gustKmh": 68
       },
       "storm": false,
       "calima": null,
@@ -2739,8 +2925,8 @@
       "locationId": "lisboa",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 25.7,
-        "minC": 17.6
+        "maxC": 25.9,
+        "minC": 17.8
       },
       "sky": "poco_nuboso",
       "precipitation": {
@@ -2752,8 +2938,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 26.4,
-        "gustKmh": 61.9
+        "speedKmh": 27.4,
+        "gustKmh": 62.6
       },
       "storm": false,
       "calima": null,
@@ -2786,8 +2972,8 @@
       "locationId": "evora",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 31.9,
-        "minC": 16.2
+        "maxC": 32.2,
+        "minC": 16.5
       },
       "sky": "poco_nuboso",
       "precipitation": {
@@ -2799,8 +2985,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 22,
-        "gustKmh": 46.1
+        "speedKmh": 24.8,
+        "gustKmh": 50.8
       },
       "storm": false,
       "calima": null,
@@ -2827,7 +3013,7 @@
       "locationId": "beja",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 30.8,
+        "maxC": 30.7,
         "minC": 15.4
       },
       "sky": "poco_nuboso",
@@ -2840,8 +3026,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 21.5,
-        "gustKmh": 43.2
+        "speedKmh": 22.5,
+        "gustKmh": 46.1
       },
       "storm": false,
       "calima": null,
@@ -2868,8 +3054,8 @@
       "locationId": "faro",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 31.8,
-        "minC": 19.6
+        "maxC": 31.1,
+        "minC": 20
       },
       "sky": "poco_nuboso",
       "precipitation": {
@@ -2881,8 +3067,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 22.2,
-        "gustKmh": 41
+        "speedKmh": 23.9,
+        "gustKmh": 43.6
       },
       "storm": false,
       "calima": null,
@@ -2921,7 +3107,7 @@
       "sky": null,
       "precipitation": {
         "mm": 0.5,
-        "probabilityPercent": 70
+        "probabilityPercent": 78
       },
       "snow": {
         "cm": 0,
@@ -2946,223 +3132,6 @@
       "primarySourceDescription": "Light drizzle"
     },
     {
-      "locationId": "ceuta",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 27,
-        "minC": 19
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 0
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 28,
-        "gustKmh": 47
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.64,
-          "wavePeriodS": 5.4,
-          "waveDirectionDeg": 312,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "la-gomera",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 34,
-        "minC": 26
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 0
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 29,
-        "gustKmh": 41
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.9,
-          "wavePeriodS": 8.45,
-          "waveDirectionDeg": 286,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "temperatura_maxima",
-            "sourcePhenomenon": "Temperaturas máximas",
-            "startsAt": "2026-09-15T10:00:00+01:00",
-            "endsAt": "2026-09-15T17:59:59+01:00",
-            "source": "aemet",
-            "officialZoneId": "659401"
-          },
-          {
-            "level": "amarillo",
-            "phenomenon": "temperatura_maxima",
-            "sourcePhenomenon": "Temperaturas máximas",
-            "startsAt": "2026-09-16T10:00:00+01:00",
-            "endsAt": "2026-09-16T15:59:59+01:00",
-            "source": "aemet",
-            "officialZoneId": "659401"
-          }
-        ]
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "fuerteventura",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 35,
-        "minC": 26
-      },
-      "sky": "despejado",
-      "precipitation": {
-        "mm": 0,
-        "probabilityPercent": 0
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 27,
-        "gustKmh": 37
-      },
-      "storm": false,
-      "calima": false,
-      "fog": false,
-      "marine": {
-        "status": "ok",
-        "data": {
-          "waveHeightM": 0.92,
-          "wavePeriodS": 5.45,
-          "waveDirectionDeg": 44,
-          "source": "open-meteo"
-        }
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "temperatura_maxima",
-            "sourcePhenomenon": "Temperaturas máximas",
-            "startsAt": "2026-09-14T11:00:00+01:00",
-            "endsAt": "2026-09-14T18:59:59+01:00",
-            "source": "aemet",
-            "officialZoneId": "659201"
-          },
-          {
-            "level": "amarillo",
-            "phenomenon": "calima",
-            "sourcePhenomenon": "Polvo en suspensión",
-            "startsAt": "2026-09-14T10:00:00+01:00",
-            "endsAt": "2026-09-15T14:59:59+01:00",
-            "source": "aemet",
-            "officialZoneId": "659201"
-          },
-          {
-            "level": "naranja",
-            "phenomenon": "temperatura_maxima",
-            "sourcePhenomenon": "Temperaturas máximas",
-            "startsAt": "2026-09-15T10:00:00+01:00",
-            "endsAt": "2026-09-15T17:59:59+01:00",
-            "source": "aemet",
-            "officialZoneId": "659201"
-          }
-        ]
-      },
-      "provenance": {
-        "primary": "aemet",
-        "complementary": {
-          "precipitation.mm": "open-meteo",
-          "snow.cm": "open-meteo"
-        }
-      },
-      "primarySourceDescription": "Despejado"
-    },
-    {
-      "locationId": "huescar",
-      "date": "2026-09-16",
-      "temperature": {
-        "maxC": 31.7,
-        "minC": 16.7
-      },
-      "sky": null,
-      "precipitation": {
-        "mm": 0.6,
-        "probabilityPercent": 60
-      },
-      "snow": {
-        "cm": 0,
-        "present": false
-      },
-      "wind": {
-        "speedKmh": 24.1,
-        "gustKmh": 52.9
-      },
-      "storm": false,
-      "calima": null,
-      "fog": false,
-      "marine": {
-        "status": "not_applicable"
-      },
-      "alerts": {
-        "status": "ok",
-        "alerts": []
-      },
-      "provenance": {
-        "primary": "open-meteo"
-      },
-      "primarySourceDescription": "Slight rain showers"
-    },
-    {
       "locationId": "tenerife",
       "date": "2026-09-16",
       "temperature": {
@@ -3171,15 +3140,15 @@
       },
       "sky": "despejado",
       "precipitation": {
-        "mm": null,
+        "mm": 0,
         "probabilityPercent": 0
       },
       "snow": {
-        "cm": null,
+        "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 28,
+        "speedKmh": 30,
         "gustKmh": 47
       },
       "storm": false,
@@ -3205,88 +3174,114 @@
             "endsAt": "2026-09-15T17:59:59+01:00",
             "source": "aemet",
             "officialZoneId": "659602"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "temperatura_maxima",
+            "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-16T10:00:00+01:00",
+            "endsAt": "2026-09-16T19:59:59+01:00",
+            "source": "aemet",
+            "officialZoneId": "659602"
           }
         ]
       },
       "provenance": {
-        "primary": "aemet"
-      },
-      "degradations": [
-        {
-          "metric": "precipitation.mm",
-          "reason": "source_error",
-          "attemptedSource": "open-meteo"
-        },
-        {
-          "metric": "snow.cm",
-          "reason": "source_error",
-          "attemptedSource": "open-meteo"
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
         }
-      ],
+      },
       "primarySourceDescription": "Despejado"
     },
     {
-      "locationId": "gran-canaria",
+      "locationId": "cadiz",
       "date": "2026-09-16",
       "temperature": {
-        "maxC": 30,
-        "minC": 25
+        "maxC": 22.7,
+        "minC": 20.9
       },
-      "sky": "despejado",
+      "sky": "nuboso",
       "precipitation": {
-        "mm": null,
+        "mm": 0,
         "probabilityPercent": 0
       },
       "snow": {
-        "cm": null,
+        "cm": 0,
         "present": false
       },
       "wind": {
-        "speedKmh": 30,
-        "gustKmh": 49
+        "speedKmh": 20,
+        "gustKmh": 31
       },
       "storm": false,
-      "calima": false,
+      "calima": null,
       "fog": false,
       "marine": {
         "status": "ok",
         "data": {
-          "waveHeightM": 0.94,
-          "wavePeriodS": 7.15,
-          "waveDirectionDeg": 359,
+          "waveHeightM": 0.8,
+          "wavePeriodS": 5.6,
+          "waveDirectionDeg": 276,
           "source": "open-meteo"
         }
       },
       "alerts": {
         "status": "ok",
-        "alerts": [
-          {
-            "level": "amarillo",
-            "phenomenon": "calima",
-            "sourcePhenomenon": "Polvo en suspensión",
-            "startsAt": "2026-09-15T03:00:00+01:00",
-            "endsAt": "2026-09-15T23:59:59+01:00",
-            "source": "aemet",
-            "officialZoneId": "659001"
-          }
-        ]
+        "alerts": []
       },
       "provenance": {
-        "primary": "aemet"
+        "primary": "open-meteo"
       },
-      "degradations": [
-        {
-          "metric": "precipitation.mm",
-          "reason": "source_error",
-          "attemptedSource": "open-meteo"
-        },
-        {
-          "metric": "snow.cm",
-          "reason": "source_error",
-          "attemptedSource": "open-meteo"
+      "primarySourceDescription": "Partly cloudy"
+    },
+    {
+      "locationId": "porto",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 26.1,
+        "minC": 15.3
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 0
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 24.4,
+        "gustKmh": 56.2
+      },
+      "storm": false,
+      "calima": null,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 2.4,
+          "wavePeriodS": 7.75,
+          "waveDirectionDeg": 324,
+          "source": "open-meteo"
         }
-      ],
-      "primarySourceDescription": "Despejado"
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": []
+      },
+      "provenance": {
+        "primary": "ipma",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo",
+          "wind.speedKmh": "open-meteo",
+          "wind.gustKmh": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Céu pouco nublado"
     },
     {
       "locationId": "lanzarote",
@@ -3305,8 +3300,8 @@
         "present": false
       },
       "wind": {
-        "speedKmh": 32,
-        "gustKmh": 44
+        "speedKmh": 36,
+        "gustKmh": 50
       },
       "storm": false,
       "calima": false,
@@ -3327,17 +3322,8 @@
             "level": "amarillo",
             "phenomenon": "temperatura_maxima",
             "sourcePhenomenon": "Temperaturas máximas",
-            "startsAt": "2026-09-14T11:00:00+01:00",
-            "endsAt": "2026-09-14T18:59:59+01:00",
-            "source": "aemet",
-            "officialZoneId": "659101"
-          },
-          {
-            "level": "amarillo",
-            "phenomenon": "calima",
-            "sourcePhenomenon": "Polvo en suspensión",
-            "startsAt": "2026-09-14T10:00:00+01:00",
-            "endsAt": "2026-09-15T14:59:59+01:00",
+            "startsAt": "2026-09-15T10:00:00+01:00",
+            "endsAt": "2026-09-15T17:59:59+01:00",
             "source": "aemet",
             "officialZoneId": "659101"
           },
@@ -3345,8 +3331,17 @@
             "level": "amarillo",
             "phenomenon": "temperatura_maxima",
             "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-16T10:00:00+01:00",
+            "endsAt": "2026-09-16T19:59:59+01:00",
+            "source": "aemet",
+            "officialZoneId": "659101"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "calima",
+            "sourcePhenomenon": "Polvo en suspensión",
             "startsAt": "2026-09-15T10:00:00+01:00",
-            "endsAt": "2026-09-15T17:59:59+01:00",
+            "endsAt": "2026-09-15T14:59:59+01:00",
             "source": "aemet",
             "officialZoneId": "659101"
           }
@@ -3360,6 +3355,189 @@
         }
       },
       "primarySourceDescription": "Despejado"
+    },
+    {
+      "locationId": "menorca",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 28,
+        "minC": 20
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 10
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 20,
+        "gustKmh": 35
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.88,
+          "wavePeriodS": 4.9,
+          "waveDirectionDeg": 351,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "costero",
+            "sourcePhenomenon": "Costeros",
+            "startsAt": "2026-09-17T00:00:00+02:00",
+            "endsAt": "2026-09-17T11:59:59+02:00",
+            "source": "aemet",
+            "officialZoneId": "645501C"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Poco nuboso"
+    },
+    {
+      "locationId": "fuerteventura",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 35,
+        "minC": 26
+      },
+      "sky": "despejado",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 0
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 25,
+        "gustKmh": 35
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.92,
+          "wavePeriodS": 5.45,
+          "waveDirectionDeg": 44,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "naranja",
+            "phenomenon": "temperatura_maxima",
+            "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-15T10:00:00+01:00",
+            "endsAt": "2026-09-15T17:59:59+01:00",
+            "source": "aemet",
+            "officialZoneId": "659201"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "temperatura_maxima",
+            "sourcePhenomenon": "Temperaturas máximas",
+            "startsAt": "2026-09-16T10:00:00+01:00",
+            "endsAt": "2026-09-16T19:59:59+01:00",
+            "source": "aemet",
+            "officialZoneId": "659201"
+          },
+          {
+            "level": "amarillo",
+            "phenomenon": "calima",
+            "sourcePhenomenon": "Polvo en suspensión",
+            "startsAt": "2026-09-15T10:00:00+01:00",
+            "endsAt": "2026-09-15T14:59:59+01:00",
+            "source": "aemet",
+            "officialZoneId": "659201"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Despejado"
+    },
+    {
+      "locationId": "gran-canaria",
+      "date": "2026-09-16",
+      "temperature": {
+        "maxC": 30,
+        "minC": 25
+      },
+      "sky": "poco_nuboso",
+      "precipitation": {
+        "mm": 0,
+        "probabilityPercent": 0
+      },
+      "snow": {
+        "cm": 0,
+        "present": false
+      },
+      "wind": {
+        "speedKmh": 31,
+        "gustKmh": 50
+      },
+      "storm": false,
+      "calima": false,
+      "fog": false,
+      "marine": {
+        "status": "ok",
+        "data": {
+          "waveHeightM": 0.94,
+          "wavePeriodS": 7.15,
+          "waveDirectionDeg": 359,
+          "source": "open-meteo"
+        }
+      },
+      "alerts": {
+        "status": "ok",
+        "alerts": [
+          {
+            "level": "amarillo",
+            "phenomenon": "calima",
+            "sourcePhenomenon": "Polvo en suspensión",
+            "startsAt": "2026-09-15T10:00:00+01:00",
+            "endsAt": "2026-09-15T23:59:59+01:00",
+            "source": "aemet",
+            "officialZoneId": "659001"
+          }
+        ]
+      },
+      "provenance": {
+        "primary": "aemet",
+        "complementary": {
+          "precipitation.mm": "open-meteo",
+          "snow.cm": "open-meteo"
+        }
+      },
+      "primarySourceDescription": "Poco nuboso"
     }
   ],
   "meta": {
