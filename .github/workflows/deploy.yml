@@ -37,6 +37,17 @@ jobs:
         env:
           AEMET_API_KEY: ${{ secrets.AEMET_API_KEY }}
 
+      # Justo después del fetch, antes de lint/test/build: si cualquiera de
+      # los tres falla, el forecast.json de este run sigue siendo
+      # recuperable como artifact aunque nunca llegue a commitearse.
+      - name: Upload raw forecast artifact
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: forecast-json-${{ github.run_id }}-${{ github.run_attempt }}
+          path: src/data/forecast.json
+          retention-days: 30
+
       - run: npm run lint
       - run: npm run test
       - run: npm run build
