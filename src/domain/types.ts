@@ -55,7 +55,7 @@ export interface Marine {
 export type MarineAvailability =
   | { status: 'ok'; data: Marine }
   | { status: 'not_applicable' } // Location.coastal === false: hecho estructural, nunca va a haber dato
-  | { status: 'error' } // Location.coastal === true, pero la consulta de hoy falló
+  | { status: 'error' } // Location.coastal === true, pero la consulta de esta ejecución falló
 
 export type AlertLevel = 'amarillo' | 'naranja' | 'rojo' // 'verde' = sin entrada, no se representa como nivel
 
@@ -85,7 +85,7 @@ export interface OfficialAlert {
 export type AlertsAvailability =
   | { status: 'ok'; alerts: OfficialAlert[] } // consultado; alerts puede ser [] (sin avisos activos)
   | { status: 'unsupported' } // la fuente no tiene este producto (Open-Meteo/Andorra, siempre)
-  | { status: 'error' } // el producto existe pero la consulta de hoy falló
+  | { status: 'error' } // el producto existe pero la consulta de esta ejecución falló
 
 // Trazabilidad por métrica, no por bloque entero: un mismo eje puede mezclar
 // fuentes (ej. Lisboa: precipitation.mm de Open-Meteo, .probabilityPercent de IPMA).
@@ -127,7 +127,7 @@ export interface LocationForecast {
   alerts: AlertsAvailability
 
   provenance: Provenance
-  degradations?: Degradation[] // solo métricas con complemento intentado y fallido hoy
+  degradations?: Degradation[] // solo métricas con complemento intentado y fallido en esta ejecución
   primarySourceDescription: string | null // texto literal SOLO de la fuente principal
 }
 

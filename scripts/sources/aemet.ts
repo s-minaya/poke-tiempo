@@ -127,6 +127,19 @@ const SNOW_CODES = new Set(['33', '34', '35', '36', '71', '72', '73', '74'])
 const FOG_CODE = '81'
 const CALIMA_CODE = '83'
 
+// Niebla, solo en ventana diurna: una única aparición nocturna (p. ej.
+// 22h-23h) no debe tapar un día despejado el resto de horas. `periodo` en
+// la horaria de AEMET es la hora en punto ("08", "21"...), sin el sufijo
+// "n" que sí lleva `value` — se compara como número, sin construir un
+// sistema genérico de franjas horarias.
+const DAYTIME_FOG_START_HOUR = 8
+const DAYTIME_FOG_END_HOUR = 20
+
+function isDaytimePeriod(periodo: string): boolean {
+  const hour = Number(periodo)
+  return Number.isFinite(hour) && hour >= DAYTIME_FOG_START_HOUR && hour <= DAYTIME_FOG_END_HOUR
+}
+
 // El código lleva sufijo 'n' en horario nocturno (ej. '17n') — mismo
 // significado que su versión diurna a efectos de este dominio.
 function baseSkyCode(value: string): string {
@@ -199,8 +212,10 @@ export function normalizeAemetHourly(hourly: AemetHourlyResponse, targetDate: st
 
   const skyCodes = day.estadoCielo.map((entry) => baseSkyCode(entry.value))
   const storm = skyCodes.some((code) => STORM_CODES.has(code))
-  const fog = skyCodes.some((code) => code === FOG_CODE)
   const calima = skyCodes.some((code) => code === CALIMA_CODE)
+  // Solo periodos diurnos (ver DAYTIME_FOG_START_HOUR/END_HOUR arriba) —
+  // a diferencia de storm/calima, que miran el día completo.
+  const fog = day.estadoCielo.some((entry) => isDaytimePeriod(entry.periodo) && baseSkyCode(entry.value) === FOG_CODE)
 
   // El campo `nieve` (mm de equivalente en agua) es la señal cuantitativa,
   // pero el propio código de cielo (familias 33-36 y 71-74) ya confirma

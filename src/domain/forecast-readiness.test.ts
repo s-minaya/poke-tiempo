@@ -5,8 +5,8 @@ import type { LocationForecast } from './types.ts'
 // `assignPokemon` real por defecto (los 74 lugares "válidos" del happy path
 // deben producir Pokémon de verdad, no un mock inventado) — solo se
 // sobreescribe puntualmente en el test que necesita forzar una lista vacía,
-// caso que el motor real de 003 no puede producir hoy (temperature siempre
-// asigna), pero que esta función tiene que seguir protegiendo si eso
+// caso que el motor real de 003 no puede producir actualmente (temperature
+// siempre asigna), pero que esta función tiene que seguir protegiendo si eso
 // cambiara alguna vez.
 vi.mock('./assign-pokemon.ts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./assign-pokemon.ts')>()

@@ -35,6 +35,8 @@ interface ProvinceBoundaryProperties {
 
 type Region = 'main' | 'canary'
 
+type TerritoryPaths = Record<'spain' | 'portugal' | 'andorra' | 'balearic-islands' | 'ceuta' | 'melilla', string>
+
 // Los 6 de los 74 lugares que están en Canarias. Ceuta y Melilla no son una
 // región propia: entran en el `fitExtent` del mapa principal y su `region`
 // es `'main'`, como cualquier lugar peninsular.
@@ -292,7 +294,23 @@ async function buildMap(): Promise<void> {
     height: mainHeight,
   }
 
-  const mainMapPath = geoPath(mainProjection)(mainCollection)
+  // Un `<path>` por territorio, no una única silueta combinada (005-plan.md
+  // → punto 3): misma `mainProjection` que el `fitExtent` conjunto, pero
+  // cada `geoPath` recibe solo su propia feature — así España/Portugal/
+  // Andorra/Baleares/Ceuta/Melilla se pueden colorear por separado en
+  // `SpainMap.tsx` sin depender de ningún hack de CSS sobre una silueta
+  // única.
+  const territoryFeatures: Record<keyof TerritoryPaths, Feature<Geometry, MapFeatureProperties>> = {
+    spain,
+    portugal,
+    andorra,
+    'balearic-islands': balearic,
+    ceuta,
+    melilla,
+  }
+  const territoryPaths = Object.fromEntries(
+    Object.entries(territoryFeatures).map(([id, feature]) => [id, geoPath(mainProjection)(single(feature))]),
+  ) as TerritoryPaths
   // Misma proyección que la silueta principal — las fronteras de provincia
   // son un detalle interno de la misma geometría, no un territorio aparte.
   const provinceBoundaries = loadProvinceBoundaries()
@@ -306,7 +324,13 @@ async function buildMap(): Promise<void> {
   // no se pinta, con primitivas nativas de SVG.
   const moroccoContextPath = geoPath(mainProjection)(single(moroccoFeature))
   const algeriaContextPath = geoPath(mainProjection)(single(algeriaFeature))
-  if (!mainMapPath || !provinceBoundariesPath || !canaryPath || !moroccoContextPath || !algeriaContextPath) {
+  if (
+    Object.values(territoryPaths).some((path) => !path) ||
+    !provinceBoundariesPath ||
+    !canaryPath ||
+    !moroccoContextPath ||
+    !algeriaContextPath
+  ) {
     throw new Error('geoPath no generó un `d` para alguna de las siluetas')
   }
 
@@ -377,7 +401,10 @@ async function buildMap(): Promise<void> {
   const body =
     `export const POINT_PADDING = ${POINT_PADDING}\n\n` +
     `export const ROOT_VIEW_BOX = ${JSON.stringify(ROOT_VIEW_BOX)}\n\n` +
-    `export const mainMapPath = ${JSON.stringify(mainMapPath)}\n\n` +
+    `// Un path por territorio (misma proyección/fitExtent que el conjunto) —\n` +
+    `// España, Baleares, Ceuta y Melilla se pintan con el mismo color en\n` +
+    `// SpainMap.tsx, pero cada uno es su propio <path>, no una silueta única.\n` +
+    `export const territoryPaths: Record<'spain' | 'portugal' | 'andorra' | 'balearic-islands' | 'ceuta' | 'melilla', string> = ${JSON.stringify(territoryPaths, null, 2)}\n\n` +
     `// Fronteras de comunidades autónomas / distritos (España + Portugal) —\n` +
     `// puramente visual, mismo grupo accesible que la silueta principal.\n` +
     `export const provinceBoundariesPath = ${JSON.stringify(provinceBoundariesPath)}\n\n` +

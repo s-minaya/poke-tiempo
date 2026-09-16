@@ -1,0 +1,31 @@
+.app {
+  // Réplica fija de la composición (mission.md → "Réplica fija, no una app
+  // adaptativa", 006-plan.md): una única plantilla de grid a cualquier
+  // ancho — cabecera arriba a todo el ancho, leyenda bajo el título, mapa
+  // como cuerpo. Lo que cambia con el ancho de pantalla es el tamaño de la
+  // composición completa (raíz fluida, `_reset.scss`), nunca su forma.
+  &__layout {
+    display: grid;
+    grid-template-areas:
+      'header header'
+      'legend map';
+    grid-template-columns: minmax(22rem, 26rem) 1fr;
+
+    // `stretch` (el valor por defecto de grid): la leyenda ocupa toda la
+    // altura de su fila, no solo la de su contenido — sin esto, cuando el
+    // mapa es más alto que la leyenda queda un hueco en blanco debajo de
+    // ella (el fondo de mar de la leyenda no llega hasta abajo).
+    align-items: stretch;
+
+    // Tope del ancho de diseño completo (26rem de leyenda + 134rem que
+    // ocupa el mapa de forma natural a `$breakpoint-desktop-large`, ver
+    // `SpainMap.scss`) — sin él, la columna `map` (`1fr`) sigue creciendo
+    // por encima de ese punto mientras la raíz fluida (`_reset.scss`) deja
+    // de hacerlo, dejando huecos en blanco (sin el azul del mar) a los
+    // lados del mapa ya centrado dentro de una columna más ancha que él.
+    // Al topar aquí el contenedor entero, `1fr` nunca pide más de lo que
+    // el mapa realmente ocupa y no queda hueco que rellenar.
+    max-width: 160rem;
+    margin-inline: auto;
+  }
+}

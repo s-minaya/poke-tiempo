@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import { locations } from './locations.ts'
-import { POINT_PADDING, ROOT_VIEW_BOX, canaryBox, mainMapPath, mapPoints, northAfricaContext, provinceBoundariesPath } from './map-geometry.ts'
+import { POINT_PADDING, ROOT_VIEW_BOX, canaryBox, mapPoints, northAfricaContext, provinceBoundariesPath, territoryPaths } from './map-geometry.ts'
+
+const TERRITORY_IDS = ['spain', 'portugal', 'andorra', 'balearic-islands', 'ceuta', 'melilla'] as const
 
 const CANARY_LOCATION_IDS = new Set([
   'la-palma',
@@ -18,12 +20,19 @@ describe('map-geometry', () => {
     expect(ROOT_VIEW_BOX.height).toBeGreaterThan(0)
   })
 
-  it('genera un path SVG no vacío para el mapa principal, las fronteras internas, Canarias y el contexto norteafricano', () => {
-    expect(mainMapPath.startsWith('M')).toBe(true)
+  it('genera un path SVG no vacío para cada territorio, las fronteras internas, Canarias y el contexto norteafricano', () => {
+    for (const id of TERRITORY_IDS) {
+      expect(territoryPaths[id].startsWith('M')).toBe(true)
+    }
     expect(provinceBoundariesPath.startsWith('M')).toBe(true)
     expect(canaryBox.path.startsWith('M')).toBe(true)
     expect(northAfricaContext.moroccoPath.startsWith('M')).toBe(true)
     expect(northAfricaContext.algeriaPath.startsWith('M')).toBe(true)
+  })
+
+  it('España, Portugal, Andorra, Baleares, Ceuta y Melilla son paths independientes, no una única silueta combinada', () => {
+    const paths = TERRITORY_IDS.map((id) => territoryPaths[id])
+    expect(new Set(paths).size).toBe(TERRITORY_IDS.length)
   })
 
   it('el recuadro de Canarias cae dentro del viewBox raíz (que arranca en un origen negativo)', () => {

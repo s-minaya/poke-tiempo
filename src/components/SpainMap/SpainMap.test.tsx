@@ -63,7 +63,7 @@ describe('SpainMap', () => {
     )
 
     expect(container.querySelectorAll('image')).toHaveLength(1)
-    expect(screen.getByRole('img', { name: 'A Coruña' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'A Coruña, mínima 10 grados, máxima 20 grados' })).toBeInTheDocument()
   })
 
   it('Canarias se renderiza en su propio recuadro, como grupo accesible', () => {
@@ -82,8 +82,8 @@ describe('SpainMap', () => {
       />,
     )
 
-    expect(screen.getByRole('img', { name: 'Ceuta' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Melilla' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Ceuta, mínima 10 grados, máxima 20 grados' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Melilla, mínima 10 grados, máxima 20 grados' })).toBeInTheDocument()
     expect(screen.queryByRole('group', { name: 'Ceuta' })).not.toBeInTheDocument()
     expect(screen.queryByRole('group', { name: 'Melilla' })).not.toBeInTheDocument()
   })

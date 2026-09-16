@@ -1,14 +1,21 @@
+@use '../../../styles/abstracts/variables' as vars;
+
 .territory-inset {
+  &__sea {
+    fill: vars.$map-sea;
+  }
+
   &__frame {
     fill: none;
-    stroke: currentcolor;
+    stroke: vars.$color-sky-blue;
     stroke-opacity: 0.75;
     stroke-width: 2.5;
   }
 
+  // Canarias es España (005-plan.md → punto 3): mismo color que el resto
+  // del territorio nacional en el mapa principal.
   &__landmass {
-    fill: currentcolor;
-    fill-opacity: 0.12;
+    fill: vars.$map-spain;
     stroke: currentcolor;
     stroke-width: 1;
   }

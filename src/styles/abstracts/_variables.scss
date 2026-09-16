@@ -1,2 +1,49 @@
-// Paleta, espaciados y tipografía se fijan en las features que definen la identidad
-// visual (ver constitution/tech-stack.md → Estilo visual). Vacío a propósito hasta entonces.
+// Paleta y tipografía fijadas en la 005 (cabecera, leyenda y mapa). Ver
+// spec/features/005-header-and-legend/005-plan.md → punto 1. Un hex
+// repetido en más de un sitio usa una única variable, nunca dos con el
+// mismo valor.
+
+// Compartidos
+$color-white: #fff;
+$color-near-black: #111;
+$color-green: #09e230; // mood neutral (cabecera) + marker mild (borde) + marker pleasant (relleno)
+$color-sky-blue: #42c7ec; // mood cold (cabecera) + marco de Canarias
+
+// Cabecera y leyenda — mood térmico (relleno). Comprobado contraste WCAG
+// contra $map-sea (fondo de cabecera/leyenda): "cold"/"neutral" reutilizan
+// $color-sky-blue/$color-green de arriba sin tocarlos (compartidos con el
+// marco de Canarias y los marcadores) — el resto son variables propias.
+$header-mood-gelid: #3f6fe0;
+$header-mood-heat: #eb6b59; // rojo-anaranjado de verano
+$header-mood-sweltering-fill: #e54343; // rojo más puro e intenso que "heat": ola de calor, no solo verano
+
+// Cabecera y leyenda — mood térmico (borde de previsión/"Leyenda"/
+// etiquetas, nunca del título grande, que lleva $color-near-black — ver
+// Decisiones en Header.scss). Cada tono es el mismo matiz que su relleno,
+// un 25% más oscuro (HSL, mismo h/s, -0.25 de lightness) — un matiz, no un
+// contorno negro plano.
+$header-mood-gelid-border: #163989;
+$header-mood-cold-border: #10809f;
+$header-mood-neutral-border: #046716;
+$header-mood-heat-border: #af2815;
+$header-mood-sweltering-border: #941414;
+
+// Mapa
+$map-sea: #B9FFFD;
+$map-spain: #ffebf6; // España, Baleares, Ceuta, Melilla y Canarias
+$map-portugal: #f6ffec;
+$map-andorra: #fff3b0;
+$map-north-africa-opacity: 0.5; // mismo color que España ($map-spain), más tenue
+
+// Temperatura por marcador (las franjas que no comparten hex con lo de arriba)
+$marker-temp-freezing-stroke: #7b2cbf;
+$marker-temp-cool: #848dee;
+$marker-temp-hot: #e53935;
+$marker-temp-hot-stroke: #ffd54f;
+$marker-temp-scorching: #9b1c31;
+$marker-temp-scorching-stroke: #c69214;
+
+// Tipografía
+$font-title: 'Poketiempo Unown', sans-serif; // cabecera (POKETIEMPO) + encabezado de la leyenda
+$font-heading: 'Pixelify Sans', monospace; // línea de previsión de la cabecera
+$font-body: 'Nunito Sans', sans-serif; // leyenda + créditos + temperaturas del mapa (prioriza legibilidad)

@@ -125,6 +125,47 @@ describe('normalizeAemetHourly — día con fenómenos (fixture de bordes)', () 
   })
 })
 
+describe('normalizeAemetHourly — niebla en ventana diurna', () => {
+  function hourlyWithFogAt(...periodos: string[]): AemetHourlyResponse {
+    return {
+      prediccion: {
+        dia: [
+          {
+            estadoCielo: periodos.map((periodo) => ({ value: '81', periodo, descripcion: 'Niebla' })),
+            nieve: [],
+            vientoAndRachaMax: [],
+            fecha: '2026-01-15T00:00:00',
+          },
+        ],
+      },
+    }
+  }
+
+  it('niebla únicamente a las 22h/23h (nocturna) → fog: false', () => {
+    expect(normalizeAemetHourly(hourlyWithFogAt('22', '23'), '2026-01-15').fog).toBe(false)
+  })
+
+  it('niebla a las 08h/09h (diurna) → fog: true', () => {
+    expect(normalizeAemetHourly(hourlyWithFogAt('08', '09'), '2026-01-15').fog).toBe(true)
+  })
+
+  it('día sin niebla en ningún periodo → fog: false', () => {
+    const hourly: AemetHourlyResponse = {
+      prediccion: {
+        dia: [
+          {
+            estadoCielo: [{ value: '11', periodo: '12', descripcion: 'Despejado' }],
+            nieve: [],
+            vientoAndRachaMax: [],
+            fecha: '2026-01-15T00:00:00',
+          },
+        ],
+      },
+    }
+    expect(normalizeAemetHourly(hourly, '2026-01-15').fog).toBe(false)
+  })
+})
+
 describe('normalizeAemetHourly — sin datos horarios', () => {
   it('devuelve todo null en vez de fabricar un valor', () => {
     const empty: AemetHourlyResponse = { prediccion: { dia: [] } }

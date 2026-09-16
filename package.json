@@ -15,6 +15,7 @@
     "fetch:forecast": "tsx --env-file-if-exists=.env scripts/fetch-forecast.ts"
   },
   "dependencies": {
+    "opentype.js": "^2.0.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

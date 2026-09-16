@@ -9,9 +9,13 @@ import {
   assignBySnow,
   assignByStorm,
   assignByTemperature,
+  assignByWarmWind,
   assignByWind,
   assignPokemon,
+  GYARADOS_MEGA_WAVE_HEIGHT_THRESHOLD_M,
   GYARADOS_WAVE_HEIGHT_THRESHOLD_M,
+  WARM_WIND_SPEED_THRESHOLD_KMH,
+  WARM_WIND_TEMPERATURE_THRESHOLD_C,
 } from './assign-pokemon.ts'
 import type { AlertsAvailability, LocationForecast, OfficialAlert } from './types.ts'
 
@@ -73,7 +77,7 @@ describe('assignByTemperature', () => {
 
 describe('assignBySky', () => {
   it.each([
-    { sky: 'despejado' as const, expected: null },
+    { sky: 'despejado' as const, expected: 'castform-sun' },
     { sky: 'poco_nuboso' as const, expected: 'altaria' },
     { sky: 'nuboso' as const, expected: 'castform' },
     { sky: 'cubierto' as const, expected: 'castform' },
@@ -141,13 +145,64 @@ describe('assignByWind', () => {
   })
 })
 
+describe('assignByWarmWind', () => {
+  it.each([
+    { speedKmh: WARM_WIND_SPEED_THRESHOLD_KMH - 0.01, maxC: 35, expected: null, label: 'justo por debajo del umbral de viento, temperatura sobra' },
+    { speedKmh: WARM_WIND_SPEED_THRESHOLD_KMH, maxC: WARM_WIND_TEMPERATURE_THRESHOLD_C - 0.01, expected: null, label: 'viento en el umbral, temperatura justo por debajo' },
+    { speedKmh: WARM_WIND_SPEED_THRESHOLD_KMH, maxC: WARM_WIND_TEMPERATURE_THRESHOLD_C, expected: 'moltres', label: 'ambos umbrales en su frontera (inclusive)' },
+    { speedKmh: 45, maxC: 34, expected: 'moltres', label: 'ambos umbrales superados' },
+  ])('speedKmh=$speedKmh, maxC=$maxC → $expected ($label)', ({ speedKmh, maxC, expected }) => {
+    expect(assignByWarmWind({ speedKmh, gustKmh: null }, { maxC, minC: maxC })).toBe(expected)
+  })
+
+  it('wind === null → null, aunque la temperatura supere el umbral', () => {
+    expect(assignByWarmWind(null, { maxC: 40, minC: 25 })).toBeNull()
+  })
+
+  it('ignora gustKmh, solo mira speedKmh', () => {
+    expect(assignByWarmWind({ speedKmh: 10, gustKmh: 150 }, { maxC: 35, minC: 20 })).toBeNull()
+  })
+})
+
 describe('assignByCalima', () => {
+  const okNoAlerts: AlertsAvailability = { status: 'ok', alerts: [] }
+  const date = '2026-09-08'
+
   it.each([
     { calima: true, expected: 'hippowdon' },
     { calima: false, expected: null },
     { calima: null, expected: null },
-  ])('calima=$calima → $expected', ({ calima, expected }) => {
-    expect(assignByCalima(calima)).toBe(expected)
+  ])('calima=$calima, sin aviso → $expected', ({ calima, expected }) => {
+    expect(assignByCalima(calima, okNoAlerts, date)).toBe(expected)
+  })
+
+  it('calima=true, sin aviso → Hippowdon', () => {
+    expect(assignByCalima(true, okNoAlerts, date)).toBe('hippowdon')
+  })
+
+  it('calima=false + aviso amarillo de calima activo el día del forecast → Hippowdon (cualquier nivel basta, a diferencia de Mega Gyarados)', () => {
+    const alerts: AlertsAvailability = { status: 'ok', alerts: [alert({ phenomenon: 'calima', level: 'amarillo' })] }
+    expect(assignByCalima(false, alerts, date)).toBe('hippowdon')
+  })
+
+  it('aviso de calima que empieza mañana → sin Hippowdon', () => {
+    const alerts: AlertsAvailability = {
+      status: 'ok',
+      alerts: [alert({ phenomenon: 'calima', level: 'amarillo', startsAt: '2026-09-09T00:00:00Z', endsAt: '2026-09-09T23:59:00Z' })],
+    }
+    expect(assignByCalima(false, alerts, date)).toBeNull()
+  })
+
+  it.each([{ status: 'error' as const }, { status: 'unsupported' as const }])(
+    'alerts.status=$status → no inventa calima aunque calima sea false',
+    (alerts) => {
+      expect(assignByCalima(false, alerts, date)).toBeNull()
+    },
+  )
+
+  it('aviso activo pero de otro fenómeno (no calima) → sin Hippowdon', () => {
+    const alerts: AlertsAvailability = { status: 'ok', alerts: [alert({ phenomenon: 'costero', level: 'rojo' })] }
+    expect(assignByCalima(false, alerts, date)).toBeNull()
   })
 })
 
@@ -176,9 +231,11 @@ describe('assignByMarine', () => {
   const date = '2026-09-08'
 
   it.each([
-    { waveHeightM: 1.24, expected: null, label: 'justo por debajo del umbral' },
+    { waveHeightM: 1.24, expected: null, label: 'justo por debajo del umbral de Gyarados' },
     { waveHeightM: GYARADOS_WAVE_HEIGHT_THRESHOLD_M, expected: 'gyarados', label: 'frontera 1.25 (inclusive)' },
-    { waveHeightM: 5, expected: 'gyarados', label: 'muy por encima del umbral' },
+    { waveHeightM: 2.49, expected: 'gyarados', label: 'justo por debajo del umbral de Mega Gyarados' },
+    { waveHeightM: GYARADOS_MEGA_WAVE_HEIGHT_THRESHOLD_M, expected: 'gyarados-mega', label: 'frontera 2.5 (inclusive) — Mega Gyarados por dato físico, sin aviso' },
+    { waveHeightM: 5, expected: 'gyarados-mega', label: 'muy por encima del umbral de Mega Gyarados' },
   ])('waveHeightM=$waveHeightM, sin aviso rojo costero → $expected ($label)', ({ waveHeightM, expected }) => {
     const marine = { status: 'ok' as const, data: { waveHeightM, wavePeriodS: 8, waveDirectionDeg: 300, source: 'open-meteo' as const } }
     expect(assignByMarine(marine, okNoAlerts, date)).toBe(expected)
@@ -221,7 +278,7 @@ describe('assignByMarine', () => {
     expect(assignByMarine(marine, alerts, date)).toBe('gyarados')
   })
 
-  it('aviso rojo costero manda aunque marine haya fallado hoy (la oficialidad vive en alerts, no en el dato físico)', () => {
+  it('aviso rojo costero manda aunque marine haya fallado en esta ejecución (la oficialidad vive en alerts, no en el dato físico)', () => {
     const alerts: AlertsAvailability = { status: 'ok', alerts: [alert()] }
     expect(assignByMarine({ status: 'error' }, alerts, date)).toBe('gyarados-mega')
   })
@@ -248,7 +305,7 @@ describe('assignByMarine', () => {
 })
 
 describe('assignPokemon', () => {
-  it('día tranquilo de interior: solo la temperatura asigna (es el único eje siempre presente)', () => {
+  it('día despejado en la franja 15–25°C: temperatura y cielo coinciden en castform-sun, sin duplicarlo', () => {
     expect(assignPokemon(baseForecast)).toEqual(['castform-sun'])
   })
 
@@ -260,7 +317,12 @@ describe('assignPokemon', () => {
       wind: { speedKmh: 45, gustKmh: 70 },
       storm: true,
     }
-    expect(assignPokemon(forecast)).toEqual(['groudon', 'altaria', 'dragonite', 'zapdos'])
+    expect(assignPokemon(forecast)).toEqual(['groudon', 'altaria', 'dragonite', 'moltres', 'zapdos'])
+  })
+
+  it('día despejado fuera de la franja 15–25°C: temperatura y cielo asignan Pokémon distintos, ninguno se pierde', () => {
+    const forecast: LocationForecast = { ...baseForecast, temperature: { maxC: 32, minC: 20 } }
+    expect(assignPokemon(forecast)).toEqual(['charmeleon', 'castform-sun'])
   })
 
   it('todos los ejes en null (salvo temperature, obligatorio): solo la temperatura asigna', () => {

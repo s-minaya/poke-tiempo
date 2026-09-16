@@ -30,7 +30,7 @@ interface TerritoryInsetProps {
 }
 
 /**
- * Un territorio auxiliar (hoy, solo Canarias — Ceuta y Melilla se
+ * Un territorio auxiliar (actualmente, solo Canarias — Ceuta y Melilla se
  * proyectan ya en su posición real dentro del mapa principal, ver
  * `004-plan.md` → punto 3) integrado en el mismo `viewBox` que la
  * península — un `<svg>` anidado con su propia proyección/`viewBox`, así
@@ -54,10 +54,21 @@ function TerritoryInset({ x, y, width, height, path, label, locations, frame = f
       role="group"
       aria-label={label}
     >
+      {/* Mismo tratamiento que el mapa principal: el mar rellena el fondo
+          completo del recuadro, detrás de la silueta (005-plan.md → punto 3). */}
+      <rect className="territory-inset__sea" x={0} y={0} width={width} height={height} aria-hidden="true" />
       {frame && <path className="territory-inset__frame" d={framePath(width, height)} />}
       <path className="territory-inset__landmass" d={path} />
       {locations.map((location) => (
-        <LocationMarker key={location.id} x={location.x} y={location.y} name={location.name} pokemonId={location.pokemonId} />
+        <LocationMarker
+          key={location.id}
+          x={location.x}
+          y={location.y}
+          name={location.name}
+          pokemonId={location.pokemonId}
+          minC={location.minC}
+          maxC={location.maxC}
+        />
       ))}
     </svg>
   )

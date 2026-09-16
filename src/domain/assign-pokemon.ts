@@ -3,7 +3,8 @@ import type { AlertsAvailability, LocationForecast, MarineAvailability, Official
 
 /**
  * Motor de asignación de Pokémon (`003-plan.md`): traduce el `LocationForecast`
- * de un lugar en la lista de Pokémon que le corresponden hoy. Cada eje
+ * de un lugar en la lista de Pokémon que le corresponden ese día
+ * (`forecast.date` — mañana, no hoy, ver `target-date.ts`). Cada eje
  * meteorológico se evalúa por su cuenta y aporta como mucho un `PokedexId` —
  * no hay prioridad entre ejes ni un único ganador, `assignPokemon` simplemente
  * junta lo que cada uno produzca. Un eje con dato `null` nunca fabrica una
@@ -29,15 +30,22 @@ export function assignByTemperature(temperature: Temperature): PokedexId {
   return 'groudon-primal'
 }
 
+// 'despejado' también dispara Castform (forma sol) — además de la franja
+// de temperatura (`assignByTemperature`, 15–25°C), no en su lugar: un día
+// despejado fuera de esa franja también es "castform-sun". `assignPokemon`
+// deduplica, así que un día despejado dentro de la franja no produce la
+// forma dos veces.
 export function assignBySky(sky: SkyCondition | null): PokedexId | null {
   switch (sky) {
+    case 'despejado':
+      return 'castform-sun'
     case 'poco_nuboso':
       return 'altaria'
     case 'nuboso':
     case 'cubierto':
       return 'castform'
     default:
-      return null // 'despejado' no tiene Pokémon propio en la tabla; null no asigna
+      return null
   }
 }
 
@@ -70,8 +78,39 @@ export function assignByWind(wind: LocationForecast['wind']): PokedexId | null {
   return 'tornadus'
 }
 
-export function assignByCalima(calima: boolean | null): PokedexId | null {
-  return calima === true ? 'hippowdon' : null
+/**
+ * Hippowdon tiene dos caminos independientes, cualquiera de los dos basta
+ * — mismo patrón que Mega Gyarados (`assignByMarine`):
+ *
+ * 1. `calima === true` (código de cielo 83 en alguna hora diurna de la
+ *    horaria de AEMET, ver `aemet.ts`).
+ * 2. Un `OfficialAlert` de `phenomenon === 'calima'` activo el día del
+ *    forecast (`startsAt`/`endsAt` solapan `date`, misma `isActiveOnDate`
+ *    que usa Mega Gyarados — sin reimplementarla) — cualquier nivel
+ *    (amarillo, naranja, rojo) basta, a diferencia del aviso costero de
+ *    Mega Gyarados, que exige rojo. Un aviso que empieza otro día no
+ *    cuenta. `alerts.status` distinto de `'ok'` nunca fabrica calima.
+ *
+ * No hay propagación entre lugares: `alerts` ya llega filtrado a la zona
+ * propia de cada lugar (`buildAlertsAvailability`, `fetch-forecast.ts`).
+ */
+export function assignByCalima(calima: boolean | null, alerts: AlertsAvailability, date: string): PokedexId | null {
+  if (calima === true) return 'hippowdon'
+  return hasActiveCalimaAlert(alerts, date) ? 'hippowdon' : null
+}
+
+// "Viento cálido": ninguna fuente (AEMET/IPMA/Open-Meteo) da esto como
+// categoría propia — regla inferida combinando dos ejes ya existentes,
+// a diferencia de DANA ("no se infiere combinando lluvia+tormenta",
+// roadmap.md), que sigue deshabilitada.
+export const WARM_WIND_SPEED_THRESHOLD_KMH = 40
+export const WARM_WIND_TEMPERATURE_THRESHOLD_C = 30
+
+export function assignByWarmWind(wind: LocationForecast['wind'], temperature: Temperature): PokedexId | null {
+  const speedKmh = wind?.speedKmh ?? null
+  if (speedKmh === null || speedKmh < WARM_WIND_SPEED_THRESHOLD_KMH) return null
+  if (temperature.maxC < WARM_WIND_TEMPERATURE_THRESHOLD_C) return null
+  return 'moltres'
 }
 
 // DANA sigue deshabilitada (`roadmap.md`): tormenta siempre asigna Zapdos,
@@ -85,9 +124,13 @@ export function assignByFog(fog: boolean | null): PokedexId | null {
 }
 
 // Coincide con el paso de "marejada" a "fuerte marejada" en la escala
-// Douglas de estado de la mar (AEMET/Puertos del Estado) — confirmado como
-// decisión de producto en `003-plan.md`.
+// Douglas de estado de la mar (AEMET/Puertos del Estado).
 export const GYARADOS_WAVE_HEIGHT_THRESHOLD_M = 1.25
+
+// Siguiente escalón de la misma escala Douglas: "muy fuerte marejada"
+// empieza en 2,5 m. Segundo camino (físico) hacia Mega Gyarados, además
+// del aviso rojo costero oficial.
+export const GYARADOS_MEGA_WAVE_HEIGHT_THRESHOLD_M = 2.5
 
 // Compara los prefijos YYYY-MM-DD como texto, sin pasar por Date: IPMA
 // entrega startsAt/endsAt sin offset (ej. "2026-09-08T12:00:00"), que
@@ -105,31 +148,51 @@ function hasActiveRedCoastalAlert(alerts: AlertsAvailability, date: string): boo
   )
 }
 
+function hasActiveCalimaAlert(alerts: AlertsAvailability, date: string): boolean {
+  return (
+    alerts.status === 'ok' && alerts.alerts.some((alert) => alert.phenomenon === 'calima' && isActiveOnDate(alert, date))
+  )
+}
+
 /**
- * El aviso oficial de "muy fuerte" es la fuente de verdad para Mega Gyarados
- * (`002-plan.md`: "la oficialidad se conserva ahí, no en el dato físico"),
- * así que dispara aunque la consulta física de oleaje de hoy haya fallado —
- * no depende de `marine.status`. Solo cuenta si el aviso está activo el día
- * del forecast (`startsAt`/`endsAt` solapan `date`); un aviso rojo que
- * empieza otro día no adelanta Mega Gyarados. Sin aviso activo, Gyarados
- * normal solo necesita el dato físico y el umbral numérico.
+ * Mega Gyarados tiene dos caminos independientes, cualquiera de los dos
+ * basta:
+ *
+ * 1. El aviso oficial de "muy fuerte" (`002-plan.md`: "la oficialidad se
+ *    conserva ahí, no en el dato físico"), así que dispara aunque la
+ *    consulta física de oleaje de esta ejecución haya fallado — no depende
+ *    de `marine.status`. Solo cuenta si el aviso está activo el día del
+ *    forecast (`startsAt`/`endsAt` solapan `date`); un aviso rojo que
+ *    empieza otro día no adelanta Mega Gyarados.
+ * 2. El dato físico, si llega a `GYARADOS_MEGA_WAVE_HEIGHT_THRESHOLD_M`
+ *    (2,5 m) — sin necesitar ningún aviso.
+ *
+ * Sin ninguno de los dos, cae a Gyarados normal si llega a
+ * `GYARADOS_WAVE_HEIGHT_THRESHOLD_M` (1,25 m).
  */
 export function assignByMarine(marine: MarineAvailability, alerts: AlertsAvailability, date: string): PokedexId | null {
   if (hasActiveRedCoastalAlert(alerts, date)) return 'gyarados-mega'
   if (marine.status !== 'ok' || marine.data.waveHeightM === null) return null
+  if (marine.data.waveHeightM >= GYARADOS_MEGA_WAVE_HEIGHT_THRESHOLD_M) return 'gyarados-mega'
   return marine.data.waveHeightM >= GYARADOS_WAVE_HEIGHT_THRESHOLD_M ? 'gyarados' : null
 }
 
+// Deduplicado: desde que 'despejado' también asigna castform-sun
+// (assignBySky), un día despejado dentro de la franja 15–25°C dispara la
+// misma forma por dos ejes distintos — la lista no debe repetirla.
 export function assignPokemon(forecast: LocationForecast): PokedexId[] {
-  return [
+  const ids = [
     assignByTemperature(forecast.temperature),
     assignBySky(forecast.sky),
     assignByRain(forecast.precipitation),
     assignBySnow(forecast.snow),
     assignByWind(forecast.wind),
-    assignByCalima(forecast.calima),
+    assignByWarmWind(forecast.wind, forecast.temperature),
+    assignByCalima(forecast.calima, forecast.alerts, forecast.date),
     assignByStorm(forecast.storm),
     assignByFog(forecast.fog),
     assignByMarine(forecast.marine, forecast.alerts, forecast.date),
   ].filter((id): id is PokedexId => id !== null)
+
+  return [...new Set(ids)]
 }

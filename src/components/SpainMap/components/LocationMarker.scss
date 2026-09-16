@@ -1,7 +1,63 @@
+@use '../../../styles/abstracts/variables' as vars;
+
 .location-marker {
   &__sprite {
     // Sin interacción propia todavía (004): solo evita que un arrastre
     // cerca de un sprite dispare la selección de texto del navegador.
     user-select: none;
+  }
+
+  &__temperature {
+    font-family: vars.$font-body;
+    font-weight: 700;
+    user-select: none;
+  }
+
+  // Custom properties por franja — cada `tspan` se colorea de forma
+  // independiente según su propio valor (marker-temperature.ts), nunca
+  // según el de la otra cifra. Solo las franjas con borde en la spec fijan
+  // --temp-stroke-width > 0. `paint-order: stroke fill` es lo que hace que
+  // el trazo quede detrás del relleno (borde real, no una nube de
+  // text-shadow) — necesario en SVG porque el orden de pintado por
+  // defecto es al revés (stroke encima del fill).
+  &__temp-value {
+    fill: var(--temp-fill);
+    stroke: var(--temp-stroke, none);
+    stroke-width: var(--temp-stroke-width, 0);
+    paint-order: stroke fill;
+
+    &--freezing {
+      --temp-fill: #{vars.$color-white};
+      --temp-stroke: #{vars.$marker-temp-freezing-stroke};
+      --temp-stroke-width: 0.8;
+    }
+
+    &--cool {
+      --temp-fill: #{vars.$marker-temp-cool};
+    }
+
+    &--mild {
+      --temp-fill: #{vars.$color-white};
+      --temp-stroke: #{vars.$color-green};
+      --temp-stroke-width: 0.8;
+    }
+
+    &--pleasant {
+      --temp-fill: #{vars.$color-green};
+      --temp-stroke: #{vars.$color-white};
+      --temp-stroke-width: 0.8;
+    }
+
+    &--hot {
+      --temp-fill: #{vars.$marker-temp-hot};
+      --temp-stroke: #{vars.$marker-temp-hot-stroke};
+      --temp-stroke-width: 0.8;
+    }
+
+    &--scorching {
+      --temp-fill: #{vars.$marker-temp-scorching};
+      --temp-stroke: #{vars.$marker-temp-scorching-stroke};
+      --temp-stroke-width: 0.8;
+    }
   }
 }

@@ -19,6 +19,7 @@ import hoppip from '../../assets/sprites/hoppip.png'
 import kyogre from '../../assets/sprites/kyogre.png'
 import kyogrePrimal from '../../assets/sprites/kyogre-primal.png'
 import magmar from '../../assets/sprites/magmar.png'
+import moltres from '../../assets/sprites/moltres.png'
 import rayquaza from '../../assets/sprites/rayquaza.png'
 import snorunt from '../../assets/sprites/snorunt.png'
 import solrock from '../../assets/sprites/solrock.png'
@@ -26,10 +27,10 @@ import tornadus from '../../assets/sprites/tornadus.png'
 import zapdos from '../../assets/sprites/zapdos.png'
 
 /**
- * Un sprite por cada `PokedexId` que `assignPokemon` puede producir hoy
- * (003) — no incluye `'thundurus'`, sin uso (ver `domain/pokedex.ts`).
- * Imports estáticos y explícitos: Vite solo empaqueta lo que se importa, y
- * un `PokedexId` sin entrada aquí falla en el tipado, no en runtime.
+ * Un sprite por cada `PokedexId` que `assignPokemon` puede producir — no
+ * incluye `'thundurus'`, sin uso (ver `domain/pokedex.ts`). Imports
+ * estáticos y explícitos: Vite solo empaqueta lo que se importa, y un
+ * `PokedexId` sin entrada aquí falla en el tipado, no en runtime.
  */
 export const spriteSources: Record<PokedexId, string> = {
   snorunt,
@@ -56,4 +57,5 @@ export const spriteSources: Record<PokedexId, string> = {
   'castform-ice': castformIce,
   gyarados,
   'gyarados-mega': gyaradosMega,
+  moltres,
 }

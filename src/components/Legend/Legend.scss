@@ -1,0 +1,123 @@
+@use '../../styles/abstracts/variables' as vars;
+
+// Altura real y VISIBLE del mapa a `$breakpoint-desktop-large` (134rem de
+// ancho × la relación de aspecto recortada a `seaBottom`, ver
+// `SpainMap.tsx` — mismo par de cifras que informa
+// `$fluid-root-height-divisor` en `_reset.scss`; no la relación de aspecto
+// sin recortar del `<svg>`, que reserva aire por debajo de Canarias). Es
+// el tope de la leyenda de más abajo: `align-items: stretch` (App.scss)
+// por sí solo NO basta para evitar que un día con muchos más Pokémon
+// visibles de los habituales estire la fila del grid (y con ella el mapa)
+// por encima de esto — un `max-height` en `rem` sí acota el aporte de la
+// leyenda al cálculo de la fila, sea cual sea su contenido.
+$legend-max-height: 84.61rem;
+
+.legend {
+  grid-area: legend;
+  padding: 2rem;
+  font-family: vars.$font-body;
+
+  // La caja de la leyenda ya queda a la altura del mapa por `align-items:
+  // stretch` (App.scss) en el caso normal — nunca más alta gracias al
+  // `max-height` de arriba. `display: flex` en columna, con `__list` como
+  // único hijo que crece (`flex: 1`, ver más abajo) y con su propio
+  // `overflow-y: auto`, hace que un día con más Pokémon visibles de los
+  // habituales deslice la lista dentro de su propio hueco en vez de
+  // empujar la caja (y con ella el mapa y la página) hacia abajo.
+  display: flex;
+  flex-direction: column;
+  max-height: $legend-max-height;
+
+  // Mismo azul que la cabecera y el mapa (`Header.scss`, `SpainMap.scss`).
+  background: vars.$map-sea;
+
+  // Mismo mood térmico y misma paleta que el título (Header.scss →
+  // Decisiones) — mismos dos tokens por mood, relleno y borde.
+  --mood-fill: #{vars.$color-green};
+  --mood-border: #{vars.$header-mood-neutral-border};
+
+  &--gelid {
+    --mood-fill: #{vars.$header-mood-gelid};
+    --mood-border: #{vars.$header-mood-gelid-border};
+  }
+
+  &--cold {
+    --mood-fill: #{vars.$color-sky-blue};
+    --mood-border: #{vars.$header-mood-cold-border};
+  }
+
+  &--neutral {
+    --mood-fill: #{vars.$color-green};
+    --mood-border: #{vars.$header-mood-neutral-border};
+  }
+
+  &--heat {
+    --mood-fill: #{vars.$header-mood-heat};
+    --mood-border: #{vars.$header-mood-heat-border};
+  }
+
+  &--sweltering {
+    --mood-fill: #{vars.$header-mood-sweltering-fill};
+    --mood-border: #{vars.$header-mood-sweltering-border};
+  }
+
+  &__heading {
+    margin: 0 0 1.6rem;
+    font-family: vars.$font-title;
+    font-size: 3.2rem;
+    letter-spacing: 0.05em;
+    color: var(--mood-fill);
+
+    // Negrita sintética (Poketiempo Unown solo tiene un peso propio, ver
+    // Header.scss → Decisiones) — mismo criterio que el título.
+    font-weight: 700;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+
+    // Único hijo que crece dentro de `.legend` (`flex: 1`) y el único al
+    // que de verdad le hace falta encoger para que `overflow-y` tenga
+    // algo que hacer: sin `min-height: 0` un hijo flex nunca se encoge
+    // por debajo de la altura de su propio contenido.
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 1.6rem;
+  }
+
+  &__sprite {
+    flex: none;
+
+    // A juego con el tamaño real del sprite en el mapa (`SPRITE_SIZE` en
+    // `LocationMarker.tsx`), en vez de una miniatura — la leyenda es la
+    // referencia visual de cada Pokémon, no un icono discreto (006-plan.md).
+    width: 6rem;
+    height: 6rem;
+
+    // Los sprites no son todos cuadrados (redimensionados a 160px de lado
+    // MÁXIMO, tech-stack.md) — sin esto, forzar el mismo ancho y alto los
+    // deforma. `contain` los encaja en el cuadro sin estirarlos.
+    object-fit: contain;
+  }
+
+  &__label {
+    color: var(--mood-fill);
+    font-size: 2.2rem;
+
+    // Nunito Sans sí trae 700 real (index.html) — negrita de verdad, no
+    // sintética.
+    font-weight: 700;
+    line-height: 1.3;
+
+    // Mismo matiz de borde que `__heading`, sin tocar.
+    -webkit-text-stroke: 1px var(--mood-border);
+  }
+}

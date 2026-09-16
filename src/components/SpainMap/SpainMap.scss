@@ -1,43 +1,47 @@
-@use '../../styles/abstracts/breakpoints' as bp;
+@use "../../styles/abstracts/variables" as vars;
 
 .spain-map {
+  grid-area: map;
   display: block;
   width: 100%;
   height: auto;
   margin-inline: auto;
 
-  // Sin esto, un `viewBox` escalado a `width: 100%` crecería sin límite en
-  // los breakpoints más anchos. Dos topes, no uno: a partir de desktop
-  // grande el mapa vuelve a crecer bastante más — es la pieza central de
-  // la página y hay sitio real de sobra en una pantalla de esa anchura —
-  // pero siempre por debajo del ancho del viewport (`max-width`, nunca un
-  // valor fijo mayor que el 100%), así que nunca fuerza scroll horizontal.
-  @include bp.respond-from(bp.$breakpoint-desktop) {
-    max-width: 110rem;
+  // Fondo completo del mapa — primer elemento, detrás de toda la tierra.
+  &__sea {
+    fill: vars.$map-sea;
   }
 
-  @include bp.respond-from(bp.$breakpoint-desktop-large) {
-    max-width: 150rem;
-  }
-
-  &__landmass {
-    fill: currentcolor;
-    fill-opacity: 0.12;
+  &__territory {
     stroke: currentcolor;
     stroke-width: 1;
+
+    &--es {
+      fill: vars.$map-spain;
+    }
+
+    &--pt {
+      fill: vars.$map-portugal;
+    }
+
+    &--ad {
+      fill: vars.$map-andorra;
+    }
   }
 
-  // Contexto norteafricano (Marruecos + norte de Argelia): más tenue que
-  // la silueta principal — se lee como fondo, no como parte del dominio.
-  // El límite de la derecha es un `clip-path` limpio (SpainMap.tsx) — no
-  // hay degradado que lo disimule. Solo relleno, sin trazo: Marruecos y
-  // Argelia son dos polígonos de Natural Earth digitalizados por
-  // separado, y su frontera compartida no encaja pixel a pixel — un
-  // trazo (sobre todo discontinuo) marca esa pequeña costura como una
-  // muesca visible; el relleno, mucho más tenue, la disuelve.
+  // Contexto norteafricano (Marruecos + norte de Argelia): mismo color que
+  // España, pero visiblemente más tenue (fill-opacity) — se lee como
+  // fondo, no como parte del dominio. El límite de la derecha es un
+  // `clip-path` limpio (SpainMap.tsx). Mismo trazo que el resto de
+  // territorios (`__territory`) — comprobado visualmente que, pese a que
+  // Marruecos y Argelia son dos polígonos de Natural Earth digitalizados
+  // por separado, su frontera compartida no deja una costura perceptible
+  // al trazarla (006-plan.md).
   &__north-africa-context {
-    fill: currentcolor;
-    fill-opacity: 0.06;
+    fill: vars.$map-spain;
+    fill-opacity: vars.$map-north-africa-opacity;
+    stroke: currentcolor;
+    stroke-width: 1;
   }
 
   // Fronteras de comunidades autónomas / distritos: un trazo fino y

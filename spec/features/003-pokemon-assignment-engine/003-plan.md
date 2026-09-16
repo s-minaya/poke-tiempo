@@ -32,7 +32,7 @@ Un único módulo de dominio, sin dependencias externas ni abstracciones genéri
 
 **Nubes** (`sky`):
 
-- `'despejado'` → Castform (forma sol) — `castform-sun`. Ampliado en la 005: además del tramo de temperatura 15–25°C (tabla de arriba), un cielo despejado también asigna esta forma, sea cual sea la temperatura — `assignPokemon` deduplica, así que un día despejado dentro de esa franja no la repite.
+- `'despejado'` → Castform (forma sol) — `castform-sun`, sea cual sea la temperatura (no solo dentro del tramo 15–25°C de la tabla de arriba) — `assignPokemon` deduplica, así que un día despejado dentro de esa franja no la repite.
 - `'poco_nuboso'` → Altaria
 - `'nuboso'` o `'cubierto'` → Castform (forma normal) — `castform`
 - `null` → ninguno
@@ -65,7 +65,7 @@ Un único módulo de dominio, sin dependencias externas ni abstracciones genéri
 | > 90 | Tornadus |
 | `null` | ninguno |
 
-**Viento cálido** (`wind.speedKmh` + `temperature.maxC`, ampliado en la 005): `wind.speedKmh >= 40` **y** `temperature.maxC >= 30` → Moltres. Regla inferida combinando dos ejes ya existentes — ninguna fuente (AEMET/IPMA/Open-Meteo) da "viento cálido" como categoría propia. Eje independiente del viento simple de arriba: ambos pueden asignar a la vez (`assignByWind` y `assignByWarmWind` son funciones separadas).
+**Viento cálido** (`wind.speedKmh` + `temperature.maxC`): `wind.speedKmh >= 40` **y** `temperature.maxC >= 30` → Moltres. Regla inferida combinando dos ejes ya existentes — ninguna fuente (AEMET/IPMA/Open-Meteo) da "viento cálido" como categoría propia. Eje independiente del viento simple de arriba: ambos pueden asignar a la vez (`assignByWind` y `assignByWarmWind` son funciones separadas).
 
 **Calima** (`calima`): `true` → Hippowdon · `false`/`null` → ninguno.
 
@@ -76,7 +76,7 @@ Un único módulo de dominio, sin dependencias externas ni abstracciones genéri
 **Oleaje** (`marine`, `alerts`):
 
 1. Si `alerts.status === 'ok'` y existe algún aviso con `level === 'rojo'` y `phenomenon === 'costero'` cuya ventana (`startsAt`/`endsAt`) solapa el día de `forecast.date` → Mega Gyarados (prioridad sobre la regla numérica, sea cual sea `waveHeightM`).
-2. Si no, y `marine.status === 'ok'` y `marine.data.waveHeightM !== null` y `waveHeightM >= 2,5` → Mega Gyarados también por dato físico, sin necesitar aviso. Ampliado en la 005: antes Mega Gyarados dependía solo del aviso oficial.
+2. Si no, y `marine.status === 'ok'` y `marine.data.waveHeightM !== null` y `waveHeightM >= 2,5` → Mega Gyarados también por dato físico, sin necesitar aviso.
 3. Si no, y `waveHeightM >= 1,25` → Gyarados.
 4. En cualquier otro caso → ninguno.
 
@@ -90,82 +90,48 @@ Un único módulo de dominio, sin dependencias externas ni abstracciones genéri
 - **Nieve exige `cm > 0`, igual que lluvia** — misma regla ("`null` nunca fabrica asignación", cero confirmado no dispara la forma") aplicada por coherencia entre los dos únicos ejes de acumulado.
 - **Mega Gyarados no depende de `marine.status`, pero sí exige que el aviso esté activo el día del forecast** — el aviso oficial es la fuente de verdad para "muy fuerte" (`002-plan.md`: "la oficialidad se conserva ahí, no en el dato físico"), así que dispara aunque la consulta física de oleaje de ese día haya fallado; pero un aviso rojo costero que no cubre `forecast.date` no adelanta la forma. La comparación es por prefijo `YYYY-MM-DD` de texto (`startsAt`/`endsAt` contra `date`), no vía `Date`: IPMA entrega esos campos sin offset, y `new Date(...)` los interpretaría con la zona horaria del entorno de ejecución en vez de la del aviso.
 - **Umbral de Gyarados: 1,25 m** — confirmado por el propietario del producto, ver tabla de oleaje arriba.
-- **Ampliaciones de la 005** (`005-plan.md` → ampliación de alcance): `'despejado'` también asigna castform-sun (además del tramo de temperatura), y Mega Gyarados suma un segundo camino por dato físico (`waveHeightM >= 2,5`) junto al aviso oficial, que se mantiene. `assignPokemon` deduplica su salida — necesario desde que dos ejes distintos pueden coincidir en el mismo `PokedexId` (cielo + temperatura en castform-sun). `MAP_PRIORITY` (004) también se ajustó: castform-sun pasa al final de los tramos de temperatura para que la temperatura real de un lugar nunca quede tapada por el disparador de cielo. Además, nuevo eje "viento cálido" → Moltres (`wind.speedKmh >= 40` y `temperature.maxC >= 30`), 25º `PokedexId` — única regla inferida del proyecto además de la ya rechazada para DANA, aceptada aquí como decisión de producto explícita.
-- **Calima también por aviso oficial, no solo por código de cielo** (`assignByCalima`, ampliación de la 005): además de `calima === true`, dispara si hay un `OfficialAlert` con `phenomenon === 'calima'` activo el día del forecast — cualquier nivel (amarillo/naranja/rojo) basta, a diferencia del aviso costero de Mega Gyarados, que exige rojo. Reutiliza la misma `isActiveOnDate` que ya usa `assignByMarine`, sin una segunda implementación. Sin propagación entre lugares: `alerts` ya llega filtrado a la zona propia de cada lugar. Ver "Hipótesis provisional de prioridad (005)" más abajo para el porqué.
+- **`assignPokemon` deduplica su salida** — necesario porque dos ejes distintos pueden coincidir en el mismo `PokedexId` (cielo despejado + temperatura en el tramo 15–25°C asignan ambos `castform-sun`).
+- **Calima también por aviso oficial, no solo por código de cielo** (`assignByCalima`): además de `calima === true`, dispara si hay un `OfficialAlert` con `phenomenon === 'calima'` activo el día del forecast — cualquier nivel (amarillo/naranja/rojo) basta, a diferencia del aviso costero de Mega Gyarados, que exige rojo. Reutiliza la misma `isActiveOnDate` que ya usa `assignByMarine`, sin una segunda implementación. Sin propagación entre lugares: `alerts` ya llega filtrado a la zona propia de cada lugar.
 
-## Hipótesis provisional de prioridad (005 — comparación con publicaciones reales)
+## Prioridad de presentación (`MAP_PRIORITY`, mapa)
 
-**Carácter provisional, explícito:** tras la primera comparación de una previsión real contra una publicación de la cuenta de Instagram original, se ajustaron `MAP_PRIORITY` (004) y `assignByCalima`/la detección de niebla de AEMET. Esta comparación **no pretende reproducir la lógica privada de Gabriel** (el propietario de la cuenta original) de forma definitiva — es una hipótesis basada en un único día de evidencia, que se irá contrastando y ajustando contra publicaciones futuras. No se toca hasta entonces sin una comparación nueva que la confirme o la contradiga.
+`assignPokemon` no tiene prioridad entre ejes — puede devolver varios
+Pokémon a la vez para el mismo lugar. El mapa dibuja solo uno por
+ubicación; `MAP_PRIORITY` (`pick-map-pokemon.ts`, 004) es el orden fijo
+que decide cuál, de más a menos "noticia":
 
-Tres cambios, ninguno toca umbrales de temperatura, viento u oleaje, ni las reglas de `assignBySky`/`assignByFog`/`assignByStorm`:
+1. Aviso rojo costero (Mega Gyarados), por delante de cualquier otro
+   fenómeno.
+2. Fenómenos severos: tormenta, nieve, calima, niebla.
+3. Lo frecuente: lluvia, oleaje sin aviso (Gyarados normal), viento
+   cálido (Moltres).
+4. Viento fuerte o superior — Dragonite, Rayquaza, Tornadus.
+5. Temperatura relevante — todos los tramos térmicos excepto
+   `castform-sun`: Snorunt, Solrock, Charmander, Charmeleon, Magmar,
+   Groudon, Groudon primigenio.
+6. Hoppip — viento moderado.
+7. Representaciones ordinarias/neutrales: Castform (nuboso/cubierto),
+   Altaria (poco nuboso), Castform-sun (banda térmica neutral +
+   despejado).
 
-1. **`MAP_PRIORITY` (`pick-map-pokemon.ts`, 004): la temperatura gana a "poco nuboso" (Altaria).** En los casos comparados, ningún lugar con cielo ligeramente nuboso mostraba Altaria en vez de su Pokémon de temperatura — el cielo parece secundario frente al termómetro cuando la nubosidad es solo parcial. `castform` (nuboso/cubierto) no se toca: sigue por delante de temperatura, sin evidencia todavía que lo cuestione. `altaria` se queda por delante de `castform-sun` (que solo compite cuando es el único candidato de temperatura).
-2. **Niebla de AEMET, solo en ventana diurna (`scripts/sources/aemet.ts`).** El booleano diario de `fog` miraba cualquier periodo horario del día — una única aparición nocturna (p. ej. 22h-23h) bastaba para tapar un día despejado el resto de horas. Ahora solo cuentan periodos entre las 08:00 y las 20:59 hora local. `storm`/`calima` no se tocan, siguen mirando el día completo.
-3. **Calima también por aviso oficial (`assignByCalima`, `assign-pokemon.ts`).** El pipeline ya descarga los avisos oficiales de AEMET (para Mega Gyarados) pero la regla de calima solo miraba el código de cielo horario. Ahora también dispara con un aviso oficial de `calima` activo el día del forecast, cualquier nivel.
+**Principio:** el viento moderado (Hoppip) y las lecturas de cielo
+ordinarias (Castform, Altaria, Castform-sun) son condiciones
+secundarias — se muestran solo cuando no hay un fenómeno más
+significativo ni una temperatura no neutral que comunique mejor el
+estado del lugar. Ninguna de las tres representaciones neutrales se
+considera un fenómeno al nivel de tormenta/nieve/calima/niebla/
+lluvia/oleaje.
 
-**Lo que queda sin resolver, deliberadamente:** si viento/oleaje deben ganar siempre a temperatura al superar su umbral o solo a veces; y por qué la calima de dos de cuatro islas canarias comparadas no queda cubierta ni por código de cielo ni por aviso oficial en la zona/fecha consultada. Ninguno de los dos se resuelve sin más evidencia — no se ha forzado ningún ajuste para que una publicación concreta "cuadre". (El tercer punto que quedaba abierto aquí — si `castform` debería ceder ante temperatura igual que Altaria — se resuelve más abajo, pero como decisión editorial propia, no porque nueva evidencia lo haya confirmado.)
+`castform-sun` va el último de todos: desde que `assignBySky` también lo
+asigna por cielo despejado (no solo por el tramo de temperatura
+15–25°C), un día despejado fuera de esa franja produce dos candidatos de
+temperatura a la vez (el real, y `castform-sun` por el cielo) — puesto
+el último, solo gana cuando es el único candidato de temperatura
+posible, que es exactamente cuando cielo y temperatura real coinciden.
 
-### Validez de la comparación del 14 de septiembre — limitada, no descartada
-
-**La comparación que originó estos tres cambios se hizo consultando AEMET/IPMA/Open-Meteo en vivo el propio 14 de septiembre**, varias horas después de que Gabriel publicara su mapa de ese mismo día. Información confirmada después: **Gabriel consulta la previsión el día anterior y publica el mapa del día siguiente** (genera con `targetDate = D+1` el día `D`, igual que ya hace `computeTargetDate` en este proyecto — `target-date.ts`). Eso significa que la comparación del 14 enfrentó dos fotos meteorológicas de instantes distintos, no la misma previsión: la propia auditoría demostró en vivo que AEMET cambia sus datos varias veces al día (viento de Teruel: 26→11 km/h en 2 minutos; sky de Ciudad Real cambiando de categoría en la misma ventana — ver histórico de la conversación de auditoría). Por eso **la comparación del 14 no vale como validación definitiva de las reglas de Gabriel** — sirve como primera hipótesis razonada (los tres cambios de arriba), pero no como confirmación. No se revierten los cambios por esto: quedan como hipótesis provisional, ahora con una advertencia de validez más explícita, a la espera de contrastarse con el método correcto.
-
-**Protocolo correcto a partir de aquí, para cualquier comparación futura:** `forecast.json` generado el día `D` (con `targetDate = D+1`, el que ya escribe el pipeline diario) contra la publicación de Gabriel correspondiente a `D+1` — nunca reconstruyendo una publicación antigua con una consulta en vivo posterior. El histórico de git no contiene ningún `forecast.json` generado el 13 de septiembre con `date: "2026-09-14"` (comprobado commit a commit: solo existen dos snapshots en todo el historial, `date: "2026-09-09"` y `date: "2026-09-11"` — ninguno de los dos sirve para el 14). El 14 de septiembre queda por tanto **sin snapshot reproducible**; el seguimiento por este método empieza el primer día para el que exista un `forecast.json` guardado desde la víspera.
-
-## Prioridad de Hoppip / viento moderado — criterio editorial propio (no reproduce a Gabriel)
-
-**A partir de aquí, reproducir exactamente las decisiones editoriales de
-Gabriel deja de ser el objetivo.** Las comparaciones
-(`spec/research/gabriel-comparisons/`) siguen siendo evidencia útil para
-motivar revisiones de la prioridad, pero PokéTiempo construye su propia
-jerarquía meteorológica, coherente y defendible por sí misma — no una
-imitación de la cuenta de Instagram original. Ningún hallazgo de esas
-comparaciones se cita aquí como "la regla de Gabriel confirmada", solo
-como el motivo que llevó a revisar `MAP_PRIORITY`.
-
-**Decisión:** Hoppip (viento moderado — `assignByWind` y su umbral de
-20 km/h, sin tocar) es una condición secundaria en el mapa. El mapa
-muestra un único Pokémon por ubicación; el viento moderado se representa
-solo cuando no existe un fenómeno significativo ni una temperatura no
-neutral que comunique mejor el estado meteorológico del lugar. Cambio
-exclusivo de `MAP_PRIORITY` (presentación, 004) — `assignPokemon` (003) y
-`assignByWind` no se tocan, ambos siguen devolviendo exactamente lo mismo
-que antes.
-
-Orden resultante en la zona afectada de `MAP_PRIORITY` (de más a menos
-prioridad):
-
-1. Fenómenos significativos ya prioritarios, sin cambios: aviso rojo
-   costero, tormenta, nieve, calima, niebla, lluvia, oleaje.
-2. Viento fuerte o superior (`dragonite`, `rayquaza`, `tornadus`) — sube
-   por encima de Hoppip: si el viento ya es lo bastante fuerte para una
-   forma más severa que Hoppip, esa forma debe ganar, no quedar tapada
-   por el propio viento moderado. `moltres` no se toca.
-3. Temperatura relevante — todos los tramos térmicos excepto
-   `castform-sun`: `snorunt`, `solrock`, `charmander`, `charmeleon`,
-   `magmar`, `groudon`, `groudon-primal`. Suben por encima de Hoppip: una
-   temperatura no neutral comunica mejor el día que un viento moderado.
-4. `hoppip` — viento moderado, cuando nada de lo anterior aplica.
-5. Representaciones ordinarias/neutrales, por debajo de Hoppip: `castform`
-   (nuboso/cubierto), `altaria` (poco nuboso), `castform-sun` (banda
-   térmica neutral + despejado). Ninguna de las tres se considera un
-   fenómeno significativo al nivel de tormenta/nieve/calima/niebla/
-   lluvia/oleaje — son la lectura por defecto de un día sin nada más que
-   contar, y ahora ceden tanto ante temperatura relevante como ante
-   viento moderado.
-
-Esto resuelve, como decisión editorial explícita — no como conclusión de
-las comparaciones — el punto que quedaba abierto arriba sobre si
-`castform` debía ceder ante temperatura igual que Altaria: ahora sí cede,
-tanto ante temperatura como ante Hoppip. La evidencia acumulada sobre esa
-relación nunca fue concluyente en ninguna dirección (día 11: 3 casos a
-favor de "nuboso gana a temperatura"; día 15: 2 contraejemplos directos;
-día 16: n=3 tras corregir un error de categoría, insuficiente) — no se
-zanja aquí el criterio de Gabriel, se fija el criterio propio de
-PokéTiempo.
-
-Moltres, oleaje, lluvia, calima, tormenta, niebla, nieve, Zapdos/Thundurus
-y todos los umbrales térmicos y de viento quedan exactamente igual que
-antes de este cambio.
+Este orden es exclusivamente de presentación: ni `assignPokemon` ni
+ningún umbral de dominio (`assignByWind` incluido) se ven afectados por
+él.
 
 ## Riesgos
 

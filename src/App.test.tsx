@@ -7,6 +7,6 @@ describe('App', () => {
   it('renders without crashing', () => {
     render(<App />)
 
-    expect(screen.getByRole('heading', { name: 'Poketiempo' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'POKETIEMPO' })).toBeInTheDocument()
   })
 })

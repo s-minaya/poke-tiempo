@@ -1,3 +1,26 @@
+@use 'sass:math';
+@use 'breakpoints' as bp;
+
+// Divisor unitless para la fórmula fluida de más abajo: a `$breakpoint-desktop-large`
+// (viewport = 100vw = esa anchura), `100vw / $fluid-root-divisor` debe dar 10px
+// (mismo resultado que `62.5%` de los 16px por defecto del navegador) — por
+// eso se divide la anchura de referencia entre 10. `math.div` dos veces
+// porque la primera anula la unidad `px` del breakpoint (CSS `calc()` exige
+// que el divisor de una división sea un número sin unidad).
+$fluid-root-divisor: math.div(math.div(bp.$breakpoint-desktop-large, 1px), 10);
+
+// Mismo cálculo para el eje vertical: la altura real de la composición a
+// `$breakpoint-desktop-large` (cabecera + mapa, medida con Playwright —
+// 006-plan.md) es ~950px con la raíz a 10px — de ahí este divisor. Sin
+// este término, un viewport ancho pero bajo (portátil típico) no encoge
+// lo suficiente y Canarias/el resto del mapa quedan por debajo del
+// pliegue, forzando scroll vertical — justo lo que una réplica fija no
+// debe hacer (mission.md). La altura del mapa que cuenta aquí es la del
+// contenido real (`seaBottom` en `SpainMap.tsx`), no la del `<svg>` sin
+// recortar — ese `<svg>` reserva casi un 16% de aire por debajo de
+// Canarias (`BOTTOM_BAND`, 004-plan.md) que ya no forma parte de su caja.
+$fluid-root-height-divisor: 95.01;
+
 // Reseteo base. font-size: 62.5% en html hace que 1rem = 10px en el navegador
 // por defecto (16px), así el resto del proyecto puede pensar en rem como si fueran px.
 *,
@@ -8,8 +31,17 @@
   padding: 0;
 }
 
+// La composición (cabecera + leyenda + mapa) es una réplica fija que escala
+// como una sola unidad a cualquier tamaño de pantalla (mission.md → "Réplica
+// fija, no una app adaptativa"), en vez de reorganizarse por breakpoint. Como
+// el resto del proyecto ya usa `rem` para todo, basta con que la raíz sea
+// fluida: 1rem escala en proporción directa al más restrictivo de ancho y
+// alto de viewport (sin mínimo — nunca desborda ni fuerza scroll, se
+// reduce), tope en 62.5% (1rem = 10px) — el mismo valor con el que están
+// pensados el resto de tamaños del proyecto — para que no siga creciendo
+// en monitores muy grandes.
 html {
-  font-size: 62.5%;
+  font-size: min(calc(100vw / #{$fluid-root-divisor}), calc(100vh / #{$fluid-root-height-divisor}), 62.5%);
 }
 
 body {

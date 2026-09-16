@@ -12,14 +12,18 @@ export interface LocationView {
   y: number
   region: 'main' | 'canary'
   pokemonId: PokedexId | null
+  minC: number | null
+  maxC: number | null
 }
 
 /**
  * Cruza los 74 `Location` con el `forecast` del día: `assignPokemon` (003)
  * decide qué Pokémon le corresponden a cada lugar y `pickMapPokemon` (004)
- * elige cuál de esos se dibuja. Un lugar sin entrada en
- * `forecast.locations` (falló en el pipeline, ver `002-plan.md`) no rompe
- * nada — se queda sin Pokémon, con su posición intacta.
+ * elige cuál de esos se dibuja; `minC`/`maxC` viajan tal cual de
+ * `temperature` para que el marcador (005) pinte su propia mínima/máxima.
+ * Un lugar sin entrada en `forecast.locations` (falló en el pipeline, ver
+ * `002-plan.md`) no rompe nada — se queda sin Pokémon ni temperatura, con
+ * su posición intacta.
  */
 export function buildLocationViews(locations: readonly Location[], forecast: Forecast): LocationView[] {
   const forecastByLocationId = new Map(forecast.locations.map((locationForecast) => [locationForecast.locationId, locationForecast]))
@@ -40,6 +44,8 @@ export function buildLocationViews(locations: readonly Location[], forecast: For
       y: point.y,
       region: point.region,
       pokemonId,
+      minC: locationForecast?.temperature.minC ?? null,
+      maxC: locationForecast?.temperature.maxC ?? null,
     }
   })
 }

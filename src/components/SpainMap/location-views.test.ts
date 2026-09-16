@@ -65,12 +65,16 @@ describe('buildLocationViews', () => {
     expect(typeof views[0].x).toBe('number')
     expect(typeof views[0].y).toBe('number')
     expect(views[0].region).toBe('main')
+    expect(views[0].minC).toBe(30)
+    expect(views[0].maxC).toBe(42)
   })
 
-  it('lugar sin entrada en forecast.locations: sin Pokémon, pero con posición', () => {
+  it('lugar sin entrada en forecast.locations: sin Pokémon, sin temperatura, pero con posición', () => {
     const views = buildLocationViews([location({ id: 'a-coruna' })], forecast([]))
 
     expect(views[0].pokemonId).toBeNull()
+    expect(views[0].minC).toBeNull()
+    expect(views[0].maxC).toBeNull()
     expect(typeof views[0].x).toBe('number')
     expect(typeof views[0].y).toBe('number')
   })

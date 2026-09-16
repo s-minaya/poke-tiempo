@@ -1,0 +1,100 @@
+@use '../../styles/abstracts/variables' as vars;
+
+// Poketiempo Unown: fuente propia vectorizada a partir del alfabeto Unown
+// (spec/features/005-header-and-legend/unown/, tech-stack.md → Identidad
+// visual). Único consumidor del título "POKETIEMPO"; Legend también la usa
+// para su encabezado ("Leyenda").
+@font-face {
+  font-family: 'Poketiempo Unown';
+  src: url('../../assets/fonts/poketiempo-unown.woff2') format('woff2');
+  font-display: swap;
+}
+
+.header {
+  // Dos custom properties en el bloque raíz, redefinidas por cada
+  // modificador de mood — título y línea de previsión leen el mismo
+  // relleno/borde sin duplicar selectores (tech-stack.md → convenciones de
+  // variables SCSS).
+  --mood-fill: #{vars.$color-green};
+  --mood-border: #{vars.$header-mood-neutral-border};
+
+  // `grid-area: header` (App.scss) ocupa toda la fila superior, columnas
+  // incluidas — el mismo azul que `.spain-map__sea`, para que se lea como
+  // una única superficie continua entre cabecera y mapa, no dos bloques de
+  // color separados. `padding-inline` vive aquí (no en el contenedor)
+  // porque el azul debe llegar de borde a borde de esa fila.
+  grid-area: header;
+  background: vars.$map-sea;
+  padding-inline: 2rem;
+  display: flex;
+
+  // Réplica fija (006-plan.md): título y previsión se mantienen siempre en
+  // la misma fila — la composición se reduce de tamaño junto con el resto
+  // de la página (raíz fluida, `_reset.scss`), nunca se reorganiza.
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.2rem;
+  padding-block: 1.6rem;
+
+  &--gelid {
+    --mood-fill: #{vars.$header-mood-gelid};
+    --mood-border: #{vars.$header-mood-gelid-border};
+  }
+
+  &--cold {
+    --mood-fill: #{vars.$color-sky-blue};
+    --mood-border: #{vars.$header-mood-cold-border};
+  }
+
+  &--neutral {
+    --mood-fill: #{vars.$color-green};
+    --mood-border: #{vars.$header-mood-neutral-border};
+  }
+
+  &--heat {
+    --mood-fill: #{vars.$header-mood-heat};
+    --mood-border: #{vars.$header-mood-heat-border};
+  }
+
+  &--sweltering {
+    --mood-fill: #{vars.$header-mood-sweltering-fill};
+    --mood-border: #{vars.$header-mood-sweltering-border};
+  }
+
+  &__title,
+  &__forecast {
+    color: var(--mood-fill);
+  }
+
+  &__title {
+    font-family: vars.$font-title;
+
+    // "POKETIEMPO" no puede partirse en dos líneas (es una palabra sin
+    // espacios): un único tamaño, sin pasos por breakpoint — toda la
+    // composición escala junto con el `rem` de la raíz (`_reset.scss`).
+    font-size: 4.8rem;
+    letter-spacing: 0.05em;
+
+    // Poketiempo Unown solo tiene un peso propio (no trae "bold" real):
+    // esto es negrita sintética del navegador, más presencia sin comerse
+    // los agujeros de los glifos (el "ojo" de cada letra).
+    font-weight: 700;
+  }
+
+  &__forecast {
+    font-family: vars.$font-heading;
+
+    // Peso visual comparable al título, como en la imagen de referencia
+    // original — la previsión no es un texto secundario discreto.
+    font-size: 2.4rem;
+    letter-spacing: 0.03em;
+
+    // Aquí sí --mood-border: un matiz (mismo tono que el relleno, más
+    // oscuro — ver _variables.scss), no un contorno negro — a los glifos
+    // finos de Pixelify Sans un borde negro se veía como un contorno duro.
+    // Sin ningún borde, el relleno tampoco se separaba bien del mar en
+    // varios moods (ej. "cold"/"neutral", muy cercanos en luminosidad a
+    // $map-sea).
+    -webkit-text-stroke: 1px var(--mood-border);
+  }
+}
