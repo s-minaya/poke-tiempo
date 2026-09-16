@@ -23,21 +23,17 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 
 **005 · Cabecera y leyenda** — cabecera con "POKETIEMPO" (fuente propia Poketiempo Unown, vectorizada del alfabeto Unown) y la línea de previsión, ambas con un mood térmico dinámico según la temperatura que predomina ese día entre los 74 lugares (`thermal-mood.ts`). Leyenda dinámica (`Legend`): solo los Pokémon que de verdad aparecen hoy en el mapa, deduplicados, en el orden de `MAP_PRIORITY`, cada uno con su sprite y su descripción real. Mínima/máxima sobre cada `LocationMarker`, coloreadas por su propia franja de temperatura. Paleta de color y territorios independientes por país en el mapa (mar, España, Portugal, Andorra, contexto norteafricano, marco de Canarias). Créditos (`Credits`): fuentes de datos y autoría de la cuenta original, en HTML semántico. Amplía el motor de asignación (003): `castform-sun` también por cielo despejado, segundo camino físico de Mega Gyarados, y Moltres ("viento cálido") como 25º `PokedexId` — ver `003-plan.md`. Ver `features/005-header-and-legend/`.
 
-## En curso 🚧
-
-**006 · Responsive y accesibilidad** — la composición (cabecera, leyenda, mapa) es una réplica fija que escala como una sola unidad a cualquier tamaño de pantalla, igual que el post de Instagram original (`mission.md` → "Réplica fija, no una app adaptativa"): nunca se reorganiza por breakpoint, solo cambia de tamaño mediante una raíz `rem` fluida (`_reset.scss`). Corrige además el trazo del contexto norteafricano y confirma que ningún `LocationMarker` de los 74 queda completamente tapado por otro. **No se cierra todavía**: la alternativa textual completa del mapa, el disclaimer de Pokémon y la auditoría de accesibilidad quedan pendientes hasta que exista la portada de entrada (Loader, ver Backlog) y Profesor Oak (007) — ver `006-spec.md` → "Fuera de alcance". Ver `features/006-responsive-and-accessibility/`.
-
 ## Siguiente 🔜
 
-**Portada de entrada (Loader)** — ver "Backlog / ideas" más abajo; bloquea el cierre de la 006.
+**Portada de entrada (Loader)** — ver "Backlog / ideas" más abajo.
 
 ## Orden previsto 📋
 
-_Orden razonado, no comprometido. Cada una necesita su spec antes de tocar código._
+_Orden razonado, no comprometido. Cada una necesita su spec antes de tocar código. Profesor Oak va antes que el cierre de la 006 a propósito: la 006 no se da por terminada hasta que exista todo lo que viene antes en esta lista._
 
 1. **Portada de entrada (Loader)** — sin spec numerada todavía (hoy vive en "Backlog / ideas"); se formaliza antes de tocar código, como cualquier feature nueva.
 2. **007 · Profesor Oak** — 3 diálogos narrativos diarios que traducen la previsión ya decidida (002 + 003) a texto, con Groq (capa gratuita) como redactor y una capa de fallback local sin IA. Diseño detallado en `features/007-professor-oak/`. La lógica de asignación Pokémon (qué Pokémon toca hoy) sigue siendo exclusivamente de la 003 — Oak nunca decide eso, solo lo narra.
-3. **Cierre de la 006** — una vez existan la portada de entrada y Oak.
+3. **Cierre de la 006 · Responsive y accesibilidad** — lo ya construido funciona y está commiteado: la composición (cabecera, leyenda, mapa) es una réplica fija que escala como una sola unidad a cualquier tamaño de pantalla, igual que el post de Instagram original (`mission.md` → "Réplica fija, no una app adaptativa"), corrige el trazo del contexto norteafricano y confirma que ningún `LocationMarker` de los 74 queda completamente tapado por otro. Pero **no se cierra hasta llegar aquí**: la alternativa textual completa del mapa, el disclaimer de Pokémon y la auditoría de accesibilidad quedan pendientes hasta que existan los dos puntos anteriores de esta lista — ver `006-spec.md` → "Fuera de alcance". Ver `features/006-responsive-and-accessibility/`.
 
 ## Decisiones pendientes 🤔
 
