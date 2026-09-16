@@ -23,17 +23,21 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 
 **005 · Cabecera y leyenda** — cabecera con "POKETIEMPO" (fuente propia Poketiempo Unown, vectorizada del alfabeto Unown) y la línea de previsión, ambas con un mood térmico dinámico según la temperatura que predomina ese día entre los 74 lugares (`thermal-mood.ts`). Leyenda dinámica (`Legend`): solo los Pokémon que de verdad aparecen hoy en el mapa, deduplicados, en el orden de `MAP_PRIORITY`, cada uno con su sprite y su descripción real. Mínima/máxima sobre cada `LocationMarker`, coloreadas por su propia franja de temperatura. Paleta de color y territorios independientes por país en el mapa (mar, España, Portugal, Andorra, contexto norteafricano, marco de Canarias). Créditos (`Credits`): fuentes de datos y autoría de la cuenta original, en HTML semántico. Amplía el motor de asignación (003): `castform-sun` también por cielo despejado, segundo camino físico de Mega Gyarados, y Moltres ("viento cálido") como 25º `PokedexId` — ver `003-plan.md`. Ver `features/005-header-and-legend/`.
 
-**006 · Responsive y accesibilidad (parcial)** — la composición (cabecera, leyenda, mapa) es una réplica fija que escala como una sola unidad a cualquier tamaño de pantalla, igual que el post de Instagram original (`mission.md` → "Réplica fija, no una app adaptativa"): nunca se reorganiza por breakpoint, solo cambia de tamaño mediante una raíz `rem` fluida (`_reset.scss`). Corrige además el trazo del contexto norteafricano (mismo que el resto de siluetas) y confirma que ningún `LocationMarker` de los 74 queda completamente tapado por otro. **Quedan fuera de esta ronda** (ver `006-spec.md` → "Fuera de alcance"): alternativa textual completa del mapa más allá del nombre accesible por marcador, disclaimer de Pokémon, y auditoría completa de accesibilidad (foco, contraste exhaustivo, navegación por teclado) — pendientes de una ampliación posterior de esta misma spec. Ver `features/006-responsive-and-accessibility/`.
+## En curso 🚧
+
+**006 · Responsive y accesibilidad** — la composición (cabecera, leyenda, mapa) es una réplica fija que escala como una sola unidad a cualquier tamaño de pantalla, igual que el post de Instagram original (`mission.md` → "Réplica fija, no una app adaptativa"): nunca se reorganiza por breakpoint, solo cambia de tamaño mediante una raíz `rem` fluida (`_reset.scss`). Corrige además el trazo del contexto norteafricano y confirma que ningún `LocationMarker` de los 74 queda completamente tapado por otro. **No se cierra todavía**: la alternativa textual completa del mapa, el disclaimer de Pokémon y la auditoría de accesibilidad quedan pendientes hasta que exista la portada de entrada (Loader, ver Backlog) y Profesor Oak (007) — ver `006-spec.md` → "Fuera de alcance". Ver `features/006-responsive-and-accessibility/`.
 
 ## Siguiente 🔜
 
-**007 · Profesor Oak** — ver el detalle en "Orden previsto" más abajo.
+**Portada de entrada (Loader)** — ver "Backlog / ideas" más abajo; bloquea el cierre de la 006.
 
 ## Orden previsto 📋
 
 _Orden razonado, no comprometido. Cada una necesita su spec antes de tocar código._
 
-1. **007 · Profesor Oak** — 3 diálogos narrativos diarios que traducen la previsión ya decidida (002 + 003) a texto, con Groq (capa gratuita) como redactor y una capa de fallback local sin IA. Diseño detallado en `features/007-professor-oak/`. La lógica de asignación Pokémon (qué Pokémon toca hoy) sigue siendo exclusivamente de la 003 — Oak nunca decide eso, solo lo narra.
+1. **Portada de entrada (Loader)** — sin spec numerada todavía (hoy vive en "Backlog / ideas"); se formaliza antes de tocar código, como cualquier feature nueva.
+2. **007 · Profesor Oak** — 3 diálogos narrativos diarios que traducen la previsión ya decidida (002 + 003) a texto, con Groq (capa gratuita) como redactor y una capa de fallback local sin IA. Diseño detallado en `features/007-professor-oak/`. La lógica de asignación Pokémon (qué Pokémon toca hoy) sigue siendo exclusivamente de la 003 — Oak nunca decide eso, solo lo narra.
+3. **Cierre de la 006** — una vez existan la portada de entrada y Oak.
 
 ## Decisiones pendientes 🤔
 
@@ -49,9 +53,9 @@ _Bloquean o condicionan alguna de las features de arriba. Ninguna se resuelve po
 
 ## Backlog / ideas 💡
 
-_Sin comprometer ni ordenar. Ideas que respetan la constitución._
+_Sin comprometer ni ordenar, salvo la primera — ver "Orden previsto"._
 
-- **Portada de entrada** — `Loader` → portada/landing → botón "Empezar" → aplicación. Ese botón serviría también como la interacción explícita del usuario que los navegadores exigen antes de habilitar el audio de Profesor Oak (007). `src/components/Loader/` ya existe como pieza aislada a la espera de esta feature (sin montar en `App.tsx`); no representa una espera de red — `forecast.json` ya llega generado estáticamente en build time — así que su uso previsto es precarga/preparación de assets de esa pantalla de entrada, no datos meteorológicos.
+- **Portada de entrada** — `Loader` → portada/landing → botón "Empezar" → aplicación. Ese botón serviría también como la interacción explícita del usuario que los navegadores exigen antes de habilitar el audio de Profesor Oak (007). `src/components/Loader/` ya existe como pieza aislada, sin montar en `App.tsx`; no espera a ningún dato — `forecast.json` ya llega generado estáticamente en build time — así que su uso previsto es precarga/preparación de assets de esa pantalla de entrada.
 - **Histórico de previsiones** — guardar un `forecast.json` por día en vez de sobrescribir. No necesita base de datos: el propio historial de git ya versiona cada día, y un archivo por fecha permitiría navegar hacia atrás.
 - **Más de un día de previsión** — AEMET devuelve hasta 7 días en la misma respuesta; hoy solo se usa el correspondiente a `targetDate` (mañana), así que ampliarlo no cuesta peticiones extra.
 - **Optimización SEO** — metadatos, imagen de previsualización para redes (que sería el mapa del día, generado en el mismo pipeline).

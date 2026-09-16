@@ -1,14 +1,27 @@
 @use '../../styles/abstracts/variables' as vars;
 
 .credits {
-  grid-area: credits;
-  padding: 1.2rem 2rem;
+  // Comparte celda con `.spain-map` (misma `grid-area: map`) en vez de
+  // tener su propia fila: una fila propia suma altura fija que la fórmula
+  // fluida de `_reset.scss` no contempla y provoca scroll vertical — la
+  // réplica fija (`mission.md`) no puede crecer más allá de lo que esa
+  // fórmula ya mide. Se ancla al final de la celda del mapa, centrado, por
+  // encima de la franja de contexto norteafricano (zona decorativa, sin
+  // `LocationMarker` con el que pueda competir — `SpainMap.tsx`).
+  grid-area: map;
+  place-self: end center;
+  z-index: 1;
+  padding: 0.4rem 1.2rem;
+  border-radius: 999px;
   font-family: vars.$font-body;
 
-  // Discreta pero legible — no compite con la cabecera/leyenda, pero el
-  // contraste sobre fondo blanco (fuera del azul del mar) sigue siendo
-  // suficiente sin necesitar su propio color de mood.
-  font-size: 1.4rem;
+  // Fondo propio (a diferencia del resto de textos superpuestos al mar,
+  // que usan borde en vez de relleno): aquí el fondo real varía según qué
+  // haya debajo (mar, tierra, contexto norteafricano), así que un borde de
+  // mood no bastaría en todos los casos — una pastilla clara sí garantiza
+  // contraste sea cual sea el color de fondo real en ese punto.
+  background: rgb(255 255 255 / 80%);
+  font-size: 1.2rem;
   color: vars.$color-near-black;
   text-align: center;
 

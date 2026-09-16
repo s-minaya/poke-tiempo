@@ -72,9 +72,9 @@ La distinción de a qué lugar corresponde cada Pokémon en zonas densas se resu
 
 ## 6 — Responsive
 
-Un único `viewBox` fijo con el SVG a `width: 100%; height: auto` — el aspecto no cambia entre breakpoints. El `viewBox` raíz lleva las dos extensiones del punto 3 (origen en `x = -130`, ancho total `960 + 130 + 150`, alto `932`), como un único valor fijo, sin recálculo en JS.
+Un único `viewBox` fijo con el SVG a `width: 100%; height: auto` — el aspecto no cambia nunca. El `viewBox` raíz lleva las dos extensiones del punto 3 (origen en `x = -130`, ancho total `960 + 130 + 150`, alto `932`), como un único valor fijo, sin recálculo en JS.
 
-**Dos topes de `max-width`:** a partir de desktop (1200px) el mapa sube a 110rem, y a partir de desktop grande (1600px) sube a 150rem — el mapa es la pieza central de la página y hay sitio de sobra en una pantalla ancha. Sigue siendo un `max-width` (nunca un ancho fijo mayor que el contenedor), así que nunca fuerza scroll horizontal — comprobado con Playwright hasta 1920px, sin `hasHorizontalScroll`.
+**Sin `max-width` propio del mapa** — el tope de ancho de toda la composición vive en el contenedor (`app__layout`, `005-plan.md` → punto 7), no en `SpainMap.scss`: desde la 006, la página entera es una réplica fija de escala fluida (`mission.md`), no un mapa que cambia de tamaño por su cuenta en distintos breakpoints.
 
 ## Sprites — resolución de archivo
 

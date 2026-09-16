@@ -40,8 +40,8 @@ const TERRITORY_COUNTRY: Record<keyof typeof territoryPaths, 'es' | 'pt' | 'ad'>
  * detrás — sin lugar propio, sin `LocationMarker`. Canarias, mucho más
  * lejos en la realidad, se mantiene como un recuadro aparte
  * (`TerritoryInset`), desplazado a la izquierda del ancho que ocupa la
- * península. Responsive vía `viewBox` — el mismo SVG escala en los 5
- * breakpoints, sin JS de resize.
+ * península. Responsive vía `viewBox` — el mismo SVG escala junto con el
+ * resto de la composición (raíz fluida, `_reset.scss`), sin JS de resize.
  *
  * `role="group"` en el SVG raíz, no `role="img"`: con `role="img"` los 74
  * `LocationMarker` de dentro (cada uno con su propio nombre accesible)

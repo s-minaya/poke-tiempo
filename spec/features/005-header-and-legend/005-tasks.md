@@ -86,7 +86,7 @@ _Ver `005-spec.md` → "Ampliación de alcance" y `005-plan.md` → punto 8._
 - [x] `src/App.scss` — amplía (no repite) el grid del bloque 5 (`app__layout`): añade `credits` a `grid-template-areas` (fila propia, a todo el ancho, bajo leyenda/mapa) en la única plantilla del grid (réplica fija, sin plantilla alternativa por breakpoint desde la 006).
 - [x] `App.tsx` — monta `<Credits />` junto a `Header`/`Legend`/`SpainMap` dentro de `app__layout`; `App.test.tsx` actualizado (comprueba el `<footer>` con `getByRole('contentinfo')`).
 - [x] `npm run lint`, `npm run test` (357/357) y `npm run build` sin errores.
-- [ ] Comprobación visual (Playwright) de la fila de créditos añadida al grid — la 006 verificó la composición cabecera/leyenda/mapa antes de que existiera esta fila; pendiente confirmar que no rompe el ajuste de altura (`$legend-max-height`, `$fluid-root-height-divisor`) que la 006 afinó sin ella.
+- [x] Comprobación visual (Playwright, 1400/1600/1920px): la primera versión de `Credits` como fila propia del grid rompía el ajuste de altura de la 006 y forzaba scroll vertical. Corregido — `Credits` comparte celda con `SpainMap` (`grid-area: map`), anclado al final y centrado, como una pastilla sobre el contexto norteafricano. Sin scroll en ningún ancho probado, texto legible.
 
 ## Bloque 8 — Cierre ✅
 

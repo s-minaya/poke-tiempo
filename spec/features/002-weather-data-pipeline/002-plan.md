@@ -120,9 +120,9 @@ interface Wind { speedKmh: number | null; gustKmh: number | null }
 
 **Semántica global de `null`:**
 
-- `null` = **no existe un valor normalizado fiable disponible** para esa métrica, sea cual sea la razón (la fuente no tiene capacidad estructural, o sí la tiene pero el complemento de hoy falló, o el dato simplemente falta). `null` **no** implica "esta fuente nunca puede darlo" — solo que ahora mismo no hay un valor del que fiarse.
+- `null` = **no existe un valor normalizado fiable disponible** para esa métrica, sea cual sea la razón (la fuente no tiene capacidad estructural, o sí la tiene pero el complemento falló en esta ejecución, o el dato simplemente falta). `null` **no** implica "esta fuente nunca puede darlo" — solo que ahora mismo no hay un valor del que fiarse.
 - `false`/`0` = la métrica **se ha podido evaluar** y confirma ausencia/cero. Solo se usa cuando de verdad hubo una evaluación, nunca como valor por defecto ante la duda.
-- **La razón de un `null`** (sin capacidad estructural / falló el complemento hoy / dato ausente) no se mete dentro de cada campo individual — eso llevaría a envolver cada métrica en un objeto complejo, justo lo que se quiere evitar. Vive aparte, en una lista dispersa a nivel de `LocationForecast`:
+- **La razón de un `null`** (sin capacidad estructural / falló el complemento en esta ejecución / dato ausente) no se mete dentro de cada campo individual — eso llevaría a envolver cada métrica en un objeto complejo, justo lo que se quiere evitar. Vive aparte, en una lista dispersa a nivel de `LocationForecast`:
 
 ```ts
 type MetricPath =
@@ -136,7 +136,7 @@ interface Degradation {
 }
 ```
 
-`degradations` solo lista métricas para las que **existía un complemento configurado y se intentó** pero falló hoy — no aparece nada para `calima` en Portugal/Andorra (ahí nunca hay complemento configurado, no es una degradación puntual, es que esa métrica no se persigue con esa fuente, punto). Si `degradations` está vacío o ausente, todos los `null` del resto del forecast son "no aplica/sin capacidad", no "falló algo hoy".
+`degradations` solo lista métricas para las que **existía un complemento configurado y se intentó** pero falló en esta ejecución — no aparece nada para `calima` en Portugal/Andorra (ahí nunca hay complemento configurado, no es una degradación puntual, es que esa métrica no se persigue con esa fuente, punto). Si `degradations` está vacío o ausente, todos los `null` del resto del forecast son "no aplica/sin capacidad", no "falló algo en esta ejecución".
 
 ```ts
 interface Marine {
@@ -149,10 +149,10 @@ interface Marine {
 type MarineAvailability =
   | { status: 'ok'; data: Marine }
   | { status: 'not_applicable' }   // Location.coastal === false — nunca va a haber dato, es un hecho estructural
-  | { status: 'error' }             // Location.coastal === true, pero la consulta de hoy falló
+  | { status: 'error' }             // Location.coastal === true, pero la consulta de esta ejecución falló
 ```
 
-`marine: null` a secas mezclaba dos cosas muy distintas (lugar de interior vs. costero-pero-falló-hoy) — igual que ya distinguíamos en `alerts`, aquí también hace falta el tercer estado explícito. Fetch de marine siempre se intenta cuando `coastal === true`, sin condición estacional ni de "si hace falta" — así el único motivo real para `error` es un fallo de red/consulta ese día, nunca ambigüedad de si se intentó.
+`marine: null` a secas mezclaba dos cosas muy distintas (lugar de interior vs. costero-pero-falló-en-esta-ejecución) — igual que ya distinguíamos en `alerts`, aquí también hace falta el tercer estado explícito. Fetch de marine siempre se intenta cuando `coastal === true`, sin condición estacional ni de "si hace falta" — así el único motivo real para `error` es un fallo de red/consulta ese día, nunca ambigüedad de si se intentó.
 
 ### Avisos oficiales — vocabulario honesto entre AEMET e IPMA
 
@@ -198,7 +198,7 @@ Mapeo verificado contra categorías reales de ambas fuentes (no supuesto):
 type AlertsAvailability =
   | { status: 'ok'; alerts: OfficialAlert[] }   // consultado; alerts puede ser [] (sin avisos activos)
   | { status: 'unsupported' }                     // la fuente no tiene este producto (Open-Meteo/Andorra, siempre)
-  | { status: 'error' }                             // el producto existe pero la consulta de hoy falló
+  | { status: 'error' }                             // el producto existe pero la consulta de esta ejecución falló
 ```
 
 ### Provenance — trazabilidad por métrica, no por bloque entero
@@ -236,7 +236,7 @@ interface LocationForecast {
   alerts: AlertsAvailability
 
   provenance: Provenance
-  degradations?: Degradation[]                // solo métricas con complemento intentado y fallido hoy
+  degradations?: Degradation[]                // solo métricas con complemento intentado y fallido en esta ejecución
   primarySourceDescription: string | null      // texto literal SOLO de la fuente principal — nunca mezclado
 }
 ```

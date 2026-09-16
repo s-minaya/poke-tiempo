@@ -35,5 +35,5 @@ Mientras tanto, esta feature **no se implementa** — está bloqueada, no en des
 
 - Definir el contrato de salida de la 003 — se hace en su propia spec.
 - Definir la estructura de avisos oficiales — ya está cerrada en la 002 (`AlertsAvailability`, vocabulario de `AlertPhenomenon`), Oak solo la consume.
-- **Representar DANA** — el contrato actual de la 002 no la incluye ni la incluirá como parte de esta ronda; queda como capacidad futura del roadmap si algún día aparece una fuente fiable, no como algo pendiente "de la spec de la 002" tal como decía antes.
+- **Representar DANA** — el contrato actual de la 002 no la incluye; queda como capacidad futura del roadmap si algún día aparece una fuente fiable.
 - La UX final del componente (carrusel, flechas, indicador) — se decide en el `007-plan.md` cuando se implemente, no aquí.

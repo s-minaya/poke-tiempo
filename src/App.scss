@@ -8,8 +8,7 @@
     display: grid;
     grid-template-areas:
       'header header'
-      'legend map'
-      'credits credits';
+      'legend map';
     grid-template-columns: minmax(22rem, 26rem) 1fr;
 
     // `stretch` (el valor por defecto de grid): la leyenda ocupa toda la
