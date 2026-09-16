@@ -8,5 +8,6 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'POKETIEMPO' })).toBeInTheDocument()
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument()
   })
 })

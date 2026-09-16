@@ -1,5 +1,6 @@
 import type { Forecast } from './domain/types.ts'
 
+import Credits from './components/Credits/Credits.tsx'
 import Header from './components/Header/Header.tsx'
 import Legend from './components/Legend/Legend.tsx'
 import SpainMap from './components/SpainMap/SpainMap.tsx'
@@ -14,13 +15,15 @@ function App() {
   return (
     <main>
       {/* Grid con nombres de área (App.scss): cabecera arriba, ocupando
-          todo el ancho; leyenda bajo el título; mapa como cuerpo
-          (mission.md). Cada componente fija su propio `grid-area` en su
-          `.scss` — este contenedor solo define la plantilla. */}
+          todo el ancho; leyenda bajo el título; mapa como cuerpo; créditos
+          a todo el ancho debajo de los dos (mission.md). Cada componente
+          fija su propio `grid-area` en su `.scss` — este contenedor solo
+          define la plantilla. */}
       <div className="app__layout">
         <Header forecast={forecast} />
         <Legend forecast={forecast} />
         <SpainMap forecast={forecast} />
+        <Credits />
       </div>
     </main>
   )

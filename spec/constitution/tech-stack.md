@@ -57,7 +57,7 @@ Motivos, para que nadie los reabra por costumbre:
 - `src/components/` — componentes reutilizables. Un componente por carpeta, con su `.tsx`, `.scss` y `.test.tsx` del mismo nombre. El `.tsx` importa siempre su propio `.scss`.
 - `src/domain/` — lógica pura del proyecto: tipos compartidos y el motor de asignación de Pokémon. Sin React ni DOM. Es lo único que se testea de forma exhaustiva.
 - `src/data/` — `locations.ts` (generado) y `forecast.json` (generado a diario). Ninguno se edita a mano.
-- `src/styles/abstracts/` — `_breakpoints.scss`, `_variables.scss`, `_reset.scss` (reseteo base con `font-size: 62.5%`).
+- `src/styles/abstracts/` — `_breakpoints.scss`, `_variables.scss`, `_reset.scss` (reseteo base + raíz `rem` fluida, tope `62.5%` — ver "Escala (réplica fija, no breakpoints de reorganización)").
 - `src/styles/main.scss` — estilos globales.
 - `src/test/setup.ts` — setup de Vitest.
 - `scripts/` — código que solo se ejecuta en Node (descarga de AEMET, generación de listados, proyección de coordenadas). Nunca se importa desde `src/`.
@@ -98,7 +98,7 @@ El contrato de datos completo (tipos, ejes meteorológicos simultáneos, provena
 ## Convenciones de rendimiento (React)
 
 - Toda lista renderizada con `.map()` que tenga interacción por fila usa callbacks estables (`useCallback`, id como argumento, no capturado en closure) y el componente de fila envuelto en `React.memo`. **Aplica directamente al mapa:** son 74 marcadores con hover/foco.
-- `loading="lazy"` en `<img>` dentro de listas **solo cuando el contenido está por debajo del pliegue**. Los sprites del mapa no lo llevan: están todos visibles en la carga inicial y diferirlos empeoraría la carga percibida. La lista de respaldo en móvil sí lo lleva.
+- `loading="lazy"` en `<img>` dentro de listas **solo cuando el contenido está por debajo del pliegue**. Los sprites del mapa y los de la leyenda no lo llevan: la composición es una réplica fija que siempre cabe en pantalla (`mission.md`), así que todo está visible en la carga inicial y diferirlos empeoraría la carga percibida.
 - Ningún cálculo derivado (`filter`/`sort`/`map` sobre los datos) va sin `useMemo` si el componente se re-renderiza por motivos ajenos a ese cálculo.
 
 ## Convenciones de variables SCSS
@@ -118,13 +118,9 @@ El contrato de datos completo (tipos, ejes meteorológicos simultáneos, provena
 - **Sin estilos inline** salvo necesidad justificada (p. ej. un valor dinámico calculado en runtime que no tiene sentido como clase).
 - **Modificador BEM que cambia el color de varios elementos hijos: custom properties, no selectores anidados literales.** Stylelint exige kebab-case estricto en cualquier selector de clase escrito con `.`, y un elemento BEM escrito así fuera de la nomenclatura `&__`/`&--` lo rechaza por llevar `__`. Solución: declarar custom properties en el bloque raíz que cada hijo lee con `var(--foo)`, y redefinirlas dentro del modificador.
 
-### Breakpoints (mobile-first, `min-width`)
+### Escala (réplica fija, no breakpoints de reorganización)
 
-- `320px` — móvil pequeño (base, sin media query).
-- `480px` — móvil normal.
-- `768px` — tablet.
-- `1200px` — desktop.
-- `1600px` — desktop grande.
+**Desde la 006, la composición no se reorganiza por punto de corte** (`mission.md` → "Réplica fija, no una app adaptativa"): cabecera, leyenda y mapa mantienen siempre la misma disposición y las mismas proporciones entre sí, a cualquier tamaño de pantalla — lo único que cambia es el tamaño de la composición completa, mediante una raíz `rem` fluida (`html { font-size: min(...) }`, `_reset.scss`) en vez de plantillas de grid alternativas por `min-width`. `_breakpoints.scss` sigue existiendo, pero ya no se consume como puntos de corte de layout — `$breakpoint-mobile`/`$breakpoint-tablet`/`$breakpoint-desktop` no tienen ningún consumidor real hoy (candidatos a limpieza, ver "Convenciones de variables SCSS"); `$breakpoint-desktop-large` (1600px) sí se usa, pero como referencia numérica de la fórmula fluida (el ancho al que la raíz deja de crecer), no como `min-width` de una media query. `respond-from` (el mixin de `_breakpoints.scss`) no tiene ningún uso en el proyecto en este momento.
 
 ```scss
 // src/styles/abstracts/_breakpoints.scss
@@ -144,11 +140,33 @@ $breakpoint-desktop-large: 1600px;
 
 _Identidad: pixel art, interfaz de Game Boy, Pokédex de primera generación. No una app del tiempo moderna._
 
-- **Composición** (fijada por el usuario): título arriba a la izquierda, fecha de previsión arriba a la derecha, leyenda en columna bajo el título, mapa en el cuerpo.
-- **Tipografía del título:** **"Poketiempo Unown"**, fuente propia construida para el proyecto — no un archivo de terceros. Se vectorizó cada letra A–Z a partir de las imágenes de referencia del alfabeto Unown (`spec/features/005-header-and-legend/unown/`) con `potrace` y se compiló a `.woff2`/`.ttf` con `opentype.js`/`wawoff2` (herramientas de build, ninguna se añade como dependencia de la app). Como el propio glifo reproduce el diseño de Unown, queda cubierto por el mismo disclaimer de Pokémon que los sprites (fan project, sin monetización) — no hay licencia de fuente de terceros que anotar. Archivos en `src/assets/fonts/` (`poketiempo-unown.woff2` para web, `.ttf` de respaldo).
+- **Composición** (fijada por el usuario): título arriba a la izquierda, fecha de previsión arriba a la derecha, leyenda en columna bajo el título, mapa en el cuerpo, créditos a todo el ancho debajo de leyenda/mapa. Réplica fija (`mission.md`): la misma disposición y las mismas proporciones a cualquier tamaño de pantalla, sin reorganizarse por breakpoint.
+- **Tipografía del título:** **"Poketiempo Unown"**, fuente propia construida para el proyecto — no un archivo de terceros. Se vectorizó cada letra A–Z a partir de imágenes de referencia del alfabeto Unown con `potrace` y se compiló a `.woff2`/`.ttf` con `opentype.js`/`wawoff2` (herramientas de build, ninguna se añade como dependencia de la app) — las imágenes de referencia eran solo entrada de ese proceso puntual, no se conservan en el repositorio. Como el propio glifo reproduce el diseño de Unown, queda cubierto por el mismo disclaimer de Pokémon que los sprites (fan project, sin monetización) — no hay licencia de fuente de terceros que anotar. Archivos en `src/assets/fonts/` (`poketiempo-unown.woff2` para web, `.ttf` de respaldo).
   - _Descartadas:_ dos fuentes "Unown" de terceros (MangaShino/FontStruct, CC BY-SA 3.0; y "elementcollector1", que prohibía explícitamente su uso como webfont) — sustituidas por la vectorización propia porque ninguna reproducía el trazo original con suficiente fidelidad.
 - **Sprites:** pixel art de una sola generación/estilo, no mezclados. Redimensionados a 160px de lado máximo (el tamaño real de render en el mapa, 004, es muy inferior) y servidos como PNG indexado — comparado contra WebP sobre el mismo redimensionado, PNG queda por debajo en peso para este conjunto de sprites, así que WebP no entra. Se sirven desde el repositorio (`src/assets/sprites/`), no en caliente desde un servicio externo, y los originales de alta resolución no se commitean. ⚠️ **Origen y licencia pendientes de fijar.**
-- **Paleta:** ⚠️ **sin definir.** No inventar colores por libre: se proponen como opciones y se anotan aquí una vez elegidos.
+- **Paleta:** fijada en la 005, centralizada en `src/styles/abstracts/_variables.scss` — un hex repetido en más de un sitio usa una única variable, nunca dos con el mismo valor (ver "Convenciones de variables SCSS" más abajo).
+
+  | Uso | Valor | Variable |
+  |---|---|---|
+  | Mar (cabecera, leyenda, mapa) | `#B9FFFD` | `$map-sea` |
+  | España, Baleares, Ceuta, Melilla, Canarias | `#FFEBF6` | `$map-spain` |
+  | Portugal | `#F6FFEC` | `$map-portugal` |
+  | Andorra | `#FFF3B0` | `$map-andorra` |
+  | Contexto norteafricano (Marruecos/Argelia) | mismo que España, opacidad `0.5` | `$map-spain` + `$map-north-africa-opacity` |
+  | Marco de Canarias | `#42C7EC` | `$color-sky-blue` |
+  | Mood térmico "gelid" (< 0°C) | relleno `#3F6FE0` / borde `#163989` | `$header-mood-gelid` / `-border` |
+  | Mood térmico "cold" (0–<10°C) | relleno `#42C7EC` (`$color-sky-blue`) / borde `#10809F` | `$header-mood-cold-border` |
+  | Mood térmico "neutral" (10–<26°C) | relleno `#09E230` (`$color-green`) / borde `#046716` | `$header-mood-neutral-border` |
+  | Mood térmico "heat" (26–<35°C) | relleno `#EB6B59` / borde `#AF2815` | `$header-mood-heat` / `-border` |
+  | Mood térmico "sweltering" (>= 35°C) | relleno `#E54343` / borde `#941414` | `$header-mood-sweltering-fill` / `-border` |
+  | Temperatura de marcador "freezing" (< 0°C) | relleno blanco, borde `#7B2CBF` | `$marker-temp-freezing-stroke` |
+  | Temperatura de marcador "cool" (0–<10°C) | `#848DEE`, sin borde | `$marker-temp-cool` |
+  | Temperatura de marcador "mild" (10–20°C) | relleno blanco, borde `#09E230` (`$color-green`) | — |
+  | Temperatura de marcador "pleasant" (21–25°C) | relleno `#09E230` (`$color-green`), borde blanco | — |
+  | Temperatura de marcador "hot" (26–34°C) | `#E53935`, borde `#FFD54F` | `$marker-temp-hot` / `-stroke` |
+  | Temperatura de marcador "scorching" (>= 35°C) | `#9B1C31`, borde `#C69214` | `$marker-temp-scorching` / `-stroke` |
+
+  Los tonos de borde de mood son el mismo matiz que su relleno, un 25% más oscuro (HSL, mismo h/s, `-0.25` de lightness) — nunca negro plano, salvo el título de la cabecera (`$color-near-black` fijo en las cinco categorías, ver `005-plan.md` → Decisiones).
 - **Accesibilidad — daltonismo:** ningún significado depende solo del matiz. Cada condición se distingue por su Pokémon y por texto; el mapa debe seguir siendo legible en escala de grises. Cualquier estado que dependa del color (activo, hover, foco) se refuerza con una señal no cromática.
 
 ## Legal y atribución

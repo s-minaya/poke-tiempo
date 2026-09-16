@@ -1,6 +1,6 @@
 # 005 · Cabecera y leyenda — Plan
 
-**Estado:** propuesta
+**Estado:** implementado ✅
 
 ## Enfoque
 
@@ -92,7 +92,7 @@ $font-body: 'Nunito Sans', sans-serif; // leyenda + créditos + temperaturas del
     <p class="app-header__forecast">{headline}</p>
   </header>
   ```
-- **`Header.scss`** — dos custom properties (`--mood-fill`, `--mood-border`) redefinidas por cada modificador `--gelid/--cold/--neutral/--heat/--sweltering` (patrón ya fijado en `tech-stack.md` para modificadores BEM que cambian el color de varios hijos). El título y la previsión leen ambos `--mood-fill` para su color, pero el borde de cada uno es distinto (ver Decisiones): el título lleva `$color-near-black` fijo (no varía por mood) con `font-weight: 700` (negrita sintética — Poketiempo Unown solo trae un peso propio); la previsión lleva `--mood-border` (un matiz del propio relleno, no un contorno negro — a los glifos finos de Pixelify Sans un borde negro se ve como un contorno duro). Layout con `display: flex; justify-content: space-between; align-items: baseline` en el ancho base (título a la izquierda, previsión a la derecha) — sin quiebre por breakpoint todavía (eso se decide en la feature final); solo se comprueba que no fuerza scroll horizontal en los anchos que ya cubre la 004.
+- **`Header.scss`** — dos custom properties (`--mood-fill`, `--mood-border`) redefinidas por cada modificador `--gelid/--cold/--neutral/--heat/--sweltering` (patrón ya fijado en `tech-stack.md` para modificadores BEM que cambian el color de varios hijos). El título y la previsión leen ambos `--mood-fill` para su color, pero el borde de cada uno es distinto (ver Decisiones): el título lleva `$color-near-black` fijo (no varía por mood) con `font-weight: 700` (negrita sintética — Poketiempo Unown solo trae un peso propio); la previsión lleva `--mood-border` (un matiz del propio relleno, no un contorno negro — a los glifos finos de Pixelify Sans un borde negro se ve como un contorno duro). Layout con `display: flex; justify-content: space-between; align-items: baseline` (título a la izquierda, previsión a la derecha) — sin quiebre por breakpoint, a cualquier ancho: la composición es una réplica fija que escala como una sola unidad (`006-plan.md`), nunca se reorganiza.
 
 ## 3 — Mapa: paleta y territorios independientes
 
@@ -131,7 +131,7 @@ Se regenera `src/data/map-geometry.ts` con `npm run build:map` — archivo gener
 
 - **`src/components/SpainMap/pick-map-pokemon.ts`** — se exporta `MAP_PRIORITY` (ya existe, solo se le quita `const` interno por `export const`).
 - **`src/components/Legend/visible-map-pokemon.ts`** — `getVisibleMapPokemonIds(forecast: Forecast): PokedexId[]`: reutiliza `buildLocationViews(locations, forecast)` (la misma función que ya usa `SpainMap`, ninguna lógica duplicada), junta los `pokemonId` no nulos en un `Set` (deduplicación) y filtra `MAP_PRIORITY` por ese `Set` (orden de leyenda = orden de prioridad del mapa, sin copiar el array).
-- **`src/components/Legend/legend-metadata.ts`** — `LEGEND_METADATA: Record<PokedexId, string>` con las 24 etiquetas literales del enunciado (`castform-sun` describe su franja de temperatura, nunca "soleado").
+- **`src/components/Legend/legend-metadata.ts`** — `LEGEND_METADATA: Record<PokedexId, string>` con las 25 etiquetas literales del enunciado (`castform-sun` describe su franja de temperatura, nunca "soleado").
 - **`src/components/Legend/Legend.tsx`** — recibe `forecast: Forecast`; `visibleIds = useMemo(() => getVisibleMapPokemonIds(forecast), [forecast])`; `<section aria-labelledby="legend-heading">` con un `<h2 id="legend-heading">Leyenda</h2>` visible (fuente Poketiempo Unown) seguido de un `<ul>` de `<li>` (sprite `spriteSources[id]` reutilizado de `SpainMap/sprite-sources.ts` + `LEGEND_METADATA[id]`). El nombre accesible de la sección viene del propio encabezado, no de un `aria-label` redundante. HTML, no SVG; sin `loading="lazy"` en los sprites (la leyenda está por encima del pliegue, igual que el mapa).
 - **`Legend.scss`** — columna simple (`flex-direction: column`), `font-family: $font-body`. Fondo `$map-sea` (mismo azul que cabecera y mapa); `--mood-fill`/`--mood-border` (misma paleta que `Header.scss`) para el color de "Leyenda" y de cada etiqueta — ambos con negrita (sintética en "Leyenda", real en las etiquetas — Nunito Sans sí trae ese peso) y con el trazo de mood fino (`--mood-border`, un matiz del propio relleno) para que el texto se separe del mar en las categorías más claras (`cold`/`neutral`). El sprite lleva `object-fit: contain` dentro de una caja fija — los 24 sprites no son todos cuadrados (redimensionados a 160px de **lado máximo**, no 160×160, `tech-stack.md`), así que forzar el mismo ancho y alto sin esto los deforma.
 
@@ -155,10 +155,7 @@ Se regenera `src/data/map-geometry.ts` con `npm run build:map` — archivo gener
 </main>
 ```
 
-**`src/App.scss`** — el contenedor define la plantilla; cada componente fija su propio `grid-area` en su propio `.scss` (`Header.scss` → `header`, `Legend.scss` → `legend`, `SpainMap.scss` → `map`, `Credits.scss` → `credits`, bloque 6):
-
-- Ancho base (móvil): una columna, apilado `header / legend / map / credits` — sin esto, la columna de leyenda con ancho mínimo fuerza overflow horizontal por debajo de tablet.
-- Desde `respond-from(bp.$breakpoint-tablet)`: dos columnas (`minmax(22rem, 26rem) 1fr`), `"header header" "legend map" "credits credits"` — leyenda bajo el título, mapa como cuerpo, créditos a todo el ancho debajo de los dos.
+**`src/App.scss`** — el contenedor define la plantilla; cada componente fija su propio `grid-area` en su propio `.scss` (`Header.scss` → `header`, `Legend.scss` → `legend`, `SpainMap.scss` → `map`, `Credits.scss` → `credits`, bloque 6). Una única plantilla de grid a cualquier ancho (`"header header" "legend map" "credits credits"`, dos columnas `minmax(22rem, 26rem) 1fr`) — sin cambio de columnas por breakpoint: la composición es una réplica fija que escala como una sola unidad (`mission.md` → "Réplica fija, no una app adaptativa", `006-plan.md`), nunca se reorganiza. Lo que hace que quepa en cualquier tamaño de pantalla es la raíz fluida (`html { font-size }`, `_reset.scss`), no un cambio de plantilla.
 
 El azul del mar vive en `Header.scss` (`grid-area: header` ocupa toda la fila superior, columnas incluidas) — no en el contenedor: así la leyenda, que comparte columna con el título pero está en una fila aparte, no hereda el fondo azul. El mapa no necesita fondo azul del contenedor porque ya pinta el suyo (`spain-map__sea`, punto 3).
 
@@ -197,8 +194,8 @@ de `003-plan.md` (`assignBySky`, `assignByMarine`,
 - **`-webkit-text-stroke` para la cabecera (HTML), `stroke`/`paint-order` real para las temperaturas del marcador (SVG)** — cada contexto usa el mecanismo de borde de texto que le corresponde; ninguno usa `text-shadow`.
 - **Fuente de los números de temperatura: Nunito Sans** — misma familia que leyenda y créditos, prioriza legibilidad sobre estética pixel; Pixelify Sans queda reservada a la línea de previsión de la cabecera.
 - **Sin pastilla/fondo detrás de las temperaturas** salvo que la comprobación visual (Playwright) muestre que no se lee sobre algún sprite — condición explícita del enunciado, se revisa en el cierre antes de añadir nada.
-- **Composición de cabecera: se mantiene el split izquierda/derecha ya fijado en `mission.md`/`tech-stack.md`** — ninguno de los dos documentos se toca en esta feature; el responsive de ese split (cómo se apila en móvil) se decide en la feature final, 005 solo evita overflow.
-- **Título a `4.8rem` desde tablet, más pequeño por debajo** (`3rem` en el ancho base, `3.6rem` desde `$breakpoint-mobile`) — a `3.2rem` fijo los glifos de Poketiempo Unown eran demasiado pequeños para distinguir el borde del relleno; pero a `4.8rem` fijo, "POKETIEMPO" (una palabra sin espacios, no puede partirse en dos líneas) desbordaba en 320px. Único caso de esta feature con más de un valor por breakpoint — necesario para no desbordar, no es el ajuste fino de la 006.
+- **Composición de cabecera: se mantiene el split izquierda/derecha ya fijado en `mission.md`/`tech-stack.md`** — ninguno de los dos documentos se toca en esta feature.
+- **Título a un único tamaño fijo, `4.8rem`, sin pasos por breakpoint** — "POKETIEMPO" (una palabra sin espacios, no puede partirse en dos líneas) cabe en cualquier ancho porque la composición entera escala mediante la raíz fluida (`006-plan.md`), no porque el título cambie de tamaño por su cuenta.
 - **Las cinco categorías llevan el mismo borde en el título: negro (`$color-near-black`), `0.9px`, más `font-weight: 700` (negrita sintética — Poketiempo Unown solo trae un peso propio)** — un borde de color por mood no aporta frente al negro simple en un texto tan grande, y uno blanco deja "cold" casi ilegible contra el mar. La previsión y la leyenda, mucho más pequeñas, sí usan un borde de mood (`--mood-border`, un matiz del propio relleno un 25% más oscuro) en vez de negro plano — a ese tamaño un contorno negro se ve como un trazo duro, no como parte del propio color.
 - **"heat" es un rojo-anaranjado de verano (`#EB6B59`), "sweltering" un rojo más puro e intenso (`#E54343`)** — ninguno reutiliza `$color-green`/`$color-sky-blue`: son las dos categorías que de verdad debían leerse "calor", y las etiquetas de la leyenda reutilizan el mismo relleno, así que además de la temática hace falta que ninguno de los dos sea tan oscuro que apague el tono ni tan intenso que se vea agresivo.
 - **La franja "pleasant" del marcador (21–25 °C, verde) lleva borde blanco** — la spec original solo le daba relleno, sin borde; pedido explícito para mejorar su contraste sobre el rosa/verde pálido del mapa. Mismo grosor (`0.8`) que el resto de franjas con borde.

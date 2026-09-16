@@ -80,22 +80,23 @@ _Ver `005-spec.md` → "Ampliación de alcance" y `005-plan.md` → punto 8._
   - [x] `003-plan.md`, `roadmap.md`, `005-spec.md`, `005-plan.md` — documentación actualizada (tabla de viento cálido, resumen de 003, catálogo ya no "cerrado a 24", sprite de Moltres añadido a la entrada pendiente de licencia de sprites en `roadmap.md`).
 - [x] `npm run lint` (limpio), `npm run test` (318/318), `npm run build` sin errores. Comprobación visual: leyenda con las 24 etiquetas nuevas, sin números.
 
-## Bloque 7 — Créditos y composición final
+## Bloque 7 — Créditos y composición final ✅
 
-- [ ] `src/components/Credits/Credits.tsx` + `.scss` + `.test.tsx` — las dos líneas de crédito, HTML semántico, `grid-area: credits` en su propio `.scss`.
-- [ ] `src/App.scss` — amplía (no repite) el grid del bloque 5 (`app__layout`): añade `credits` a `grid-template-areas` (fila propia, a todo el ancho, bajo leyenda/mapa) en ambas plantillas (base y tablet+).
-- [ ] `App.tsx` — monta `<Credits />` junto a `Header`/`Legend`/`SpainMap` dentro de `app__layout`; `App.test.tsx` actualizado si aplica.
-- [ ] Comprobación visual (Playwright, 320/480/768/1200/1600px): sin scroll horizontal, sin overlap del bloque leyenda/mapa/créditos (ajuste fino de más allá queda para la 006).
+- [x] `src/components/Credits/Credits.tsx` + `.scss` + `.test.tsx` — las dos líneas de crédito, HTML semántico (`<footer>`), `grid-area: credits` en su propio `.scss`.
+- [x] `src/App.scss` — amplía (no repite) el grid del bloque 5 (`app__layout`): añade `credits` a `grid-template-areas` (fila propia, a todo el ancho, bajo leyenda/mapa) en la única plantilla del grid (réplica fija, sin plantilla alternativa por breakpoint desde la 006).
+- [x] `App.tsx` — monta `<Credits />` junto a `Header`/`Legend`/`SpainMap` dentro de `app__layout`; `App.test.tsx` actualizado (comprueba el `<footer>` con `getByRole('contentinfo')`).
+- [x] `npm run lint`, `npm run test` (357/357) y `npm run build` sin errores.
+- [ ] Comprobación visual (Playwright) de la fila de créditos añadida al grid — la 006 verificó la composición cabecera/leyenda/mapa antes de que existiera esta fila; pendiente confirmar que no rompe el ajuste de altura (`$legend-max-height`, `$fluid-root-height-divisor`) que la 006 afinó sin ella.
 
-## Bloque 8 — Cierre
+## Bloque 8 — Cierre ✅
 
-- [ ] `constitution/roadmap.md` → "Decisiones pendientes" — anotar que `npm run build:map` ya no reproduce las coordenadas commiteadas de `mapPoints` (004) a partir de sus propias entradas actuales (`build-map.ts`/`locations.ts`/`spain-map.geo.json`), confirmado sin cambios de la 005 de por medio — hallazgo con impacto más allá de esta feature, no investigado a fondo (ver `005-plan.md` → Riesgos).
-- [ ] Comentarios obsoletos sobre "hoy" corregidos en `src/domain/types.ts` y `src/components/SpainMap/sprite-sources.ts` (se refieren al día del forecast, no al día de ejecución) — sin cambiar lógica. (`assign-pokemon.ts` ya quedó al día en el bloque 6.)
-- [ ] `constitution/tech-stack.md` — paleta ya no "sin definir"; Pixelify Sans/Nunito Sans anotadas (Google Fonts, solo `<link>`, sin dependencia JS); tipografía del título documentada (Poketiempo Unown, fuente propia — ver Identidad visual). La composición (split izquierda/derecha) no cambia, no se toca `mission.md`.
-- [ ] `constitution/roadmap.md` — 005 movida a "Hecho"; "Paleta de color" retirada de "Decisiones pendientes".
-- [ ] Narración del proceso barrida de comentarios y de `005-spec.md`/`005-plan.md`/este archivo.
-- [ ] Validado contra los criterios de aceptación de `005-spec.md`.
-- [ ] `npm run lint`, `npm run test`, `npm run build` sin errores.
+- [x] `constitution/roadmap.md` → "Decisiones pendientes" — anotada la inconsistencia de `npm run build:map`/`mapPoints` (ver más abajo).
+- [x] Comentarios obsoletos sobre "hoy" corregidos en `src/domain/types.ts`, `src/domain/forecast-readiness.test.ts` (se refieren al día del forecast/a la ejecución, no al día de ejecución del agente). `sprite-sources.ts` no tenía ninguno pendiente al revisar.
+- [x] `constitution/tech-stack.md` — paleta ya no "sin definir" (tabla completa añadida); Pixelify Sans/Nunito Sans anotadas; tipografía del título documentada (Poketiempo Unown, fuente propia); sección de breakpoints corregida (ya no describe reorganización mobile-first: la composición es una réplica fija de escala fluida desde la 006). La composición (split izquierda/derecha) no cambia, no se toca `mission.md` (su cambio de principio de mobile-first a réplica fija es de la 006, no de esta feature).
+- [x] `constitution/roadmap.md` — 005 movida a "Hecho"; "Paleta de color" retirada de "Decisiones pendientes"; 006 añadida a "Hecho" (con su alcance parcial) y retirada de "Orden previsto".
+- [x] Narración del proceso barrida de comentarios y de `005-spec.md`/`005-plan.md`/este archivo.
+- [x] Validado contra los criterios de aceptación de `005-spec.md` — todos marcados.
+- [x] `npm run lint`, `npm run test` (357/357), `npm run build` sin errores.
 
 ## Definición de "hecho" (además de los criterios de la spec)
 
