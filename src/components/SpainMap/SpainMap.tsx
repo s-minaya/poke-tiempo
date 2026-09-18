@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 
 import type { Forecast } from '../../domain/types.ts'
 
-import { buildLocationViews } from './location-views.ts'
+import { buildLocationViews } from '../../domain/location-views.ts'
 
 import LocationMarker from './components/LocationMarker.tsx'
 import TerritoryInset from './components/TerritoryInset.tsx'

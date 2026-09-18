@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import type { PokedexId } from '../../domain/pokedex.ts'
-import { LEGEND_METADATA } from './legend-metadata.ts'
+import type { PokedexId } from './pokedex.ts'
+import { POKEMON_LABELS } from './pokemon-labels.ts'
 
 const ALL_POKEDEX_IDS: PokedexId[] = [
   'snorunt',
@@ -31,16 +31,16 @@ const ALL_POKEDEX_IDS: PokedexId[] = [
   'moltres',
 ]
 
-describe('LEGEND_METADATA', () => {
+describe('POKEMON_LABELS', () => {
   it('cubre los 25 PokedexId, ninguno vacío', () => {
     for (const id of ALL_POKEDEX_IDS) {
-      expect(LEGEND_METADATA[id]).toBeTruthy()
+      expect(POKEMON_LABELS[id]).toBeTruthy()
     }
-    expect(Object.keys(LEGEND_METADATA)).toHaveLength(25)
+    expect(Object.keys(POKEMON_LABELS)).toHaveLength(25)
   })
 
   it('castform-sun no promete "soleado" — también se asigna por temperatura sola, puede tocar un día nublado', () => {
-    expect(LEGEND_METADATA['castform-sun']).toBe('Templado')
-    expect(LEGEND_METADATA['castform-sun'].toLowerCase()).not.toContain('sol')
+    expect(POKEMON_LABELS['castform-sun']).toBe('Templado')
+    expect(POKEMON_LABELS['castform-sun'].toLowerCase()).not.toContain('sol')
   })
 })

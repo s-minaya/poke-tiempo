@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Forecast, Location, LocationForecast } from '../../domain/types.ts'
+import type { Forecast, Location, LocationForecast } from './types.ts'
 import { buildLocationViews } from './location-views.ts'
 
 function location(overrides: Partial<Location> = {}): Location {

@@ -1,10 +1,11 @@
-import type { PokedexId } from '../../domain/pokedex.ts'
+import type { PokedexId } from './pokedex.ts'
 
 /**
  * Orden de prioridad para elegir el único Pokémon que se dibuja en el mapa
- * (`003-plan.md` → "Prioridad de presentación") — decisión de
- * presentación, no de dominio: `assignPokemon` (003) sigue siendo quien
- * decide qué Pokémon le corresponden a un lugar, sin tocar.
+ * (`003-plan.md` → "Prioridad de presentación") — decisión editorial de
+ * qué Pokémon se muestra cuando un lugar tiene varios candidatos:
+ * `assignPokemon` (003) sigue siendo quien decide qué Pokémon le
+ * corresponden a un lugar, sin tocar.
  *
  * De más a menos "noticia": aviso rojo costero (Mega Gyarados), fenómenos
  * severos (tormenta, nieve, calima, niebla), lo frecuente (lluvia, oleaje

@@ -4,8 +4,7 @@ import type { Forecast } from '../../domain/types.ts'
 
 import { resolveThermalMood } from '../Header/thermal-mood.ts'
 import { getVisibleMapPokemonIds } from './visible-map-pokemon.ts'
-
-import { LEGEND_METADATA } from './legend-metadata.ts'
+import { POKEMON_LABELS } from '../../domain/pokemon-labels.ts'
 
 import { spriteSources } from '../SpainMap/sprite-sources.ts'
 
@@ -38,7 +37,7 @@ function Legend({ forecast }: LegendProps) {
         {visibleIds.map((id) => (
           <li key={id} className="legend__item">
             <img className="legend__sprite" src={spriteSources[id]} alt="" width={60} height={60} />
-            <span className="legend__label">{LEGEND_METADATA[id]}</span>
+            <span className="legend__label">{POKEMON_LABELS[id]}</span>
           </li>
         ))}
       </ul>

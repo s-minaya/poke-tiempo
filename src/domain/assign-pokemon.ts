@@ -1,5 +1,6 @@
+import { isActiveOnDate } from './alerts.ts'
 import type { PokedexId } from './pokedex.ts'
-import type { AlertsAvailability, LocationForecast, MarineAvailability, OfficialAlert, SkyCondition, Temperature } from './types.ts'
+import type { AlertsAvailability, LocationForecast, MarineAvailability, SkyCondition, Temperature } from './types.ts'
 
 /**
  * Motor de asignación de Pokémon (`003-plan.md`): traduce el `LocationForecast`
@@ -131,15 +132,6 @@ export const GYARADOS_WAVE_HEIGHT_THRESHOLD_M = 1.25
 // empieza en 2,5 m. Segundo camino (físico) hacia Mega Gyarados, además
 // del aviso rojo costero oficial.
 export const GYARADOS_MEGA_WAVE_HEIGHT_THRESHOLD_M = 2.5
-
-// Compara los prefijos YYYY-MM-DD como texto, sin pasar por Date: IPMA
-// entrega startsAt/endsAt sin offset (ej. "2026-09-08T12:00:00"), que
-// `new Date(...)` interpretaría con la zona horaria del entorno de
-// ejecución en vez de la del aviso — justo la ambigüedad que se evita
-// quedándose en el día calendario, sin necesidad de zona horaria.
-function isActiveOnDate(alert: OfficialAlert, date: string): boolean {
-  return alert.startsAt.slice(0, 10) <= date && alert.endsAt.slice(0, 10) >= date
-}
 
 function hasActiveRedCoastalAlert(alerts: AlertsAvailability, date: string): boolean {
   return (

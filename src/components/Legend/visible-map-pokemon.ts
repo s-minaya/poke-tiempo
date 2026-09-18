@@ -1,7 +1,7 @@
 import type { PokedexId } from '../../domain/pokedex.ts'
 import type { Forecast } from '../../domain/types.ts'
-import { buildLocationViews } from '../SpainMap/location-views.ts'
-import { MAP_PRIORITY } from '../SpainMap/pick-map-pokemon.ts'
+import { buildLocationViews } from '../../domain/location-views.ts'
+import { MAP_PRIORITY } from '../../domain/map-priority.ts'
 
 import { locations } from '../../data/locations.ts'
 

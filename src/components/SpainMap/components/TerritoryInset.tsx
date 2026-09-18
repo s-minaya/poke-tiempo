@@ -1,4 +1,4 @@
-import type { LocationView } from '../location-views.ts'
+import type { LocationView } from '../../../domain/location-views.ts'
 
 import LocationMarker from './LocationMarker.tsx'
 

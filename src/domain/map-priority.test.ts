@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import type { PokedexId } from '../../domain/pokedex.ts'
-import { pickMapPokemon } from './pick-map-pokemon.ts'
+import type { PokedexId } from './pokedex.ts'
+import { pickMapPokemon } from './map-priority.ts'
 
 interface PriorityCase {
   input: PokedexId[]

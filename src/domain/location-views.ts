@@ -1,8 +1,8 @@
-import type { PokedexId } from '../../domain/pokedex.ts'
-import type { Forecast, Location } from '../../domain/types.ts'
-import { assignPokemon } from '../../domain/assign-pokemon.ts'
-import { mapPoints } from '../../data/map-geometry.ts'
-import { pickMapPokemon } from './pick-map-pokemon.ts'
+import type { PokedexId } from './pokedex.ts'
+import type { Forecast, Location } from './types.ts'
+import { assignPokemon } from './assign-pokemon.ts'
+import { mapPoints } from '../data/map-geometry.ts'
+import { pickMapPokemon } from './map-priority.ts'
 
 /** Un lugar ya listo para dibujarse en el mapa: posición + Pokémon visible. */
 export interface LocationView {

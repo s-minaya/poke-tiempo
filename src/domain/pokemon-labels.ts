@@ -1,13 +1,13 @@
-import type { PokedexId } from '../../domain/pokedex.ts'
+import type { PokedexId } from './pokedex.ts'
 
 /**
- * Texto de la leyenda para cada uno de los 25 `PokedexId` que puede
- * producir `assignPokemon`. `castform-sun` se lee "Templado", no
- * "Soleado": se asigna tanto por cielo despejado como por temperatura
- * (15–25 °C) sola, así que puede tocarle a un día nublado o lluvioso a
- * esa temperatura — la etiqueta no puede prometer sol.
+ * Texto asociado a cada uno de los 25 `PokedexId` que puede producir
+ * `assignPokemon` — usado hoy por la leyenda (005). `castform-sun` se lee
+ * "Templado", no "Soleado": se asigna tanto por cielo despejado como por
+ * temperatura (15–25 °C) sola, así que puede tocarle a un día nublado o
+ * lluvioso a esa temperatura — la etiqueta no puede prometer sol.
  */
-export const LEGEND_METADATA: Record<PokedexId, string> = {
+export const POKEMON_LABELS: Record<PokedexId, string> = {
   snorunt: 'Helado',
   solrock: 'Despejado y frío',
   'castform-sun': 'Templado',
