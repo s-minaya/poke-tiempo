@@ -1,6 +1,6 @@
-# 006 · Responsive, accesibilidad y cierre — Tareas
+# 008 · Responsive, accesibilidad y cierre — Tareas
 
-_Esta ronda cubre solo lo descrito en `006-spec.md`; el resto de "Responsive, accesibilidad y cierre" (alternativa textual, créditos AEMET, disclaimer, bloque 7/8 de la 005) queda fuera de alcance — ver `006-spec.md` → "Fuera de alcance"._
+_Esta ronda cubre solo lo descrito en `008-spec.md`; el resto de "Responsive, accesibilidad y cierre" (alternativa textual, créditos AEMET, disclaimer, bloque 7/8 de la 005) queda fuera de alcance — ver `008-spec.md` → "Fuera de alcance"._
 
 ## Bloque 1 — Escala fluida de la composición ✅
 
@@ -27,7 +27,7 @@ _Esta ronda cubre solo lo descrito en `006-spec.md`; el resto de "Responsive, ac
 - [x] `$fluid-root-height-divisor` (`_reset.scss`) y `$legend-max-height` (`Legend.scss`) remedidos con Playwright tras el recorte anterior.
 - [x] `npm run lint`, `npm run test` y `npm run build` sin errores.
 - [x] Comprobación visual con datos reales en un barrido amplio de anchos y altos: la leyenda termina siempre exactamente a la misma altura visible que el mapa, sin scroll de página en ningún caso.
-- [x] Validado contra los criterios de aceptación de `006-spec.md`.
+- [x] Validado contra los criterios de aceptación de `008-spec.md`.
 
 ## Definición de "hecho" (además de los criterios de la spec)
 

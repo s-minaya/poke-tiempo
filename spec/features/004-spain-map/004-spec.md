@@ -36,7 +36,7 @@ Tres límites que gobiernan la geometría de contexto y su relación con el rest
 ## Fuera de alcance
 
 - Cabecera, fecha de previsión y leyenda — 005.
-- Alternativa textual completa del mapa, cita a AEMET/IPMA, disclaimer de Pokémon — 006. La legibilidad fina en móvil estrecho (320–375px) sigue siendo de la 006; 004 solo garantiza que el mapa no se rompe en ese ancho.
+- Alternativa textual completa del mapa, cita a AEMET/IPMA, disclaimer de Pokémon — 008. La legibilidad fina en móvil estrecho (320–375px) sigue siendo de la 008; 004 solo garantiza que el mapa no se rompe en ese ancho.
 - Diálogos de Profesor Oak — 007.
 - Zoom, pan o clustering automático de puntos.
 - Paleta de color final (pendiente en `roadmap.md`).

@@ -35,7 +35,7 @@ La leyenda necesita que `assignPokemon()` cubra `'despejado'` (castform-sun por 
 - [x] "POKETIEMPO" usa la fuente propia Poketiempo Unown (`src/assets/fonts/poketiempo-unown.woff2`); la línea de previsión usa Pixelify Sans (Google Fonts); leyenda, créditos y las temperaturas mínima/máxima del mapa usan Nunito Sans (Google Fonts). Ninguna de las dos fuentes de Google Fonts se añade como dependencia JS — solo `<link>` en `index.html`.
 - [x] El color de relleno de "POKETIEMPO" y de la línea de previsión cambia igual entre los dos, según la categoría térmica que predomina entre los 74 `temperature.maxC` del forecast: gelid (`< 0`), cold (`0–<10`), neutral (`10–<26`), heat (`26–<35`), sweltering (`>= 35`). Empate en el recuento se resuelve con la categoría en la que cae la mediana de las 74 máximas — determinista, no depende del orden del array.
 - [x] "POKETIEMPO" lleva borde negro fijo en las cinco categorías (`$color-near-black`) con `font-weight: 700` (negrita sintética), stroke CSS real (`-webkit-text-stroke`), nunca una pila de `text-shadow`. La línea de previsión, mucho más pequeña, lleva su propio borde de mood (`--mood-border`, un matiz del relleno, no negro) y su propio grosor, más fino que el del título.
-- [x] La composición es una réplica fija que escala como una sola unidad a cualquier tamaño de pantalla, sin reorganizarse por breakpoint — resuelto en la 006 (`mission.md` → "Réplica fija, no una app adaptativa"); no queda pendiente aquí.
+- [x] La composición es una réplica fija que escala como una sola unidad a cualquier tamaño de pantalla, sin reorganizarse por breakpoint — resuelto en la 008 (`mission.md` → "Réplica fija, no una app adaptativa"); no queda pendiente aquí.
 
 **Mapa — paleta y territorios**
 
@@ -78,7 +78,7 @@ La leyenda necesita que `assignPokemon()` cubra `'despejado'` (castform-sun por 
 
 - Loader, landing, Profesor Oak, audio.
 - Pokémon nuevos o reglas meteorológicas inferidas más allá de las descritas en `003-plan.md` (castform-sun por cielo, Mega Gyarados por dato físico, Moltres por viento cálido).
-- Responsive exhaustivo por breakpoint (queda para la 006) — esta feature entrega un layout limpio en grid/flex, no el ajuste fino de los 5 anchos.
-- Auditoría completa de accesibilidad (006).
+- Responsive exhaustivo por breakpoint (queda para la 008) — esta feature entrega un layout limpio en grid/flex, no el ajuste fino de los 5 anchos.
+- Auditoría completa de accesibilidad (008).
 - Cambios en la 002 (pipeline de datos) o en las reglas de `assignPokemon`/`pickMapPokemon`.
 - Refactors de arquitectura no necesarios para lo anterior.

@@ -1,4 +1,4 @@
-# 006 · Responsive, accesibilidad y cierre
+# 008 · Responsive, accesibilidad y cierre
 
 **Estado:** implementado ✅ (parcial — ver "Fuera de alcance")
 
@@ -29,7 +29,7 @@ Cierra la identidad visual fijada en `mission.md`: la web es una réplica fija d
 
 ## Fuera de alcance
 
-- **Alternativa textual completa del mapa, atribución visible a AEMET/IPMA/Open-Meteo y disclaimer de Pokémon** — siguen pendientes en `roadmap.md` → 006, pero no forman parte de esta ronda: se abordan en una ampliación posterior de esta misma spec, con su propia confirmación (`AGENTS.md`, paso 4). El nombre accesible por marcador (`role="img"` + `aria-label`, ya implementado en 004/005) ya cubre el criterio de "hecho" de tener la información del mapa también en forma textual a nivel de cada lugar.
+- **Alternativa textual completa del mapa, atribución visible a AEMET/IPMA/Open-Meteo y disclaimer de Pokémon** — siguen pendientes en `roadmap.md` → 008, pero no forman parte de esta ronda: se abordan en una ampliación posterior de esta misma spec, con su propia confirmación (`AGENTS.md`, paso 4). El nombre accesible por marcador (`role="img"` + `aria-label`, ya implementado en 004/005) ya cubre el criterio de "hecho" de tener la información del mapa también en forma textual a nivel de cada lugar.
 - **Auditoría completa de accesibilidad** (foco, contraste exhaustivo, navegación por teclado) — no forma parte de esta ronda.
 - **Terminar el bloque 7/8 de la 005** (componente `Credits` + composición final, cierre de esa feature) — es trabajo pendiente de una feature distinta y ya aprobada; no se mezcla aquí.
 - **Cambios de contenido**: ninguna regla de `assignPokemon()`, dato de `forecast.json` ni posición geográfica de los 74 lugares cambia.

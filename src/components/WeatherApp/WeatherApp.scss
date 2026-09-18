@@ -1,6 +1,10 @@
+// Bloque BEM `.app`, no `.weather-app`: nombre heredado de cuando este
+// componente era `App.tsx` (006-entry-landing lo extrajo a `WeatherApp`
+// para dejar sitio al loader/portada) — sin motivo funcional para
+// renombrar el selector, se deja como está.
 .app {
   // Réplica fija de la composición (mission.md → "Réplica fija, no una app
-  // adaptativa", 006-plan.md): una única plantilla de grid a cualquier
+  // adaptativa", 008-plan.md): una única plantilla de grid a cualquier
   // ancho — cabecera arriba a todo el ancho, leyenda bajo el título, mapa
   // como cuerpo. Lo que cambia con el ancho de pantalla es el tamaño de la
   // composición completa (raíz fluida, `_reset.scss`), nunca su forma.

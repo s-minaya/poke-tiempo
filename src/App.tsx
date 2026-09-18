@@ -1,32 +1,47 @@
+import { useEffect, useState } from 'react'
+
 import type { Forecast } from './domain/types.ts'
 
-import Credits from './components/Credits/Credits.tsx'
-import Header from './components/Header/Header.tsx'
-import Legend from './components/Legend/Legend.tsx'
-import SpainMap from './components/SpainMap/SpainMap.tsx'
+import Landing from './components/Landing/Landing.tsx'
+import Loader from './components/Loader/Loader.tsx'
+import WeatherApp from './components/WeatherApp/WeatherApp.tsx'
 
 import forecastData from './data/forecast.json'
 
-import './App.scss'
+type EntryStage = 'loading' | 'landing' | 'entering' | 'app'
 
+// Duración del cruce landing → WeatherApp (006-plan.md) — el loader no
+// necesita una constante equivalente: su salida no se demora, `Landing` ya
+// está montada debajo y el propio fundido de salida del loader (Loader.scss)
+// no depende de ningún cambio de stage.
+const TRANSITION_MS = 350
+
+/**
+ * Orquesta el flujo de entrada (006-plan.md): loader → portada → aplicación.
+ * Recargar la página siempre vuelve a `'loading'` — no hay persistencia de
+ * "portada ya vista", es intencionado.
+ */
 function App() {
   const forecast = forecastData as Forecast
+  const [stage, setStage] = useState<EntryStage>('loading')
+
+  useEffect(() => {
+    if (stage !== 'entering') {
+      return
+    }
+
+    const timer = setTimeout(() => setStage('app'), TRANSITION_MS)
+    return () => clearTimeout(timer)
+  }, [stage])
 
   return (
-    <main>
-      {/* Grid con nombres de área (App.scss): cabecera arriba, ocupando
-          todo el ancho; leyenda bajo el título; mapa como cuerpo
-          (mission.md). Cada componente fija su propio `grid-area` en su
-          `.scss` — este contenedor solo define la plantilla. `Credits`
-          comparte celda con `SpainMap` (Credits.scss): montado después en
-          el DOM para pintarse encima. */}
-      <div className="app__layout">
-        <Header forecast={forecast} />
-        <Legend forecast={forecast} />
-        <SpainMap forecast={forecast} />
-        <Credits />
-      </div>
-    </main>
+    <>
+      {stage === 'loading' && <Loader onReady={() => setStage('landing')} />}
+      {(stage === 'landing' || stage === 'entering') && (
+        <Landing onStart={() => setStage('entering')} leaving={stage === 'entering'} />
+      )}
+      {(stage === 'entering' || stage === 'app') && <WeatherApp forecast={forecast} />}
+    </>
   )
 }
 

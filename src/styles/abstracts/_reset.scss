@@ -11,7 +11,7 @@ $fluid-root-divisor: math.div(math.div(bp.$breakpoint-desktop-large, 1px), 10);
 
 // Mismo cálculo para el eje vertical: la altura real de la composición a
 // `$breakpoint-desktop-large` (cabecera + mapa, medida con Playwright —
-// 006-plan.md) es ~950px con la raíz a 10px — de ahí este divisor. Sin
+// 008-plan.md) es ~950px con la raíz a 10px — de ahí este divisor. Sin
 // este término, un viewport ancho pero bajo (portátil típico) no encoge
 // lo suficiente y Canarias/el resto del mapa quedan por debajo del
 // pliegue, forzando scroll vertical — justo lo que una réplica fija no

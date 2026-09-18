@@ -83,17 +83,17 @@ _Ver `005-spec.md` → "Ampliación de alcance" y `005-plan.md` → punto 8._
 ## Bloque 7 — Créditos y composición final ✅
 
 - [x] `src/components/Credits/Credits.tsx` + `.scss` + `.test.tsx` — las dos líneas de crédito, HTML semántico (`<footer>`), `grid-area: credits` en su propio `.scss`.
-- [x] `src/App.scss` — amplía (no repite) el grid del bloque 5 (`app__layout`): añade `credits` a `grid-template-areas` (fila propia, a todo el ancho, bajo leyenda/mapa) en la única plantilla del grid (réplica fija, sin plantilla alternativa por breakpoint desde la 006).
+- [x] `src/App.scss` — amplía (no repite) el grid del bloque 5 (`app__layout`): añade `credits` a `grid-template-areas` (fila propia, a todo el ancho, bajo leyenda/mapa) en la única plantilla del grid (réplica fija, sin plantilla alternativa por breakpoint desde la 008).
 - [x] `App.tsx` — monta `<Credits />` junto a `Header`/`Legend`/`SpainMap` dentro de `app__layout`; `App.test.tsx` actualizado (comprueba el `<footer>` con `getByRole('contentinfo')`).
 - [x] `npm run lint`, `npm run test` (357/357) y `npm run build` sin errores.
-- [x] Comprobación visual (Playwright, 1400/1600/1920px): la primera versión de `Credits` como fila propia del grid rompía el ajuste de altura de la 006 y forzaba scroll vertical. Corregido — `Credits` comparte celda con `SpainMap` (`grid-area: map`), anclado al final y centrado, como una pastilla sobre el contexto norteafricano. Sin scroll en ningún ancho probado, texto legible.
+- [x] Comprobación visual (Playwright, 1400/1600/1920px): la primera versión de `Credits` como fila propia del grid rompía el ajuste de altura de la 008 y forzaba scroll vertical. Corregido — `Credits` comparte celda con `SpainMap` (`grid-area: map`), anclado al final y centrado, como una pastilla sobre el contexto norteafricano. Sin scroll en ningún ancho probado, texto legible.
 
 ## Bloque 8 — Cierre ✅
 
 - [x] `constitution/roadmap.md` → "Decisiones pendientes" — anotada la inconsistencia de `npm run build:map`/`mapPoints` (ver más abajo).
 - [x] Comentarios obsoletos sobre "hoy" corregidos en `src/domain/types.ts`, `src/domain/forecast-readiness.test.ts` (se refieren al día del forecast/a la ejecución, no al día de ejecución del agente). `sprite-sources.ts` no tenía ninguno pendiente al revisar.
-- [x] `constitution/tech-stack.md` — paleta ya no "sin definir" (tabla completa añadida); Pixelify Sans/Nunito Sans anotadas; tipografía del título documentada (Poketiempo Unown, fuente propia); sección de breakpoints corregida (ya no describe reorganización mobile-first: la composición es una réplica fija de escala fluida desde la 006). La composición (split izquierda/derecha) no cambia, no se toca `mission.md` (su cambio de principio de mobile-first a réplica fija es de la 006, no de esta feature).
-- [x] `constitution/roadmap.md` — 005 movida a "Hecho"; "Paleta de color" retirada de "Decisiones pendientes"; 006 añadida a "Hecho" (con su alcance parcial) y retirada de "Orden previsto".
+- [x] `constitution/tech-stack.md` — paleta ya no "sin definir" (tabla completa añadida); Pixelify Sans/Nunito Sans anotadas; tipografía del título documentada (Poketiempo Unown, fuente propia); sección de breakpoints corregida (ya no describe reorganización mobile-first: la composición es una réplica fija de escala fluida desde la 008). La composición (split izquierda/derecha) no cambia, no se toca `mission.md` (su cambio de principio de mobile-first a réplica fija es de la 008, no de esta feature).
+- [x] `constitution/roadmap.md` — 005 movida a "Hecho"; "Paleta de color" retirada de "Decisiones pendientes"; 008 añadida a "Hecho" (con su alcance parcial) y retirada de "Orden previsto".
 - [x] Narración del proceso barrida de comentarios y de `005-spec.md`/`005-plan.md`/este archivo.
 - [x] Validado contra los criterios de aceptación de `005-spec.md` — todos marcados.
 - [x] `npm run lint`, `npm run test` (357/357), `npm run build` sin errores.

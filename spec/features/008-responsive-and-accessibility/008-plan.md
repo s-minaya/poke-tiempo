@@ -1,6 +1,6 @@
-# 006 · Responsive, accesibilidad y cierre — Plan
+# 008 · Responsive, accesibilidad y cierre — Plan
 
-**Estado:** implementado ✅ (parcial — ver `006-spec.md` → "Fuera de alcance")
+**Estado:** implementado ✅ (parcial — ver `008-spec.md` → "Fuera de alcance")
 
 ## Enfoque
 

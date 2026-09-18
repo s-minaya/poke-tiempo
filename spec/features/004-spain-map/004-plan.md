@@ -74,7 +74,7 @@ La distinción de a qué lugar corresponde cada Pokémon en zonas densas se resu
 
 Un único `viewBox` fijo con el SVG a `width: 100%; height: auto` — el aspecto no cambia nunca. El `viewBox` raíz lleva las dos extensiones del punto 3 (origen en `x = -130`, ancho total `960 + 130 + 150`, alto `932`), como un único valor fijo, sin recálculo en JS.
 
-**Sin `max-width` propio del mapa** — el tope de ancho de toda la composición vive en el contenedor (`app__layout`, `005-plan.md` → punto 7), no en `SpainMap.scss`: desde la 006, la página entera es una réplica fija de escala fluida (`mission.md`), no un mapa que cambia de tamaño por su cuenta en distintos breakpoints.
+**Sin `max-width` propio del mapa** — el tope de ancho de toda la composición vive en el contenedor (`app__layout`, `005-plan.md` → punto 7), no en `SpainMap.scss`: desde la 008, la página entera es una réplica fija de escala fluida (`mission.md`), no un mapa que cambia de tamaño por su cuenta en distintos breakpoints.
 
 ## Sprites — resolución de archivo
 
@@ -110,7 +110,7 @@ PNG indexado a 160px de lado máximo. Se comparó contra WebP (mismo redimension
 
 ## Riesgos
 
-- **Legibilidad en móvil estrecho** — fuera de alcance de la 004 (`roadmap.md` lo asigna a la 006).
-- **Solapamientos a 62u** — con el sprite a su tamaño final, es esperable solapamiento puntual entre lugares muy próximos (ej. Oviedo/Gijón). Medido con Playwright; no se reduce el sprite para evitarlo — es una decisión de producto: la legibilidad del Pokémon pesa más que el solapamiento puntual, documentado aquí como límite conocido para la 006.
+- **Legibilidad en móvil estrecho** — fuera de alcance de la 004 (`roadmap.md` lo asigna a la 008).
+- **Solapamientos a 62u** — con el sprite a su tamaño final, es esperable solapamiento puntual entre lugares muy próximos (ej. Oviedo/Gijón). Medido con Playwright; no se reduce el sprite para evitarlo — es una decisión de producto: la legibilidad del Pokémon pesa más que el solapamiento puntual, documentado aquí como límite conocido para la 008.
 - **Ceuta/Melilla muy cerca de la costa peninsular en el mapa principal** — al integrarse en el mismo `fitExtent`, su separación visual respecto a la costa de Cádiz/Málaga es pequeña (geografía real). Es el efecto buscado ("costa norteafricana", no aislados); el contexto de Marruecos/Argelia detrás refuerza la lectura en vez de depender solo de la distancia entre puntos.
 - **`forecast.json` cambia a diario** — cualquier captura o test que dependa de su contenido concreto (no de su forma) puede quedar desactualizado sin que sea un fallo de la 004. Los tests de esta feature comprueban estructura y comportamiento (un lugar sin forecast no rompe nada, la región es la esperada), nunca qué Pokémon exacto le toca hoy a un lugar real.

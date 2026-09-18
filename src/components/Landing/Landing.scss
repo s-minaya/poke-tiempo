@@ -1,0 +1,109 @@
+@use '../../styles/abstracts/variables' as vars;
+
+$landing-fade-ms: 350ms;
+
+// Portada a viewport completo (006-plan.md). Mismo fondo que `Loader`
+// (`$color-near-black`) para que el corte entre ambas nunca deje ver un
+// parpadeo en blanco, y aparece con un fundido breve al montarse.
+.landing {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 8rem;
+  background: vars.$color-near-black;
+  animation: landing-fade-in $landing-fade-ms ease-out;
+
+  // Cruce hacia `WeatherApp` (App.tsx, stage `entering`): dos composiciones
+  // visuales distintas conviene fundirlas, a diferencia del spinner del
+  // loader, que no arrastra información que deba "revelarse" con cuidado.
+  &--leaving {
+    animation: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity $landing-fade-ms ease-in;
+  }
+
+  &__picture,
+  &__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__image {
+    object-fit: cover;
+
+    // El personaje y su Pokémon se apoyan en la esquina inferior izquierda
+    // de ambas ilustraciones — se prioriza mantenerlos en cuadro frente a
+    // recortar simétrico desde el centro.
+    object-position: center bottom;
+
+    @media (width <= 767px) {
+      object-position: left bottom;
+    }
+  }
+
+  &__button {
+    position: relative;
+    z-index: 1;
+    padding: 1.6rem 4.8rem;
+    border: 4px solid vars.$color-near-black;
+    border-radius: 0.8rem;
+    background: vars.$color-green;
+    color: vars.$color-near-black;
+    font-family: vars.$font-heading;
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    animation: landing-button-invite 1.6s ease-in-out infinite;
+
+    &:focus-visible {
+      outline: 3px solid vars.$color-white;
+      outline-offset: 3px;
+    }
+
+    &:disabled {
+      animation: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing {
+    animation: none;
+
+    &--leaving {
+      transition: none;
+    }
+  }
+
+  .landing__button {
+    animation: none;
+  }
+}
+
+@keyframes landing-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes landing-button-invite {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-0.4rem);
+  }
+}

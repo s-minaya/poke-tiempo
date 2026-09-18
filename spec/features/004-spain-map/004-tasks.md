@@ -24,17 +24,17 @@
 - [x] `src/components/SpainMap/components/TerritoryInset.tsx` + `.scss` — recuadro reutilizable (hoy solo Canarias): `<svg>` anidado con su propio `viewBox`, `role="group"`, marco opcional (`frame`) como `<path>` con esquina superior derecha achaflanada. Sin `TerritoryInset.test.tsx` propio — cubierto indirectamente por `SpainMap.test.tsx` (rol de grupo, nombre accesible "Canarias", marcadores dentro del recuadro).
 - [x] `src/components/SpainMap/SpainMap.tsx` + `.scss` + `.test.tsx` — silueta principal, fronteras internas (trazo fino, `aria-hidden`), grupo decorativo de Marruecos/Argelia (`clip-path`, `aria-hidden`, sin `LocationMarker`), los 74 `LocationMarker` y el `TerritoryInset` de Canarias. `role="group"` en el `<svg>` raíz (nunca `role="img"`, que colapsaría los 74 marcadores como descendientes de una única imagen para tecnología de asistencia).
 - [x] Montado en `App.tsx` con `forecast.json` (`resolveJsonModule` en `tsconfig.app.json`).
-- [x] Responsive vía `viewBox` fijo + SCSS (`width: 100%; height: auto`) — sin JS de recálculo de layout. (El `max-width` por breakpoint de entonces ya no existe: desde la 006 el tope de ancho vive en el contenedor, `004-plan.md` → punto 6.)
+- [x] Responsive vía `viewBox` fijo + SCSS (`width: 100%; height: auto`) — sin JS de recálculo de layout. (El `max-width` por breakpoint de entonces ya no existe: desde la 008 el tope de ancho vive en el contenedor, `004-plan.md` → punto 6.)
 - [x] Sprites: redimensionados a 160px de lado máximo, servidos como PNG (comparado contra WebP, PNG gana en peso para este conjunto — ver `tech-stack.md`).
 - [x] Comprobación visual real (Playwright, 320/480/768/1200/1600px y hasta 1920px): sin scroll horizontal en ningún breakpoint, sin territorios ni sprites recortados.
 - [x] Tests: `map-geometry.test.ts`, `location-views.test.ts`, `SpainMap.test.tsx` (Marruecos/Argelia no generan lugares accesibles, sigue habiendo exactamente 74 `LocationMarker` expuestos individualmente).
 - [x] `npm run lint` y `npm run build` (tsc + vite) sin errores.
 
-**Límite de producto documentado, no un defecto pendiente:** a 62u de sprite hay solapamiento puntual entre lugares muy próximos (p. ej. Oviedo/Gijón) — la legibilidad del Pokémon pesa más que evitarlo por completo; queda anotado en `004-plan.md` → Riesgos como límite conocido para la 006 (responsive/accesibilidad de cierre), no se reduce el sprite para evitarlo.
+**Límite de producto documentado, no un defecto pendiente:** a 62u de sprite hay solapamiento puntual entre lugares muy próximos (p. ej. Oviedo/Gijón) — la legibilidad del Pokémon pesa más que evitarlo por completo; queda anotado en `004-plan.md` → Riesgos como límite conocido para la 008 (responsive/accesibilidad de cierre), no se reduce el sprite para evitarlo.
 
 ## Bloque 4 — Cierre ✅
 
-- [x] Foco visible en `LocationMarker`: no aplica todavía — ningún marcador es interactivo en la 004 (sin `tabIndex`, sin `onClick`); se revisa cuando 005/006 añadan interacción real.
+- [x] Foco visible en `LocationMarker`: no aplica todavía — ningún marcador es interactivo en la 004 (sin `tabIndex`, sin `onClick`); se revisa cuando 005/008 añadan interacción real.
 - [x] `constitution/tech-stack.md` actualizado: fuente/licencia del GeoJSON (Natural Earth, dominio público), decisión PNG vs WebP y redimensionado de sprites.
 - [x] Narración del proceso barrida de comentarios, `004-spec.md`, `004-plan.md` y este archivo (`AGENTS.md`, paso 7).
 - [x] Validado contra los criterios de aceptación de `004-spec.md`.
