@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import type { PokedexId } from './pokedex.ts'
-import { pickMapPokemon } from './map-priority.ts'
+import { MAP_PRIORITY, isSignificantPokemon, pickMapPokemon } from './map-priority.ts'
+import { POKEMON_LABELS } from './pokemon-labels.ts'
 
 interface PriorityCase {
   input: PokedexId[]
@@ -92,5 +93,40 @@ describe('pickMapPokemon', () => {
     ])('$label', ({ input, expected }) => {
       expect(pickMapPokemon(input)).toBe(expected)
     })
+  })
+})
+
+describe('isSignificantPokemon', () => {
+  // Estos dos tests son la red que impide que la frontera y `MAP_PRIORITY` se
+  // separen: no comprueban una lista escrita a mano, sino que la respuesta se
+  // derive siempre de la posición respecto a `hoppip`.
+  it('coincide, Pokémon a Pokémon, con estar por delante de hoppip en MAP_PRIORITY', () => {
+    for (const id of MAP_PRIORITY) {
+      expect(isSignificantPokemon(id)).toBe(MAP_PRIORITY.indexOf(id) < MAP_PRIORITY.indexOf('hoppip'))
+    }
+  })
+
+  it('MAP_PRIORITY cubre los 25 PokedexId, así que la frontera nunca cae fuera del array', () => {
+    expect(new Set(MAP_PRIORITY)).toEqual(new Set(Object.keys(POKEMON_LABELS) as PokedexId[]))
+    expect(MAP_PRIORITY).toHaveLength(25)
+  })
+
+  it('un id ausente de MAP_PRIORITY no es significativo por el -1 de indexOf', () => {
+    // `thundurus` tiene sprite pero no es un `PokedexId` (DANA deshabilitada),
+    // así que no está en el array: sirve para comprobar la guarda sin esperar
+    // a que aparezca un Pokémon nuevo sin colocar.
+    expect(isSignificantPokemon('thundurus' as unknown as PokedexId)).toBe(false)
+  })
+
+  it('las condiciones secundarias no son significativas: hoppip incluido', () => {
+    for (const id of ['hoppip', 'castform', 'altaria', 'castform-sun'] as PokedexId[]) {
+      expect(isSignificantPokemon(id)).toBe(false)
+    }
+  })
+
+  it('los fenómenos y los tramos térmicos sí lo son', () => {
+    for (const id of ['gyarados-mega', 'zapdos', 'cryogonal', 'castform-ice', 'kyogre', 'moltres', 'snorunt', 'groudon'] as PokedexId[]) {
+      expect(isSignificantPokemon(id)).toBe(true)
+    }
   })
 })

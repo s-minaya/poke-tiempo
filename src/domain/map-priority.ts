@@ -67,3 +67,19 @@ export function pickMapPokemon(pokemonIds: readonly PokedexId[]): PokedexId | nu
   const present = new Set(pokemonIds)
   return MAP_PRIORITY.find((id) => present.has(id)) ?? null
 }
+
+// Donde empiezan las condiciones secundarias de `MAP_PRIORITY`: Hoppip y las
+// tres representaciones ordinarias de cielo que le siguen.
+const FIRST_SECONDARY_INDEX = MAP_PRIORITY.indexOf('hoppip')
+
+/**
+ * Si un Pokémon representa una condición significativa o una de las
+ * ordinarias. No es una lista aparte: se deriva de la posición en
+ * `MAP_PRIORITY` respecto a `hoppip`, que es justo donde el propio orden
+ * editorial separa lo que es noticia de lo que solo se dibuja cuando no hay
+ * nada mejor que mostrar. Reordenar `MAP_PRIORITY` mueve la frontera con él.
+ */
+export function isSignificantPokemon(id: PokedexId): boolean {
+  const index = MAP_PRIORITY.indexOf(id)
+  return index !== -1 && index < FIRST_SECONDARY_INDEX
+}
