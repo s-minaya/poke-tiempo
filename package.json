@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "build:locations": "tsx --env-file-if-exists=.env scripts/build-locations.ts",
     "build:map": "tsx scripts/build-map.ts",
-    "fetch:forecast": "tsx --env-file-if-exists=.env scripts/fetch-forecast.ts"
+    "fetch:forecast": "tsx --env-file-if-exists=.env scripts/fetch-forecast.ts",
+    "generate:oak": "tsx --env-file-if-exists=.env scripts/oak/generate.ts"
   },
   "dependencies": {
     "opentype.js": "^2.0.0",

@@ -213,9 +213,11 @@ export type NarrativeFact =
   | CalendarFact
 ```
 
-**Por qué así:** la IA no puede interpretar el forecast porque no lo ve. Recibe entre 3 y 6 de estos objetos y solo puede verbalizarlos. Además es lo que hace viable el presupuesto de tokens de una capa gratuita: mandar los 74 `LocationForecast` serían decenas de miles de tokens; el `DayReport` completo se queda en el orden de un millar.
+**Por qué así:** la IA no puede interpretar el forecast porque no lo ve. Recibe entre 3 y 6 de estos objetos y solo puede verbalizarlos. Además es lo que hace viable el presupuesto de tokens de una capa gratuita: mandar los 74 `LocationForecast` serían decenas de miles de tokens; el payload que recibe la IA se queda en el orden de un millar.
 
-## `DayReport` y el plan de diálogos
+## `DayPlan` y el plan de diálogos
+
+El objeto que cierra el día no se llama `DayReport`: **el dominio produce un `DayPlan`** y no existe ningún segundo objeto con la misma información.
 
 ```ts
 export type DayMode = 'alerta' | 'invasion' | 'avistamiento' | 'parte'
@@ -237,40 +239,34 @@ export interface DialogueSlot {
   leitmotif: LeitmotifId | null
 }
 
+export type DialoguePlan = [DialogueSlot, DialogueSlot, DialogueSlot]
+
 /** Por qué este Pokémon protagoniza — ver "Protagonistas". */
 export type ProtagonistRole = 'headline' | 'spread' | 'rarity'
 
 export interface Protagonist {
   role: ProtagonistRole
-  pokemonId: PokedexId
-  label: string                   // POKEMON_LABELS[pokemonId]
-  locations: FactLocation[]
-  locationCount: number
+  spotlight: PokemonSpotlightFact // el hecho entero, no una copia de sus campos
 }
 
-export interface DayReport {
+/** El modo y el hecho que lo justificó, juntos: el reparto no vuelve a deducirlo. */
+export type DayModeDecision =
+  | { mode: 'alerta'; trigger: AlertFact }
+  | { mode: 'invasion'; trigger: PokemonSpotlightFact }
+  | { mode: 'avistamiento'; trigger: PokemonSpotlightFact }
+  | { mode: 'parte'; trigger: null }
+
+export interface DayPlan {
   date: string                    // === forecast.date (mañana)
-  weekday: Weekday
-  weekend: boolean
   dayMode: DayMode
-  protagonists: Protagonist[]     // 1..3
-  dialoguePlan: [DialogueSlot, DialogueSlot, DialogueSlot]
+  focusPokemonId: PokedexId | null
+  leitmotif: LeitmotifId | null
+  dialoguePlan: DialoguePlan
+  historyEntry: OakHistoryEntry   // listo para persistir
 }
 ```
 
-`dayMode` es del día, no del slot: tres frases del mismo personaje en el mismo bocadillo no cambian de registro a mitad. El tono sí varía por slot.
-
-### Reparto de los tres diálogos
-
-`plan-dialogues.ts` reparte sin solapar, llevando un conjunto de hechos ya consumidos:
-
-1. **`apertura`** — sitúa el día. Toma el `CalendarFact` y/o el `DayShapeFact`. Tono siempre `neutral`: es la frase que abre, no la que impresiona. Nunca gasta el hecho más fuerte.
-2. **`foco`** — el hecho más interesante: el spotlight elegido con su hecho asociado, o el `AlertFact` si el modo es `alerta` (que puede llevar de acompañante un hecho local del mismo fenómeno). A igualdad de interés se prefiere un hecho con `mapRepresentsFact: true`. Tono por modo: `alerta` → `epico` si el aviso es rojo y `consejo` en cualquier otro nivel, `invasion` → `epico`, `avistamiento` → `cientifico`, `parte` → `neutral`. Uno o dos hechos, no más.
-3. **`cierre`** — otro dato, un consejo o un gag. Toma un hecho libre de otro protagonista. Si hay leitmotiv elegible **y** queda libre un hecho de su propio Pokémon que lo sostenga, se cuenta el gag con ese hecho y el tono es `guasa`; si ninguno de los candidatos del día encuentra hecho que lo sostenga, el gag se deja para otro día y no gasta cooldown. Sin gag: tono `consejo` si el hecho es accionable (lluvia, nieve, viento, tormenta, niebla, calima, oleaje, aviso) y `neutral` si no.
-
-**Día poco interesante:** siempre hay material sin necesidad de dramatismo. `DayShapeFact` y `CalendarFact` existen todos los días, siempre hay un `TemperatureFact` de máxima y otro de mínima, y con 74 lugares nunca falta un `PokemonSpotlightFact`. El modo cae a `parte` y el tono a `neutral`/`guasa`, que es exactamente el registro correcto para un día ordinario — ese es el "día tranquilo" del repertorio, sin necesidad de un modo aparte.
-
-**Longitud:** cada `text` entre 20 y 160 caracteres. Es un bocadillo, no un párrafo — y lo impone el validador, no solo el prompt.
+`Protagonist` guarda el `PokemonSpotlightFact` entero en vez de repetir sus campos: el hecho ya existe y duplicarlo era una fuente de divergencia. El día de la semana tampoco se copia al plan — vive en el `CalendarFact`, que es un hecho como los demás.
 
 ## Protagonistas — derivados de `MAP_PRIORITY`, sin tabla nueva
 
@@ -377,7 +373,13 @@ Puede haber **varias generaciones para el mismo `forecast.date`** (el `schedule`
 | Mismo modo demasiados días seguidos | Si el modo elegido es el mismo los últimos 3 días y hay otro elegible, se pasa al siguiente. **`alerta` nunca cede** — un aviso naranja tres días seguidos se narra tres días. |
 | Mismo protagonista siempre | Si el `PokedexId` de `headline` ha sido el primer protagonista los últimos 3 días y existe un `spread`/`rarity` distinto, el slot `foco` usa ese en su lugar. El modo del día no cambia por esto. |
 
-`history.ts` es **puro**: recibe `OakHistoryEntry[]` y la fecha objetivo, y devuelve las decisiones y la lista actualizada. El I/O (`src/data/oak-history.json`) vive en `scripts/oak/`. Retención: los días distintos que cubran el cooldown más largo configurado, no un número fijo.
+`history.ts` es **puro**: recibe `OakHistoryEntry[]` y la fecha objetivo, y devuelve las decisiones y la lista actualizada. El upsert por fecha y la retención también viven ahí (`nextHistory`), no en el script: del script solo es leer, validar y escribir.
+
+Retención derivada de sus dos únicos consumidores, no de una cifra redonda: `max(FOCUS_REPEAT_LIMIT, MAX_LEITMOTIF_COOLDOWN_DAYS)` días anteriores más el propio día generado. En una ventana de N días de calendario no caben más de N fechas distintas, así que quedarse con las N más recientes cubre el cooldown exactamente.
+
+Lectura del archivo (`scripts/oak/history-file.ts`): **que no exista es normal** — el primer día no hay historial y `[]` es la respuesta correcta. **Que exista y esté mal no lo es**: JSON roto, forma inesperada, `PokedexId` o `LeitmotifId` desconocidos y fechas imposibles abortan sin escribir nada. Convertirlos en "historial vacío" haría que Oak olvidara su continuidad en silencio.
+
+Una entrada **posterior** a la fecha objetivo también aborta: o el reloj iba mal cuando se generó, o el archivo viene de otra rama, y fiarse de ella envenenaría el cooldown y la racha de focos durante días. La del propio día objetivo sí vale — es un rerun, y `recentHistory` ya sabe que no cuenta como historial previo. La comprobación vive en el lector y no en `history.ts`: depende de qué día se está generando, no de la forma del dato, y el dominio puro no sabe eso.
 
 ## Leitmotivs — catálogo inicial
 
@@ -441,45 +443,58 @@ Da variedad suficiente sin tabla combinatoria: unas 60 piezas cortas bien escrit
 
 ## IA
 
-- **Dominio desacoplado:** `src/domain/oak/` no conoce Groq. La frontera es una función pequeña, `generateOakDialogues(report: DayReport): Promise<OakGeneration | null>`, implementada en `scripts/oak/groq-adapter.ts`. `null` = usa el fallback.
+- **Dominio desacoplado:** `src/domain/oak/` no conoce Groq. La frontera es una función pequeña, `generateOakDialogues(dayPlan: DayPlan): Promise<OakDialogues | null>`, implementada en `scripts/oak/groq-adapter.ts`. `null` no es una excepción, es una respuesta: significa "usa el fallback".
 - **Transporte:** `fetch` de Node contra `POST https://api.groq.com/openai/v1/chat/completions`, `Authorization: Bearer $GROQ_API_KEY`. Sin SDK — la API es OpenAI-compatible y una sola llamada no justifica una dependencia.
-- **Salida estructurada:** `response_format: { type: 'json_schema', json_schema: { name, strict: true, schema } }`, soportado hoy por `openai/gpt-oss-120b` y `openai/gpt-oss-20b`. Con `strict: true` el esquema se impone por decodificación restringida; aun así el output **se vuelve a validar** en nuestro código: nunca se confía en el modo estricto.
+- **Salida estructurada:** `response_format: { type: 'json_schema', json_schema: { name, strict: true, schema } }`, soportado hoy por `openai/gpt-oss-120b` y `openai/gpt-oss-20b`. En modo estricto todo objeto lleva `additionalProperties: false` y todos sus campos en `required`. El esquema se queda en el subconjunto que la documentación lista explícitamente (tipos, `enum`, `object`, `array`, `required`, `additionalProperties`): el recuento exacto de tres y los 20–160 caracteres **no** se le piden al proveedor, se comprueban en `validate.ts`. Nunca se confía en el modo estricto.
 - **Modelo:** `openai/gpt-oss-120b` por defecto, configurable por `GROQ_MODEL`.
 - **Una llamada por generación**, no una por diálogo: los 3 diálogos salen de una única petición. El `schedule` normal hace una al día; un rerun manual hace otra, y eso es esperado — el sistema no promete "una al día", promete "una por generación".
-- **Presupuesto de tokens:** el `DayReport` serializado ronda el millar de tokens porque solo lleva hechos cerrados. No es una optimización: es lo que permite quedarse dentro del límite por minuto de una capa gratuita.
+- **Presupuesto de tokens:** el payload serializado ronda el millar de tokens porque solo lleva hechos cerrados. No es una optimización: es lo que permite quedarse dentro del límite por minuto de una capa gratuita.
 - **Capa gratuita, 0 €.** Nunca se habilita billing. Cualquier `429`, indisponibilidad o cambio de cuota cae al fallback. Las cifras concretas de cuota no se fijan en el diseño: se consultan en la consola de Groq y cambian sin aviso.
-- **Timeout** corto y explícito (`AbortSignal.timeout`), sin reintentos: si falla, fallback.
-- **Secreto:** `GROQ_API_KEY` en GitHub Secrets y en `.env` local. Nunca `VITE_*`, nunca en el JSON publicado.
+- **Parámetros:** `reasoning_effort: 'low'`, `stream: false` y `max_completion_tokens` — no `max_tokens`, deprecado en Groq. Sin herramientas, sin búsqueda web, sin tool calling: Oak no necesita ninguna capacidad externa.
+- **Timeout** corto y explícito (`AbortSignal.timeout`), sin reintentos: si falla, fallback. Un segundo intento no arregla un 429.
+- **Qué ve la IA:** ni el `forecast.json`, ni los 74 lugares, ni el historial, ni el `historyEntry`. Solo fecha, modo y los tres huecos con su papel, su tono, su leitmotiv y sus hechos. De cada hecho viaja lo que se puede decir en voz alta: se quedan fuera `locationId`, la trazabilidad del aviso (`officialZoneId`, `source`, `sourcePhenomenon`) y también `mapPokemonId`/`mapRepresentsFact` — la forma más segura de que el modelo no nombre al Pokémon del mapa desde un hecho meteorológico es que no lo tenga. El nombre humano va ya resuelto (`gyarados-mega` → "Mega-Gyarados"): es presentación nuestra, no una deducción suya.
+- **Secreto:** `GROQ_API_KEY` en GitHub Secrets y en `.env` local. Nunca `VITE_*`, nunca en el JSON publicado, nunca en la URL ni en el cuerpo — solo en la cabecera `Authorization`. Que falte **no es un fallo**: es el camino normal en desarrollo local, y sale el fallback.
 
-**Contrato de salida validado:**
+**Contrato de salida.** La IA devuelve solo los textos — ni modo, ni papel, ni hechos, ni metadatos, ni razonamiento:
 
 ```ts
-export interface OakGeneration {
-  dialogues: [
-    { id: 'dialogue-1'; text: string },
-    { id: 'dialogue-2'; text: string },
-    { id: 'dialogue-3'; text: string },
-  ]
-}
+{ dialogues: [{ id: 'dialogue-1', text }, { id: 'dialogue-2', text }, { id: 'dialogue-3', text }] }
 ```
 
-Validación propia antes de publicar: exactamente 3 elementos, los 3 `id` esperados y en orden, `text` no vacío, 20–160 caracteres, sin campos extra. Cualquier desviación → fallback.
+El `role` se lo pone después el programa desde el `DialoguePlan`. Validación propia antes de publicar: objeto exacto, 3 elementos, los 3 `id` esperados y en orden, `text` no vacío, 20–160 caracteres, sin campos extra. Cualquier desviación → fallback.
+
+**Todo lo que cae al fallback** y termina en éxito: sin `GROQ_API_KEY`, timeout, error de red, HTTP no 2xx, 429, respuesta sin `content`, JSON ilegible, esquema inesperado, ids mal o en otro orden, texto vacío o fuera de rango, cualquier campo extra. Se registra `Oak AI unavailable/invalid → using local fallback (motivo)`, sin secretos ni cabeceras.
+
+**Lo que aborta** con código 1 y sin escribir nada: `forecast.date` desalineada del `computeTargetDate(now)`, historial corrupto o inválido, y cualquier fallo de nuestra propia lógica o validación. No hay `try` general: un bug nuestro no se disfraza de indisponibilidad del proveedor.
+
+```
+    IA rota     → fallback → se escribe → éxito
+    lógica rota → no se escribe → fallo
+```
+
+**Orden de publicación.** Cada `rename` es atómico, pero **dos `rename` no forman una transacción conjunta**: entre uno y otro hay un instante en el que un archivo está publicado y el otro no. No se monta nada para evitarlo; se elige el orden en el que ese estado intermedio es inofensivo:
+
+```
+construir y validar los dos objetos → serializar los dos → escribir los dos temporales
+→ rename oak-history.json → rename oak-today.json (SIEMPRE EL ÚLTIMO)
+```
+
+`oak-today.json` es el artefacto publicable, el que mira el frontend, y solo cambia cuando ya está todo lo demás en su sitio. Un historial adelantado sin su `oak-today` se corrige solo en la siguiente ejecución, porque el upsert por fecha reescribe esa misma entrada; al revés, un `oak-today` nuevo con el historial viejo repetiría foco o gag al día siguiente.
 
 ## `oak-today.json` y consumo desde el frontend
 
 ```ts
-export interface OakDialogue {
-  id: DialogueId
+/** El OakDialogue compartido más el papel que ya tenía en el plan. */
+export interface OakTodayDialogue extends OakDialogue {
   role: DialogueRole
-  text: string
 }
 
 export interface OakToday {
   date: string                    // === forecast.date
-  generatedAt: string
-  source: 'ai' | 'fallback'
+  generatedAt: string             // ISO UTC real de la ejecución
+  source: 'ai' | 'fallback'       // 'ai' solo si pasó NUESTRA validación; un 200 no basta
   dayMode: DayMode
-  dialogues: [OakDialogue, OakDialogue, OakDialogue]
+  dialogues: [OakTodayDialogue, OakTodayDialogue, OakTodayDialogue]
 }
 ```
 
@@ -546,7 +561,9 @@ src/domain/
     plan-dialogues.ts           los 3 DialogueSlot sin solapar, DayPlan y OakDialogue
     fallback-dialogues.ts       DayPlan → 3 textos, determinista, sin red
 scripts/oak/
-  build-day-report.ts           I/O: lee forecast.json, arma el DayReport
+  build-day-plan.ts             I/O: forecast + historial, guarda de fecha, arma el DayPlan
+  history-file.ts               lee y valida oak-history.json (ausente = [], corrupto = aborta)
+  validate.ts                   aduana: respuesta de la IA y OakToday antes de publicar
   groq-adapter.ts               única frontera con la IA
   generate.ts                   entrypoint: report → IA o fallback → escribe los JSON
 src/data/

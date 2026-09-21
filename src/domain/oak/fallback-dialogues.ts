@@ -1,6 +1,7 @@
-import { POKEMON_NAMES } from '../pokemon-names.ts'
+import { POKEMON_NAMES, displayPokemonName, hasSharedName } from '../pokemon-names.ts'
 import type { AlertPhenomenon } from '../types.ts'
 import type { LeitmotifId } from './leitmotifs.ts'
+import { DIALOGUE_MAX_LENGTH, DIALOGUE_MIN_LENGTH } from './plan-dialogues.ts'
 import type { DayPlan, DialogueSlot, OakDialogue, OakDialogues, Tone } from './plan-dialogues.ts'
 import type {
   AlertFact,
@@ -35,9 +36,6 @@ import type {
  * chiste nunca introduce un fenómeno, un lugar, un Pokémon ni una cifra que
  * no estuviera ya en un hecho.
  */
-
-const MIN_LENGTH = 20
-const MAX_LENGTH = 160
 
 // ---------------------------------------------------------------------------
 // Formato — presentación, nunca semántica
@@ -89,15 +87,6 @@ const PHENOMENON_TEXT: Record<AlertPhenomenon, string> = {
 function places(count: number): string {
   return count === 1 ? 'un lugar' : `${whole(count)} lugares`
 }
-
-/**
- * Los nombres humanos que más de un `PokedexId` comparte — hoy solo
- * "Castform", con sus cuatro formas. Se deduce de la propia tabla de
- * nombres, así que añadir o separar una forma no obliga a tocar nada aquí.
- */
-const SHARED_NAMES: ReadonlySet<string> = new Set(
-  Object.values(POKEMON_NAMES).filter((name, index, all) => all.indexOf(name) !== index),
-)
 
 function listNames(names: readonly string[]): string {
   if (names.length <= 1) return names[0] ?? ''
@@ -327,8 +316,8 @@ function alertClause(fact: AlertFact, context: ClauseContext): Clause {
 function spotlightClause(fact: PokemonSpotlightFact, context: ClauseContext): Clause {
   const parts = [...context.parts, 'spotlight', fact.pokemonId]
   const plainName = POKEMON_NAMES[fact.pokemonId]
-  const shared = SHARED_NAMES.has(plainName)
-  const name = shared ? `${plainName} (${fact.label})` : plainName
+  const shared = hasSharedName(fact.pokemonId)
+  const name = displayPokemonName(fact.pokemonId, fact.label)
   const sample = listNames(fact.locations.map((place) => place.locationName))
   const exhaustive = fact.locationCount === fact.locations.length && sample !== ''
   const count = places(fact.locationCount)
@@ -579,9 +568,9 @@ function renderSlot(slot: DialogueSlot, date: string, used: Set<string>): string
     }
   }
 
-  const chosen = candidates.find((text) => text.length >= MIN_LENGTH && text.length <= MAX_LENGTH)
+  const chosen = candidates.find((text) => text.length >= DIALOGUE_MIN_LENGTH && text.length <= DIALOGUE_MAX_LENGTH)
   if (!chosen) {
-    throw new Error(`Oak no sabe redactar ${slot.id} dentro de ${MIN_LENGTH}-${MAX_LENGTH} caracteres con los hechos de ese hueco.`)
+    throw new Error(`Oak no sabe redactar ${slot.id} dentro de ${DIALOGUE_MIN_LENGTH}-${DIALOGUE_MAX_LENGTH} caracteres con los hechos de ese hueco.`)
   }
   return chosen
 }

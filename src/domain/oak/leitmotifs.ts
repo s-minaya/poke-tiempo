@@ -128,3 +128,10 @@ export function selectLeitmotif(
 ): LeitmotifId | null {
   return orderedLeitmotifs(facts, recent, date)[0] ?? null
 }
+
+/**
+ * El descanso más largo del catálogo. Lo usa la retención del historial
+ * para saber cuántos días atrás hay que conservar: guardar menos rompería
+ * el cooldown, y guardar más sería basura.
+ */
+export const MAX_LEITMOTIF_COOLDOWN_DAYS = Math.max(...LEITMOTIFS.map((leitmotif) => leitmotif.cooldownDays))

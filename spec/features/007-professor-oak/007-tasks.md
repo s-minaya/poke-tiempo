@@ -13,7 +13,7 @@ _Checklist derivada del `007-plan.md`, agrupada en bloques. Se implementa un blo
 
 ## Bloque 1 — Tipos y hechos
 
-- [ ] `src/domain/oak/types.ts` — `NarrativeFact` y su unión completa, `DayMode`, `Tone`, `DialogueRole`, `DialogueId`, `LeitmotifId`, `DialogueSlot`, `Protagonist`, `DayReport`, `OakHistoryEntry`, `OakDialogue`, `OakToday`, `OakGeneration`.
+- [x] Contratos repartidos por módulo en vez de un `types.ts` cajón: los 12 `NarrativeFact` en `types.ts`, `DayMode`/`DayModeDecision` en `day-mode.ts`, `Tone`/`DialogueRole`/`DialogueId`/`DialogueSlot`/`DayPlan`/`OakDialogue` en `plan-dialogues.ts`, `Protagonist` en `protagonists.ts`, `LeitmotifId` en `leitmotifs.ts`, `OakHistoryEntry` en `history.ts` y `OakToday` en `oak-today.ts`.
 - [ ] `src/domain/oak/facts.ts` — `collectFacts(locations, forecast): NarrativeFact[]`. Cada número sale tal cual del `LocationForecast`; **cada `PokedexId` sale de `pickMapPokemon`**, nunca de un `assignBy*`.
 - [ ] `mapRepresentsFact` calculado una sola vez por hecho, comparando el eje que lo produjo con el Pokémon visible del lugar.
 - [ ] Filtrado de avisos por `forecast.date` con `isActiveOnDate` y deduplicado por `officialZoneId + phenomenon + level + startsAt`.
@@ -42,12 +42,12 @@ _Checklist derivada del `007-plan.md`, agrupada en bloques. Se implementa un blo
 
 ## Bloque 5 — Generación e IA
 
-- [ ] `scripts/oak/build-day-report.ts` — lee `forecast.json` y `locations.ts`, comprueba que `forecast.date === computeTargetDate(...)` y arma el `DayReport`.
-- [ ] `scripts/oak/groq-adapter.ts` — una llamada `fetch` con `response_format: json_schema` (`strict: true`), timeout con `AbortSignal.timeout`, sin reintentos, sin SDK. Modelo `openai/gpt-oss-120b` por defecto, configurable con `GROQ_MODEL`.
-- [ ] Validación propia del output (3 diálogos, ids en orden, longitud 20–160, sin campos extra) → fallback ante cualquier desviación.
-- [ ] `scripts/oak/generate.ts` — escribe `src/data/oak-today.json` y `src/data/oak-history.json` (upsert por fecha); falla ruidosamente y sin escribir nada si la lógica propia no puede producir 3 diálogos válidos o si el historial queda con fechas duplicadas.
-- [ ] `npm run generate:oak` en `package.json`; `GROQ_API_KEY` y `GROQ_MODEL` en `.env.example`.
-- [ ] Tests del validador y de la decisión IA/fallback con respuestas simuladas (429, JSON inválido, texto demasiado largo, respuesta correcta).
+- [x] `scripts/oak/build-day-plan.ts` — lee `forecast.json`, `locations.ts` y el historial, comprueba que `forecast.date === computeTargetDate(now)` antes de nada y arma el `DayPlan` encadenando las funciones puras. Ninguna decisión narrativa vive en `scripts/`.
+- [x] `scripts/oak/groq-adapter.ts` — una llamada `fetch` con `response_format: json_schema` (`strict: true`), `reasoning_effort: 'low'`, `stream: false`, `max_completion_tokens`, timeout con `AbortSignal.timeout`, sin reintentos, sin SDK, sin herramientas. Modelo `openai/gpt-oss-120b` por defecto, configurable con `GROQ_MODEL`. Devuelve `null` ante cualquier fallo del proveedor.
+- [x] `scripts/oak/validate.ts` — validación propia del output (3 diálogos, ids en orden, longitud 20–160, sin campos extra) → fallback ante cualquier desviación; y `assertValidOakToday`, que ante un fallo nuestro lanza en vez de publicar.
+- [x] `scripts/oak/generate.ts` — construye y valida los dos objetos completos en memoria y solo entonces escribe `src/data/oak-today.json` y `src/data/oak-history.json` (temporal + `rename`, los dos temporales antes de renombrar ninguno). Falla ruidosamente y sin escribir nada ante cualquier fallo propio: un error de generación nunca pisa el último JSON válido.
+- [x] `npm run generate:oak` en `package.json`; `GROQ_API_KEY` y `GROQ_MODEL` en `.env.example`, nunca `VITE_*`.
+- [x] Tests del adapter con `fetch` simulado (429, 500, red, timeout, sin content, JSON inválido, ids invertidos, texto corto/largo, campos extra, respuesta correcta) y del generador contra directorio temporal (guarda de fecha, historial ausente/corrupto, rerun idempotente, `role` desde el plan, fallo propio que no se convierte en fallback, ningún archivo escrito hasta tener los dos válidos).
 
 ## Bloque 6 — Consumo desde el frontend
 

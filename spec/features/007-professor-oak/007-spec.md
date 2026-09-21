@@ -28,7 +28,7 @@ Oak únicamente:
 4. deja que la IA redacte esos hechos ya cerrados,
 5. usa un fallback local determinista si la IA falla.
 
-La IA **nunca** puede: reasignar Pokémon, inventar temperaturas, inventar lluvia/viento/avisos, añadir lugares que no estén en el hecho que redacta, ni afirmar fenómenos que no existan en el `DayReport`. Recibe hechos cerrados y tipados (`NarrativeFact`), nunca el `forecast.json` completo.
+La IA **nunca** puede: reasignar Pokémon, inventar temperaturas, inventar lluvia/viento/avisos, añadir lugares que no estén en el hecho que redacta, ni afirmar fenómenos que no existan en el `DayPlan`. Recibe hechos cerrados y tipados (`NarrativeFact`), nunca el `forecast.json` completo.
 
 ## Estado de las dependencias
 

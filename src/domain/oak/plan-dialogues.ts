@@ -46,6 +46,14 @@ export interface OakDialogue {
 
 export type OakDialogues = [OakDialogue, OakDialogue, OakDialogue]
 
+/**
+ * Un bocadillo de videojuego, no un párrafo. El límite lo comparten las tres
+ * piezas que lo necesitan — el fallback al redactar, el validador de la
+ * respuesta de la IA y el propio prompt —, así que vive en un único sitio.
+ */
+export const DIALOGUE_MIN_LENGTH = 20
+export const DIALOGUE_MAX_LENGTH = 160
+
 export interface DayPlanInput {
   date: string
   facts: readonly NarrativeFact[]

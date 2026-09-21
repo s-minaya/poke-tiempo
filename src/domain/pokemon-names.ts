@@ -43,3 +43,29 @@ export const POKEMON_NAMES: Record<PokedexId, string> = {
   'gyarados-mega': 'Mega-Gyarados',
   moltres: 'Moltres',
 }
+
+/**
+ * Los nombres que más de un `PokedexId` comparte — hoy solo "Castform", con
+ * sus cuatro formas. Se deduce de la tabla de arriba, así que separar o
+ * fusionar una forma no obliga a tocar nada más.
+ */
+const SHARED_NAMES: ReadonlySet<string> = new Set(
+  Object.values(POKEMON_NAMES).filter((name, index, all) => all.indexOf(name) !== index),
+)
+
+export function hasSharedName(pokemonId: PokedexId): boolean {
+  return SHARED_NAMES.has(POKEMON_NAMES[pokemonId])
+}
+
+/**
+ * El nombre tal y como se dice en voz alta. Cuando varios Pokémon comparten
+ * nombre, el nombre solo no dice de cuál hablamos, así que la etiqueta del
+ * fenómeno entra **entre paréntesis** como aclaración explícita —
+ * "Castform (Niebla)" —, nunca interpolada en la frase: `POKEMON_LABELS`
+ * mezcla sustantivos y adjetivos y ninguna plantilla los admite a todos.
+ * Un nombre inequívoco no lleva aclaración.
+ */
+export function displayPokemonName(pokemonId: PokedexId, label: string): string {
+  const name = POKEMON_NAMES[pokemonId]
+  return SHARED_NAMES.has(name) ? `${name} (${label})` : name
+}

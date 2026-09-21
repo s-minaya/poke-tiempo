@@ -1,5 +1,6 @@
 import type { PokedexId } from '../pokedex.ts'
 import type { DayModeDecision } from './day-mode.ts'
+import { MAX_LEITMOTIF_COOLDOWN_DAYS } from './leitmotifs.ts'
 import type { LeitmotifId } from './leitmotifs.ts'
 import type { Protagonist } from './protagonists.ts'
 import type { PokemonSpotlightFact } from './types.ts'
@@ -14,8 +15,9 @@ import type { PokemonSpotlightFact } from './types.ts'
  * mover el historial es qué Pokémon secundario recibe el foco cuando de
  * verdad hay dónde elegir, y qué leitmotiv puede reutilizarse.
  *
- * Puro: recibe el historial ya leído y no toca disco. El upsert real por
- * fecha vive en el script de generación.
+ * Puro: recibe el historial ya leído y no toca disco. El upsert por fecha y
+ * la retención también viven aquí (`nextHistory`); del script solo es leer,
+ * validar y escribir el archivo.
  */
 export interface OakHistoryEntry {
   date: string
@@ -45,6 +47,33 @@ export function recentHistory(history: readonly OakHistoryEntry[], targetDate: s
   }
 
   return [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/**
+ * Cuántos días anteriores hay que conservar en disco: los que de verdad
+ * necesitan los dos únicos consumidores del historial — el cooldown más
+ * largo de un leitmotiv y la racha de focos de `isFocusExhausted` —, no una
+ * cifra redonda. Dentro de una ventana de N días de calendario no caben más
+ * de N fechas distintas, así que quedarse con las N más recientes cubre el
+ * cooldown exactamente.
+ */
+const RETAINED_PREVIOUS_DAYS = Math.max(FOCUS_REPEAT_LIMIT, MAX_LEITMOTIF_COOLDOWN_DAYS)
+
+/**
+ * El historial que se guarda tras generar un día: la entrada nueva entra
+ * por `date` — reemplazando la de esa misma fecha si el día ya se había
+ * generado —, y el resto se recorta a lo que hará falta mañana.
+ *
+ * Es idempotente a propósito: dos ejecuciones del mismo `targetDate` dejan
+ * el archivo exactamente igual, con una sola entrada para ese día.
+ */
+export function nextHistory(history: readonly OakHistoryEntry[], entry: OakHistoryEntry): OakHistoryEntry[] {
+  const byDate = new Map(history.map((item) => [item.date, item]))
+  byDate.set(entry.date, entry)
+
+  return [...byDate.values()]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, RETAINED_PREVIOUS_DAYS + 1) // +1: la entrada del propio día generado
 }
 
 /** Si un Pokémon ya ha sido el foco de los `FOCUS_REPEAT_LIMIT` días anteriores distintos. */

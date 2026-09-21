@@ -4,7 +4,7 @@ import type { PokedexId } from '../pokedex.ts'
 import { POKEMON_LABELS } from '../pokemon-labels.ts'
 import type { DayModeDecision } from './day-mode.ts'
 import type { OakHistoryEntry } from './history.ts'
-import { isFocusExhausted, recentHistory, resolveFocusSpotlight } from './history.ts'
+import { isFocusExhausted, nextHistory, recentHistory, resolveFocusSpotlight } from './history.ts'
 import type { Protagonist, ProtagonistRole } from './protagonists.ts'
 import type { AlertFact, PokemonSpotlightFact } from './types.ts'
 
@@ -161,5 +161,59 @@ describe('resolveFocusSpotlight', () => {
     resolveFocusSpotlight({ mode: 'parte', trigger: null }, protagonists, exhausted)
 
     expect(protagonists).toEqual(snapshot)
+  })
+})
+
+describe('nextHistory', () => {
+  const previous = [
+    entry('2026-09-17', 'charmander', ['hoppip-vuela']),
+    entry('2026-09-16', 'castform'),
+    entry('2026-09-15', 'zapdos'),
+  ]
+  const today = entry(TODAY, 'kyogre', ['snorunt-frio'])
+
+  it('la entrada del día entra la primera, y el resto se conserva en orden', () => {
+    expect(nextHistory(previous, today).map((item) => item.date)).toEqual([TODAY, '2026-09-17', '2026-09-16', '2026-09-15'])
+  })
+
+  it('regenerar el mismo día reemplaza su entrada en vez de añadir otra', () => {
+    const once = nextHistory(previous, today)
+    const twice = nextHistory(once, today)
+
+    expect(twice).toEqual(once)
+    expect(twice.filter((item) => item.date === TODAY)).toHaveLength(1)
+  })
+
+  it('el rerun gana: la entrada nueva sustituye a la anterior del mismo día', () => {
+    const corrected = entry(TODAY, 'zapdos', [])
+
+    expect(nextHistory(nextHistory(previous, today), corrected)[0]).toEqual(corrected)
+  })
+
+  it('nunca deja dos entradas con la misma fecha, ni partiendo de un historial que ya las tenía', () => {
+    const duplicated = [entry('2026-09-17', 'charmander'), entry('2026-09-17', 'castform'), ...previous]
+    const dates = nextHistory(duplicated, today).map((item) => item.date)
+
+    expect(new Set(dates).size).toBe(dates.length)
+  })
+
+  // Retención: cooldown más largo (5) y racha de focos (3) → 5 días previos.
+  it('conserva lo que necesitan sus dos consumidores y tira el resto', () => {
+    const long = Array.from({ length: 12 }, (_, index) => entry(`2026-09-${String(17 - index).padStart(2, '0')}`, 'zapdos'))
+    const kept = nextHistory(long, today)
+
+    expect(kept).toHaveLength(6)
+    expect(kept.map((item) => item.date)).toEqual([TODAY, '2026-09-17', '2026-09-16', '2026-09-15', '2026-09-14', '2026-09-13'])
+  })
+
+  it('un historial vacío es un arranque válido, no un error', () => {
+    expect(nextHistory([], today)).toEqual([today])
+  })
+
+  it('no muta el historial que recibe', () => {
+    const snapshot = structuredClone(previous)
+    nextHistory(previous, today)
+
+    expect(previous).toEqual(snapshot)
   })
 })
