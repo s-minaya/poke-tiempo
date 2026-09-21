@@ -34,6 +34,18 @@ export interface DialogueSlot {
 
 export type DialoguePlan = [DialogueSlot, DialogueSlot, DialogueSlot]
 
+/**
+ * Un bocadillo ya redactado. Es la forma mínima que comparten las dos vías
+ * de generación — el fallback local y, más adelante, la IA — y por eso vive
+ * aquí, junto al `DialogueId` que le da la identidad, y no en cada una.
+ */
+export interface OakDialogue {
+  id: DialogueId
+  text: string
+}
+
+export type OakDialogues = [OakDialogue, OakDialogue, OakDialogue]
+
 export interface DayPlanInput {
   date: string
   facts: readonly NarrativeFact[]

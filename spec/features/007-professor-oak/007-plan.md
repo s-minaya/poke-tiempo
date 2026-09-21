@@ -81,94 +81,89 @@ No es un riesgo teórico: en el `forecast.json` del 2026-09-18, **71 de los 74 l
 Por eso **ningún `NarrativeFact` lleva el `PokedexId` del eje que lo produjo**. Cada hecho de lugar lleva dos campos derivados de `pickMapPokemon`:
 
 - `mapPokemonId: PokedexId` — el Pokémon realmente visible en ese lugar. Es el único que Oak puede nombrar.
-- `representedOnMap: boolean` — `true` si el eje que produjo este hecho es el que ganó en el mapa. Permite que el planificador prefiera hechos coherentes con lo que se ve (la lluvia de un lugar que dibuja Kyogre) sobre los que no lo son, sin llegar a exponer nunca el candidato perdedor.
+- `mapRepresentsFact: boolean` — `true` si el Pokémon visible es uno de los que asigna el eje de este hecho. Es una comprobación de **coincidencia**, no de procedencia: `pickMapPokemon` devuelve un `PokedexId` y no conserva de qué eje salió, así que afirmar cuál "ganó" sería inventar información. Permite que el planificador prefiera hechos coherentes con lo que se ve (la lluvia de un lugar que dibuja Kyogre) sin llegar a exponer nunca el candidato perdedor.
 
 Con eso, el peor caso posible es una frase igualmente cierta: "llueven 3 mm en A Coruña, donde hoy manda Castform-ice".
 
 ```ts
-// src/domain/oak/types.ts
+// src/domain/oak/types.ts — contrato implementado: 12 `kind`.
+// Los comentarios largos de cada campo viven en el propio archivo.
 import type { PokedexId } from '../pokedex.ts'
-import type { AlertLevel, AlertPhenomenon, SkyCondition } from '../types.ts'
+import type { AlertLevel, AlertPhenomenon } from '../types.ts'
 
-/** Un lugar tal y como Oak lo nombra, con el Pokémon que se ve ahí.
- *  `mapPokemonId` sale siempre de `pickMapPokemon`, nunca de un `assignBy*`. */
+/** Un lugar, solo identidad: no todo hecho de un lugar tiene Pokémon. */
 export interface FactLocation {
   locationId: string
   locationName: string
+}
+
+/** Un lugar con el Pokémon que de verdad se dibuja en él. */
+export interface MapFactLocation extends FactLocation {
   mapPokemonId: PokedexId
 }
 
+/** Hecho de un lugar cuyo eje meteorológico sí tiene Pokémon en la 003. */
+export interface RepresentableFact extends MapFactLocation {
+  mapRepresentsFact: boolean
+}
+
 /** Por qué esta temperatura es noticia — no es una regla nueva, es el
- *  resultado de ordenar los 74 valores reales del día. */
+ *  resultado de ordenar los valores reales del día. */
 export type TemperatureRole = 'hottest' | 'coldest_day' | 'coldest_night'
 
-export interface TemperatureFact extends FactLocation {
+export interface TemperatureFact extends RepresentableFact {
   kind: 'temperature'
   role: TemperatureRole
   maxC: number
   minC: number
-  representedOnMap: boolean
 }
 
-export interface RainFact extends FactLocation {
+export interface RainFact extends RepresentableFact {
   kind: 'rain'
   mm: number                      // > 0 siempre: sin acumulado no hay hecho
   probabilityPercent: number | null
-  representedOnMap: boolean
 }
 
-export interface SnowFact extends FactLocation {
+export interface SnowFact extends RepresentableFact {
   kind: 'snow'
   cm: number                      // > 0 siempre
-  representedOnMap: boolean
 }
 
-export interface WindFact extends FactLocation {
+export interface WindFact extends RepresentableFact {
   kind: 'wind'
   speedKmh: number
   gustKmh: number | null
   warm: boolean                   // cumple también el umbral de viento cálido
-  representedOnMap: boolean
 }
 
-export interface StormFact extends FactLocation {
-  kind: 'storm'
-  representedOnMap: boolean
-}
+export interface StormFact extends RepresentableFact { kind: 'storm' }
 
-export interface FogFact extends FactLocation {
-  kind: 'fog'
-  representedOnMap: boolean
-}
+export interface FogFact extends RepresentableFact { kind: 'fog' }
 
-export interface CalimaFact extends FactLocation {
+export interface CalimaFact extends RepresentableFact {
   kind: 'calima'
-  fromAlert: boolean              // true si vino del aviso, no del código de cielo
-  representedOnMap: boolean
+  fromAlert: boolean              // hay aviso oficial de calima activo ese día
 }
 
-export interface SkyFact extends FactLocation {
-  kind: 'sky'
-  sky: SkyCondition
-  representedOnMap: boolean
-}
-
-export interface MarineFact extends FactLocation {
+export interface MarineFact extends RepresentableFact {
   kind: 'marine'
   waveHeightM: number
   wavePeriodS: number | null
-  representedOnMap: boolean
 }
 
-/** Un aviso oficial nunca dibuja Pokémon por sí mismo: `mapPokemonId` sigue
- *  siendo el del lugar, y `representedOnMap` no aplica. */
-export interface AlertFact extends FactLocation {
+/** Un aviso oficial nunca dibuja Pokémon: se emite para una zona oficial, no
+ *  para un lugar nuestro, así que no lleva `mapPokemonId` ni
+ *  `mapRepresentsFact`. `affectedLocations` dice qué puntos del mapa caen
+ *  bajo esa zona. */
+export interface AlertFact {
   kind: 'alert'
   level: AlertLevel
   phenomenon: AlertPhenomenon
   sourcePhenomenon: string        // literal de la fuente — trazabilidad
   officialZoneId: string
   source: 'aemet' | 'ipma'
+  affectedLocations: FactLocation[]
+  affectedLocationCount: number
 }
 
 /** El Pokémon protagonista y dónde se le ve. Siempre un Pokémon visible:
@@ -177,29 +172,19 @@ export interface PokemonSpotlightFact {
   kind: 'pokemon_spotlight'
   pokemonId: PokedexId
   label: string                   // POKEMON_LABELS[pokemonId]
-  locations: FactLocation[]       // como mucho 3: las que la IA puede nombrar
+  locations: MapFactLocation[]    // como mucho 3: las que se pueden nombrar
   locationCount: number           // total real, aunque `locations` venga recortada
 }
 
-/** Dos lugares opuestos en la misma métrica, ambos con su valor real y con
- *  el Pokémon que de verdad se ve en cada uno. */
-export interface ContrastFact {
-  kind: 'contrast'
-  metric: 'temperature_max' | 'rain_mm' | 'wind_speed'
-  high: FactLocation & { value: number }
-  low: FactLocation & { value: number }
-}
-
-/** Forma agregada del día. Todo son recuentos reales sobre los 74 lugares,
- *  calculados sobre el Pokémon visible de cada uno. */
+/** Forma agregada del día. Recuentos reales sobre los lugares con previsión,
+ *  calculados sobre el Pokémon visible de cada uno. Deliberadamente **no**
+ *  dice qué Pokémon domina: eso ya lo dice `PokemonSpotlightFact`. */
 export interface DayShapeFact {
   kind: 'day_shape'
   totalLocations: number
   rainingLocations: number
   alertedLocations: number
   distinctPokemonCount: number
-  dominantPokemonId: PokedexId
-  dominantLocationCount: number
 }
 
 export type Weekday = 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo'
@@ -221,11 +206,9 @@ export type NarrativeFact =
   | StormFact
   | FogFact
   | CalimaFact
-  | SkyFact
   | MarineFact
   | AlertFact
   | PokemonSpotlightFact
-  | ContrastFact
   | DayShapeFact
   | CalendarFact
 ```
@@ -255,7 +238,7 @@ export interface DialogueSlot {
 }
 
 /** Por qué este Pokémon protagoniza — ver "Protagonistas". */
-export type ProtagonistRole = 'severity' | 'spread' | 'rarity'
+export type ProtagonistRole = 'headline' | 'spread' | 'rarity'
 
 export interface Protagonist {
   role: ProtagonistRole
@@ -281,11 +264,11 @@ export interface DayReport {
 
 `plan-dialogues.ts` reparte sin solapar, llevando un conjunto de hechos ya consumidos:
 
-1. **`apertura`** — sitúa el día. Toma el `CalendarFact` y/o el `DayShapeFact`. Tono `neutral` o `cientifico`. Nunca gasta el hecho más fuerte.
-2. **`foco`** — el hecho más interesante: el protagonista `severity` con su hecho asociado (y el `AlertFact` si el modo es `alerta`). A igualdad de interés se prefiere un hecho con `representedOnMap: true`. Tono `epico` en `alerta`/`invasion`, `neutral` en el resto. Uno o dos hechos, no más.
-3. **`cierre`** — otro dato, un consejo o un gag. Toma un hecho del protagonista `spread` o `rarity`, un `ContrastFact`, o el leitmotiv del día si hay uno elegible. Tono `consejo` si algún hecho es accionable (lluvia, viento, calor, nieve, aviso), `guasa` si no.
+1. **`apertura`** — sitúa el día. Toma el `CalendarFact` y/o el `DayShapeFact`. Tono siempre `neutral`: es la frase que abre, no la que impresiona. Nunca gasta el hecho más fuerte.
+2. **`foco`** — el hecho más interesante: el spotlight elegido con su hecho asociado, o el `AlertFact` si el modo es `alerta` (que puede llevar de acompañante un hecho local del mismo fenómeno). A igualdad de interés se prefiere un hecho con `mapRepresentsFact: true`. Tono por modo: `alerta` → `epico` si el aviso es rojo y `consejo` en cualquier otro nivel, `invasion` → `epico`, `avistamiento` → `cientifico`, `parte` → `neutral`. Uno o dos hechos, no más.
+3. **`cierre`** — otro dato, un consejo o un gag. Toma un hecho libre de otro protagonista. Si hay leitmotiv elegible **y** queda libre un hecho de su propio Pokémon que lo sostenga, se cuenta el gag con ese hecho y el tono es `guasa`; si ninguno de los candidatos del día encuentra hecho que lo sostenga, el gag se deja para otro día y no gasta cooldown. Sin gag: tono `consejo` si el hecho es accionable (lluvia, nieve, viento, tormenta, niebla, calima, oleaje, aviso) y `neutral` si no.
 
-**Día poco interesante:** siempre hay material sin necesidad de dramatismo. `DayShapeFact` y `CalendarFact` existen todos los días; siempre hay un `TemperatureFact` de máxima y otro de mínima; `SkyFact` y el `ContrastFact` de temperatura existen prácticamente siempre. El modo cae a `parte` y el tono a `neutral`/`guasa`, que es exactamente el registro correcto para un día ordinario — ese es el "día tranquilo" del repertorio, sin necesidad de un modo aparte.
+**Día poco interesante:** siempre hay material sin necesidad de dramatismo. `DayShapeFact` y `CalendarFact` existen todos los días, siempre hay un `TemperatureFact` de máxima y otro de mínima, y con 74 lugares nunca falta un `PokemonSpotlightFact`. El modo cae a `parte` y el tono a `neutral`/`guasa`, que es exactamente el registro correcto para un día ordinario — ese es el "día tranquilo" del repertorio, sin necesidad de un modo aparte.
 
 **Longitud:** cada `text` entre 20 y 160 caracteres. Es un bocadillo, no un párrafo — y lo impone el validador, no solo el prompt.
 
@@ -295,15 +278,15 @@ No hay segundo sistema de importancia. Partiendo de `buildLocationViews(location
 
 | Rol | Regla | Qué aporta |
 |---|---|---|
-| `severity` | El `PokedexId` presente hoy con mejor posición en `MAP_PRIORITY`. | El titular. |
+| `headline` | El `PokedexId` presente hoy con mejor posición en `MAP_PRIORITY`. | El titular. |
 | `spread` | El `PokedexId` que aparece en más lugares del mapa. Empate → mejor posición en `MAP_PRIORITY`. | La cara real del día. |
 | `rarity` | El `PokedexId` presente en menos lugares, excluyendo los ya elegidos. Empate → mejor posición en `MAP_PRIORITY`. | La rareza que merece un comentario. |
 
 Si dos roles coinciden, el segundo pasa al siguiente candidato; si no queda ninguno, ese rol no existe ese día (`protagonists` tiene entre 1 y 3 elementos).
 
-Esto evita las dos trampas: no duplica un ranking (usa `MAP_PRIORITY` tal cual) y no narra siempre el primer elemento (solo `severity` lo hace, y el historial puede desbancarlo).
+Esto evita las dos trampas: no duplica un ranking (usa `MAP_PRIORITY` tal cual) y no narra siempre el primer elemento (solo `headline` lo hace, y el historial puede desbancarlo).
 
-_Con el `forecast.json` del 2026-09-18: `severity` = `gyarados-mega` (2 lugares), `spread` = `charmander` (21), `rarity` = `gyarados` (3)._
+_Con el `forecast.json` del 2026-09-18: `headline` = `gyarados-mega` (2 lugares), `spread` = `charmander` (21), `rarity` = `gyarados` (3)._
 
 ## Modos narrativos
 
@@ -329,7 +312,7 @@ Se implementa como un único helper exportado junto a `MAP_PRIORITY` (`isSignifi
 | Modo antiguo | Motivo |
 |---|---|
 | `calma` | **Descartado con datos.** Con el `MAP_PRIORITY` actual, todas las bandas térmicas van por delante de `hoppip`, y `assignByTemperature` siempre asigna algo. El día 2026-09-18, **58 de los 74 lugares** muestran un Pokémon por delante de `hoppip` (29 de ellos por banda térmica pura). La condición es prácticamente inalcanzable: sería un día con los 74 lugares entre 15 y 25 °C y sin ningún fenómeno. El registro tranquilo lo cubre `parte` con tono `neutral`. |
-| `duelo` | **Descartado con datos.** El umbral de ≥ 12 °C se cumple en un día completamente ordinario: el 2026-09-18 el salto entre la máxima más alta (Sevilla, 33 °C) y la más baja (Oviedo, 19,3 °C) es de **13,7 °C**. Cubrir Canarias, la meseta, el Pirineo y Portugal a la vez hace que el contraste sea la norma, no la noticia. El `ContrastFact` sigue existiendo como hecho para el cierre; lo que no existe es un modo que se active por él. |
+| `duelo` | **Descartado con datos.** El umbral de ≥ 12 °C se cumple en un día completamente ordinario: el 2026-09-18 el salto entre la máxima más alta (Sevilla, 33 °C) y la más baja (Oviedo, 19,3 °C) es de **13,7 °C**. Cubrir Canarias, la meseta, el Pirineo y Portugal a la vez hace que el contraste sea la norma, no la noticia. El contraste térmico no llegó a existir como hecho — un dato que se cumple casi todos los días no es una noticia —, y tampoco existe un modo que se active por él. |
 | `batalla` | Se solapaba por completo con `duelo`. |
 | `expedicion` | Sin condición objetiva: era el reparto normal de hechos, no un modo. |
 | `laboratorio` | Solo flavour. Pasa a `Tone.cientifico`. |
@@ -392,21 +375,23 @@ Puede haber **varias generaciones para el mismo `forecast.date`** (el `schedule`
 |---|---|
 | Mismo chiste todos los días | Un leitmotiv no es candidato si aparece dentro de los últimos `cooldownDays` de su propia entrada de catálogo. |
 | Mismo modo demasiados días seguidos | Si el modo elegido es el mismo los últimos 3 días y hay otro elegible, se pasa al siguiente. **`alerta` nunca cede** — un aviso naranja tres días seguidos se narra tres días. |
-| Mismo protagonista siempre | Si el `PokedexId` de `severity` ha sido el primer protagonista los últimos 3 días y existe un `spread`/`rarity` distinto, el slot `foco` usa ese en su lugar. El modo del día no cambia por esto. |
+| Mismo protagonista siempre | Si el `PokedexId` de `headline` ha sido el primer protagonista los últimos 3 días y existe un `spread`/`rarity` distinto, el slot `foco` usa ese en su lugar. El modo del día no cambia por esto. |
 
 `history.ts` es **puro**: recibe `OakHistoryEntry[]` y la fecha objetivo, y devuelve las decisiones y la lista actualizada. El I/O (`src/data/oak-history.json`) vive en `scripts/oak/`. Retención: los días distintos que cubran el cooldown más largo configurado, no un número fijo.
 
 ## Leitmotivs — catálogo inicial
 
-Cinco, no más. Cada uno solo es candidato si el dato del día lo justifica; ninguno puede afirmar nada que no esté en un hecho del día.
+Cinco, no más. Una única condición para los cinco, sin reglas particulares: el gag habla de un Pokémon concreto y solo es candidato si **ese Pokémon está hoy en el mapa** — es decir, si existe su `PokemonSpotlightFact` — y no está en cooldown. Ninguno puede afirmar nada que no esté en un hecho del día.
 
-| Id | Idea | Condición de elegibilidad |
+| Id | Idea | Pokémon que lo activan |
 |---|---|---|
-| `hoppip-vuela` | Hoppip sale volando y a ver cómo vuelve al laboratorio. | Hay un `WindFact` o `hoppip` es visible en algún lugar. |
-| `castform-vestuario` | Castform cambiándose de forma según le da el día. | Hay a la vez dos formas distintas de Castform visibles en el mapa. |
-| `groudon-termostato` | A alguien se le ha ido la mano con el termostato. | `groudon`/`groudon-primal`/`magmar` visibles, o un `TemperatureFact` de máxima alta. |
-| `gyarados-mar` | Gyarados de mal humor mar adentro. | Hay un `MarineFact`, o `gyarados`/`gyarados-mega` visibles. |
-| `snorunt-frio` | Snorunt encantado, el resto no tanto. | `snorunt`/`cryogonal`/`abomasnow` visibles, o un `TemperatureFact` de mínima baja. |
+| `hoppip-vuela` | Hoppip sale volando y a ver cómo vuelve al laboratorio. | `hoppip` |
+| `castform-vestuario` | Castform cambiándose de forma según le da el día. | `castform`, `castform-sun`, `castform-rain`, `castform-ice` |
+| `groudon-termostato` | A alguien se le ha ido la mano con el termostato. | `groudon`, `groudon-primal` |
+| `gyarados-mar` | Gyarados de mal humor mar adentro. | `gyarados`, `gyarados-mega` |
+| `snorunt-frio` | Snorunt encantado, el resto no tanto. | `snorunt` |
+
+Cooldown de 5 **días de calendario** para los cinco: usado el día 10, bloqueado del 11 al 15, disponible el 16. Que el pipeline se saltara alguna jornada no alarga la espera — el gag descansa cinco días, no cinco ejecuciones.
 
 La redacción concreta vive en `leitmotifs.ts` y se ajusta sin tocar el motor.
 
@@ -431,12 +416,28 @@ Registro orientativo (referencia de voz, **no** plantillas literales):
 
 ## Fallback — parte de primera clase
 
-Mismo `DialoguePlan`, mismos hechos, sin red. Se compone, no se enumera:
+Mismo `DialoguePlan`, mismos hechos, sin red. `generateFallbackDialogues(dayPlan: DayPlan): OakDialogues` **no decide nada**: no toca los hechos, no elige protagonista, no cambia el modo, no busca otro leitmotiv, no vuelve al forecast y no mira `MAP_PRIORITY`. Recibe un plan cerrado y lo pone en palabras. Se compone, no se enumera:
 
-1. **Una cláusula por `kind` de hecho** — 14 funciones puras y cortas (`fact → string`), cada una con dos o tres redacciones entre las que elige una semilla determinista derivada de `date`. Es donde vive la voz de Oak.
-2. **Unos pocos marcos por rol** — tres o cuatro estructuras de frase por `apertura`/`foco`/`cierre` que engarzan una o dos cláusulas y el tono.
+1. **Una cláusula por `kind` de hecho** — 12 funciones puras y cortas, cada una con dos o tres redacciones y una formulación compacta de reserva. Devuelven un **fragmento** sin punto final, para poder encadenarse; el spotlight devuelve además una frase suelta con la etiqueta del fenómeno.
+2. **Aperturas y remates por tono**, no por rol: el tono ya viene decidido por el plan y es lo que manda el registro. `consejo` remata siempre con prudencia genérica — nunca con una instrucción oficial, que nuestros datos no traen.
+3. **Tres o cuatro redacciones por leitmotiv**, que es lo único que aporta el `guasa`.
 
-Da variedad suficiente sin tabla combinatoria: unas 40 piezas cortas bien escritas en vez de cientos de plantillas completas. Determinista: el mismo día produce siempre el mismo fallback. Vive en `src/domain/oak/` porque es puro.
+Reglas de redacción que no son de estilo sino de verdad:
+
+- **Nombres humanos** desde `src/domain/pokemon-names.ts`, la única fuente. Las cuatro formas de Castform se llaman "Castform", sin sufijo inventado.
+- **La etiqueta (`POKEMON_LABELS`) no se verbaliza.** Mezcla sustantivos ("Niebla"), adjetivos ("Caluroso") y sintagmas ("Nevadas intensas"), así que ninguna plantilla la admite entera y clasificarlos gramaticalmente sería un vocabulario nuevo a cambio de muy poco. El nombre y el reparto ya dicen la verdad del spotlight, y cuando el hueco lleva además un hecho meteorológico, sus cifras dicen bastante más que una etiqueta. Decisión tomada, no deuda pendiente.
+- **Ningún hecho meteorológico nombra al Pokémon del mapa, y es deliberado.** Ni con `mapRepresentsFact: false` (sería atribuirle un fenómeno ajeno) ni con `true`, donde el contrato solo afirma coincidencia y no causa. Los Pokémon se nombran por `PokemonSpotlightFact` y por los leitmotivs, que son las dos piezas que existen para eso; así la regla del `false` no depende de acordarse de ella, sino de que no haya por dónde romperla. Abrir asociaciones Pokémon-fenómeno desde `RainFact` o `WindFact` sería una decisión de producto aparte, no un pendiente de este bloque.
+- **Lo opcional se omite cuando no existe**: sin `probabilityPercent` no hay porcentaje, sin `gustKmh` no hay racha, sin `wavePeriodS` no hay periodo. Y la probabilidad se cuenta como probabilidad: un 60 % nunca es una certeza.
+- **Trazabilidad que no se lee en voz alta**: `officialZoneId`, `source` y `sourcePhenomenon` no aparecen nunca en un texto.
+- **Muestra, no censo**: cuando `locationCount` supera a los lugares nombrados, la lista se presenta como muestra ("entre ellos"). "Solo" se reserva al único caso que lo justifica, un lugar.
+- **Lugares, no puntos**: un punto es la chincheta del mapa. El recuento es el mismo; la palabra es la de una persona.
+- **Unión sin causa**: dos hechos del mismo hueco se encadenan con " y ", "; además, " o " mientras " — nunca con un conector causal. " y " se descarta si el primer fragmento ya termina en enumeración, donde se leería como un elemento más de la lista. Y si los dos hablan del mismo sitio y no hay ambigüedad, el segundo dice "allí" en vez de repetir el nombre.
+
+**Variación determinista:** una suma posicional sobre las partes que identifican cada elección (`date` + `dialogueId` + `kind`/`role`/leitmotiv). No es un PRNG y no hay `Math.random()`: el mismo `DayPlan` produce siempre los mismos textos, y dos fechas distintas pueden caer en variantes distintas. Un conjunto compartido entre los tres bocadillos evita además que el día entero abra con la misma muletilla.
+
+**20–160 caracteres, redactando y no cortando:** cada hueco genera varias formulaciones de la misma verdad, de la más suelta a la más apretada, y se publica la primera que entra en rango. Lo que se pierde por el camino son detalles opcionales del propio hecho — la muestra de lugares, la racha, la etiqueta —, nunca el hecho. Nada de `slice(0, 160)`: si ni la formulación más compacta cabe, es un fallo nuestro de redacción y se lanza un error.
+
+Da variedad suficiente sin tabla combinatoria: unas 60 piezas cortas bien escritas en vez de cientos de plantillas completas. Vive en `src/domain/oak/` porque es puro.
 
 ## IA
 
@@ -533,16 +534,17 @@ src/domain/
   map-priority.ts               ← movido desde components/SpainMap/pick-map-pokemon.ts
                                    (+ isSignificantPokemon)
   pokemon-labels.ts             ← POKEMON_LABELS, movido desde Legend/legend-metadata.ts
+  pokemon-names.ts              ← POKEMON_NAMES, nuevo: única fuente de nombres humanos
   location-views.ts             ← movido desde components/SpainMap/
   oak/
-    types.ts                    NarrativeFact, DayReport, DialogueSlot, OakToday, historial
+    types.ts                    los 12 NarrativeFact
     facts.ts                    Forecast → NarrativeFact[] (puro, solo Pokémon visibles)
     protagonists.ts             Protagonist[] desde MAP_PRIORITY + recuentos
     day-mode.ts                 4 modos, primer modo que cumple
     leitmotifs.ts               catálogo de 5 gags
     history.ts                  puro, sin I/O, idempotente por fecha
-    plan-dialogues.ts           los 3 DialogueSlot sin solapar
-    fallback-dialogues.ts       cláusulas + marcos, determinista, sin red
+    plan-dialogues.ts           los 3 DialogueSlot sin solapar, DayPlan y OakDialogue
+    fallback-dialogues.ts       DayPlan → 3 textos, determinista, sin red
 scripts/oak/
   build-day-report.ts           I/O: lee forecast.json, arma el DayReport
   groq-adapter.ts               única frontera con la IA

@@ -15,13 +15,13 @@ _Checklist derivada del `007-plan.md`, agrupada en bloques. Se implementa un blo
 
 - [ ] `src/domain/oak/types.ts` — `NarrativeFact` y su unión completa, `DayMode`, `Tone`, `DialogueRole`, `DialogueId`, `LeitmotifId`, `DialogueSlot`, `Protagonist`, `DayReport`, `OakHistoryEntry`, `OakDialogue`, `OakToday`, `OakGeneration`.
 - [ ] `src/domain/oak/facts.ts` — `collectFacts(locations, forecast): NarrativeFact[]`. Cada número sale tal cual del `LocationForecast`; **cada `PokedexId` sale de `pickMapPokemon`**, nunca de un `assignBy*`.
-- [ ] `representedOnMap` calculado una sola vez por hecho, comparando el eje que lo produjo con el Pokémon visible del lugar.
+- [ ] `mapRepresentsFact` calculado una sola vez por hecho, comparando el eje que lo produjo con el Pokémon visible del lugar.
 - [ ] Filtrado de avisos por `forecast.date` con `isActiveOnDate` y deduplicado por `officialZoneId + phenomenon + level + startsAt`.
 - [ ] Tests table-driven (`it.each`): un caso por `kind`, los `null`/`0`/`false` que no deben producir hecho, el filtrado/deduplicado de avisos, y **un test explícito de que ningún hecho expone un candidato descartado** (fixture con lluvia + tormenta en el mismo lugar).
 
 ## Bloque 2 — Protagonistas y modo del día
 
-- [ ] `src/domain/oak/protagonists.ts` — `selectProtagonists(views): Protagonist[]` con los roles `severity`/`spread`/`rarity` y su desempate por `MAP_PRIORITY`.
+- [ ] `src/domain/oak/protagonists.ts` — `selectProtagonists(views): Protagonist[]` con los roles `headline`/`spread`/`rarity` y su desempate por `MAP_PRIORITY`.
 - [ ] `src/domain/oak/day-mode.ts` — cuatro modos en orden de prioridad (`alerta` → `invasion` → `avistamiento` → `parte`), primer modo que cumple. Depende solo del forecast y de los Pokémon visibles, no de los roles de protagonista.
 - [ ] Tests: cada modo con su caso que lo activa y su caso que no; `alerta` que ignora el amarillo; `avistamiento` que ignora un `castform-sun` raro por no ser significativo; colisión de roles de protagonista; día con un solo protagonista.
 - [ ] Comprobar que ningún archivo de `oak/` contiene un umbral meteorológico ni un `PokedexId` decidido por Oak.
@@ -31,7 +31,7 @@ _Checklist derivada del `007-plan.md`, agrupada en bloques. Se implementa un blo
 - [ ] `src/domain/oak/leitmotifs.ts` — los cinco: `hoppip-vuela`, `castform-vestuario`, `groudon-termostato`, `gyarados-mar`, `snorunt-frio`, cada uno con su `cooldownDays` y su condición de elegibilidad sobre los hechos del día.
 - [ ] `src/domain/oak/history.ts` — puro e **idempotente por fecha**: ignora la entrada de la fecha objetivo al leer, upsert al escribir, invariante de "una entrada por fecha", retención contada por días distintos.
 - [ ] Reglas de continuidad: cooldown de leitmotivs, rotación de modo repetido (`alerta` nunca cede), sustitución de protagonista repetido.
-- [ ] `src/domain/oak/plan-dialogues.ts` — los 3 `DialogueSlot` sin solapar, 1–2 hechos por slot, tono por rol, preferencia por hechos con `representedOnMap: true` en el `foco`.
+- [ ] `src/domain/oak/plan-dialogues.ts` — los 3 `DialogueSlot` sin solapar, 1–2 hechos por slot, tono por rol, preferencia por hechos con `mapRepresentsFact: true` en el `foco`.
 - [ ] Tests: ningún hecho repetido entre slots; siempre 3 slots no vacíos; día trivial que sigue produciendo 3 slots; las tres reglas de continuidad; **dos generaciones seguidas para la misma fecha producen el mismo resultado y dejan una única entrada de historial**.
 
 ## Bloque 4 — Fallback local
