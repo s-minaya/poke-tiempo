@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -14,18 +15,39 @@ import { generateOak } from './generate.ts'
  * `src/data`, y nunca sale a la red — la IA entra inyectada.
  */
 
-// Un instante cuyo "mañana" en Europe/Madrid es el 2026-09-18, la fecha del
-// forecast.json real que se copia al directorio de pruebas.
-const NOW = new Date('2026-09-17T12:00:00.000Z')
-const TARGET_DATE = '2026-09-18'
-
 const REAL_FORECAST = join(import.meta.dirname, '../../src/data/forecast.json')
+const FORECAST_JSON = readFileSync(REAL_FORECAST, 'utf-8')
+
+/**
+ * Las fechas salen del propio forecast, nunca escritas a mano: el commit
+ * diario del bot reescribe `forecast.json` con la fecha de cada día, y una
+ * constante aquí dejaría la suite roja a la mañana siguiente.
+ */
+const TARGET_DATE = (JSON.parse(FORECAST_JSON) as { date: string }).date
+
+/** Aritmética de calendario pura sobre `YYYY-MM-DD`, sin zonas horarias. */
+function plusDays(date: string, days: number): string {
+  const [year, month, day] = date.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
+
+// Un instante cuyo "mañana" en Europe/Madrid es exactamente `TARGET_DATE`:
+// mediodía UTC del día anterior, lejos de cualquier frontera de día tanto en
+// UTC+1 como en UTC+2.
+const NOW = new Date(`${plusDays(TARGET_DATE, -1)}T12:00:00.000Z`)
+
+// Una semana después, para que el objetivo ya no case con el forecast.
+const MISALIGNED_NOW = new Date(`${plusDays(TARGET_DATE, 6)}T12:00:00.000Z`)
+const MISALIGNED_TARGET = plusDays(TARGET_DATE, 7)
+
+const YESTERDAY = plusDays(TARGET_DATE, -1)
+const TOMORROW = plusDays(TARGET_DATE, 1)
 
 let dataDir: string
 
 beforeEach(async () => {
   dataDir = await mkdtemp(join(tmpdir(), 'oak-generate-'))
-  await writeFile(join(dataDir, 'forecast.json'), await readFile(REAL_FORECAST, 'utf-8'), 'utf-8')
+  await writeFile(join(dataDir, 'forecast.json'), FORECAST_JSON, 'utf-8')
 })
 
 afterEach(async () => {
@@ -63,18 +85,15 @@ async function exists(name: string): Promise<boolean> {
 
 describe('guarda de fecha', () => {
   it('un forecast desalineado aborta y no escribe nada', async () => {
-    // Un "ahora" cuyo objetivo es otro día distinto al del forecast copiado.
-    const later = new Date('2026-09-25T12:00:00.000Z')
-
-    await expect(generateOak({ dataDir, now: later, generateDialogues: noAi })).rejects.toThrow(/no se genera nada/)
+    await expect(generateOak({ dataDir, now: MISALIGNED_NOW, generateDialogues: noAi })).rejects.toThrow(/no se genera nada/)
     expect(await exists('oak-today.json')).toBe(false)
     expect(await exists('oak-history.json')).toBe(false)
   })
 
   it('el mensaje dice las dos fechas, para poder diagnosticarlo de un vistazo', async () => {
-    const later = new Date('2026-09-25T12:00:00.000Z')
-
-    await expect(generateOak({ dataDir, now: later, generateDialogues: noAi })).rejects.toThrow(/2026-09-18.*2026-09-26/)
+    await expect(generateOak({ dataDir, now: MISALIGNED_NOW, generateDialogues: noAi })).rejects.toThrow(
+      new RegExp(`${TARGET_DATE}.*${MISALIGNED_TARGET}`),
+    )
   })
 })
 
@@ -95,12 +114,12 @@ describe('historial de entrada', () => {
 
   const invalidHistories: { name: string; content: unknown }[] = [
     { name: 'la raíz no es una lista', content: { date: TARGET_DATE } },
-    { name: 'una entrada sin forma', content: ['2026-09-17'] },
+    { name: 'una entrada sin forma', content: [YESTERDAY] },
     { name: 'una fecha imposible', content: [{ date: '2026-02-30', focusPokemonId: null, leitmotifIds: [] }] },
     { name: 'una fecha con otro formato', content: [{ date: '17/09/2026', focusPokemonId: null, leitmotifIds: [] }] },
-    { name: 'un Pokémon que no existe', content: [{ date: '2026-09-17', focusPokemonId: 'pikachu', leitmotifIds: [] }] },
-    { name: 'un leitmotiv que no existe', content: [{ date: '2026-09-17', focusPokemonId: null, leitmotifIds: ['oak-baila'] }] },
-    { name: 'campos desconocidos', content: [{ date: '2026-09-17', focusPokemonId: null, leitmotifIds: [], text: '...' }] },
+    { name: 'un Pokémon que no existe', content: [{ date: YESTERDAY, focusPokemonId: 'pikachu', leitmotifIds: [] }] },
+    { name: 'un leitmotiv que no existe', content: [{ date: YESTERDAY, focusPokemonId: null, leitmotifIds: ['oak-baila'] }] },
+    { name: 'campos desconocidos', content: [{ date: YESTERDAY, focusPokemonId: null, leitmotifIds: [], text: '...' }] },
   ]
 
   it.each(invalidHistories)('$name aborta en vez de empezar de cero en silencio', async ({ content }) => {
@@ -112,34 +131,36 @@ describe('historial de entrada', () => {
 
   it('una entrada posterior al día objetivo aborta: o el reloj iba mal o el archivo es de otra rama', async () => {
     const future: OakHistoryEntry[] = [
-      { date: '2026-09-19', focusPokemonId: 'zapdos', leitmotifIds: [] },
-      { date: '2026-09-17', focusPokemonId: 'charmander', leitmotifIds: [] },
+      { date: TOMORROW, focusPokemonId: 'zapdos', leitmotifIds: [] },
+      { date: YESTERDAY, focusPokemonId: 'charmander', leitmotifIds: [] },
     ]
     await writeFile(join(dataDir, 'oak-history.json'), JSON.stringify(future), 'utf-8')
 
-    await expect(generateOak({ dataDir, now: NOW, generateDialogues: noAi })).rejects.toThrow(/es del futuro \(2026-09-19/)
+    await expect(generateOak({ dataDir, now: NOW, generateDialogues: noAi })).rejects.toThrow(new RegExp(`es del futuro \\(${TOMORROW}`))
     expect(await exists('oak-today.json')).toBe(false)
   })
 
   it('la entrada del propio día objetivo sí vale: es un rerun, no una fecha futura', async () => {
-    const rerun: OakHistoryEntry[] = [{ date: TARGET_DATE, focusPokemonId: 'zapdos', leitmotifIds: ['gyarados-mar'] }]
-    await writeFile(join(dataDir, 'oak-history.json'), JSON.stringify(rerun), 'utf-8')
+    // Cómo queda el día partiendo de cero, sea cual sea el tiempo que haga.
+    const clean = await generateOak({ dataDir, now: NOW, generateDialogues: noAi })
 
-    const { history } = await generateOak({ dataDir, now: NOW, generateDialogues: noAi })
+    const stale: OakHistoryEntry[] = [{ date: TARGET_DATE, focusPokemonId: 'zapdos', leitmotifIds: ['gyarados-mar'] }]
+    await writeFile(join(dataDir, 'oak-history.json'), JSON.stringify(stale), 'utf-8')
+    const rerun = await generateOak({ dataDir, now: NOW, generateDialogues: noAi })
 
-    expect(history).toHaveLength(1)
-    expect(history[0].date).toBe(TARGET_DATE)
-    // Y se ha reemplazado, no acumulado: el foco antiguo no sobrevive.
-    expect(history[0].focusPokemonId).toBeNull()
+    // Ni se acumula ni condiciona la decisión: se reemplaza por la misma
+    // entrada que habría salido sin ella.
+    expect(rerun.history).toHaveLength(1)
+    expect(rerun.history[0]).toEqual(clean.history[0])
   })
 
   it('un historial válido previo se conserva junto al día nuevo', async () => {
-    const previous: OakHistoryEntry[] = [{ date: '2026-09-17', focusPokemonId: 'charmander', leitmotifIds: ['hoppip-vuela'] }]
+    const previous: OakHistoryEntry[] = [{ date: YESTERDAY, focusPokemonId: 'charmander', leitmotifIds: ['hoppip-vuela'] }]
     await writeFile(join(dataDir, 'oak-history.json'), JSON.stringify(previous), 'utf-8')
 
     const { history } = await generateOak({ dataDir, now: NOW, generateDialogues: noAi })
 
-    expect(history.map((entry) => entry.date)).toEqual([TARGET_DATE, '2026-09-17'])
+    expect(history.map((entry) => entry.date)).toEqual([TARGET_DATE, YESTERDAY])
   })
 })
 
@@ -168,7 +189,9 @@ describe('OakToday', () => {
 
     expect(today.source).toBe('fallback')
     expect(today.date).toBe(TARGET_DATE)
-    expect(today.dayMode).toBe('alerta')
+    // El modo depende del tiempo que haga ese día, no del contrato: se
+    // comprueba que sea uno de los cuatro, no cuál.
+    expect(['alerta', 'invasion', 'avistamiento', 'parte']).toContain(today.dayMode)
     expect(today.dialogues).toHaveLength(3)
     for (const dialogue of today.dialogues) {
       expect(dialogue.text.length).toBeGreaterThanOrEqual(20)
