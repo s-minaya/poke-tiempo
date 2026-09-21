@@ -504,42 +504,45 @@ Consumo idéntico al de `forecast.json`: `import oakData from './data/oak-today.
 
 El componente concreto (`src/components/ProfessorOak/`) y su UX se diseñan en una fase posterior. Sin voz ni TTS en esta feature: el gesto de `EMPEZAR` (006) existe, pero no se da por resuelto el autoplay a futuro.
 
-## Integración en el workflow actual
+## Integración en el workflow
 
-Workflow de hoy (`.github/workflows/deploy.yml`): `checkout → setup-node → npm ci → fetch:forecast (solo cron/manual) → upload raw forecast artifact → lint → test → build → commit forecast.json → upload pages → deploy`.
-
-Propuesta:
+Implementado en `.github/workflows/deploy.yml`. El job `build` quedó así, con los dos pasos nuevos en negrita:
 
 ```
-npm ci
-→ Fetch forecast                (cron/manual)  ← ya aborta sin escribir si no pasa invariantes
-→ Upload raw forecast artifact  (cron/manual)  ← SIN MOVER, sigue justo detrás del fetch
-→ Generate Oak                  (cron/manual)  ← NUEVO, después del artifact
-→ Upload Oak artifact           (cron/manual)  ← NUEVO, opcional, artifact propio
+checkout → setup-node 22 → npm ci
+→ Fetch forecast                 (cron/manual)  ya aborta sin escribir si no pasa invariantes
+→ Upload raw forecast artifact   (cron/manual)  SIN MOVER, justo detrás del fetch
+→ **Generate Oak**               (cron/manual)
+→ **Upload Oak generation artifact** (cron/manual)
 → lint → test → build
-→ Commit (forecast.json + oak-today.json + oak-history.json)
-→ upload pages → deploy
+→ Commit daily data              (cron/manual)  forecast.json + oak-today.json + oak-history.json
+→ configure-pages → upload-pages-artifact → (job deploy)
 ```
 
 Por qué exactamente ahí:
 
-- **El artifact del forecast no se mueve.** Su razón de ser es conservar el snapshot del día en cuanto existe, pase lo que pase después. Un fallo de Oak no puede quitarle esa garantía, así que Oak va **detrás** del artifact, nunca entre el fetch y él.
-- **Los JSON de Oak, en su propio paso de artifact**, después de generarlos. Si Oak falla, ese paso no llega a ejecutarse y el artifact del forecast ya está a salvo.
-- **Después del fetch** porque `fetch-forecast.ts` ya aplica `checkForecastReadiness` y **no escribe** `forecast.json` si el dataset es inválido. La regla de preservar el último JSON válido no se toca.
-- **Antes de lint/test/build** para que el `oak-today.json` del día pase por la misma validación que el resto del código y entre en el bundle que se despliega.
-- **Mismo `if:`** que el fetch (`schedule || workflow_dispatch`): en un `push` normal se usa el `oak-today.json` ya commiteado.
-- **Mismo commit** que el forecast: el día y su narración viajan juntos.
+- **El artifact del forecast no se movió.** Su razón de ser es conservar el snapshot D→D+1 en cuanto existe, pase lo que pase después; sirve para las comparaciones históricas y no puede depender de que Oak funcione. Oak va **detrás** de él, nunca entre el fetch y él.
+- **Los JSON de Oak, en su propio paso de artifact**, nunca mezclados con el meteorológico: son dos instantes y dos propósitos distintos. Este es de diagnóstico — si lint/test/build fallan, el run no commitea nada y el texto se perdería, y cuando `source` es `ai` no es reproducible, porque la misma entrada no vuelve a dar la misma respuesta.
+- **Después del fetch** porque `fetch-forecast.ts` ya aplica `checkForecastReadiness` y **no escribe** `forecast.json` si el dataset es inválido. Si el fetch falla, el job se para y Oak ni se ejecuta.
+- **Antes de lint/test/build** para que los JSON del día pasen por la misma validación que el resto del código y entren en el bundle que se despliega. Hoy el bundle todavía no los importa —el frontend es el bloque siguiente—, pero el orden ya es el correcto para cuando lo haga.
+- **Mismo `if:`** que el fetch, carácter por carácter (`github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'`): en un `push` normal no se consulta meteorología, no se genera Oak y se construye con los JSON ya versionados. Un PR o un push no necesitan `AEMET_API_KEY` ni `GROQ_API_KEY`.
+- **Mismo commit** que el forecast, nunca tres: un `oak-today.json` sin su `forecast.json` hablaría de un día que el mapa no dibuja.
 
-**Guarda propia de Oak:** el script recalcula `computeTargetDate(new Date())` y aborta ruidosamente si no coincide con la `date` del `forecast.json` que acaba de leer. Evita narrar una previsión rancia si alguna vez se ejecutara suelto.
+**Secretos.** Solo `GROQ_API_KEY`, y desde GitHub Secrets al paso de Oak. `GROQ_MODEL` no es secreto y no se pasa: el código ya trae `openai/gpt-oss-120b` por defecto, y el repositorio no usa el patrón `vars.*` para nada más. **Que falte `GROQ_API_KEY` no salta el paso ni lo hace fallar**: sale el fallback local, que es contenido de producto, y así el pipeline entero se puede ejecutar antes de dar de alta la clave.
+
+**Sin `continue-on-error` en el paso de Oak**, a propósito: el script ya distingue lo recuperable de lo fatal y el workflow solo tiene que respetar su código de salida.
+
+**Guarda propia de Oak:** el script recalcula `computeTargetDate(now)` y aborta si no coincide con la `date` del `forecast.json` que acaba de leer. En el workflow las dos cosas pasan en el mismo run, así que coinciden por construcción; la guarda protege la ejecución suelta y el forecast rancio.
+
+**Sin bucle de generación recursiva.** El push del commit diario usa el `GITHUB_TOKEN` por defecto y GitHub no re-ejecuta workflows a partir de un push hecho con ese token. Añadir los dos JSON de Oak al mismo commit no cambia nada: es el mismo push, con el mismo token, en el mismo paso.
 
 **Semántica de fallo:**
 
 | Qué falla | Qué pasa |
 |---|---|
-| IA: red, timeout, `429`, JSON inválido, esquema incorrecto, longitud fuera de rango | Fallback local, `source: 'fallback'`, se escriben los JSON, exit 0, aviso en el log. |
-| Nuestra lógica: no se pueden construir 3 slots válidos, `forecast.json` incoherente, fecha desalineada, historial con fechas duplicadas | `process.exitCode = 1`, **no se escribe nada**. El job se para antes de `build` y no se despliega; queda en línea el despliegue anterior. |
-
-El workflow **no se toca hasta que se apruebe este plan**.
+| Fetch del forecast | El job falla ahí. Oak no se ejecuta, no hay commit ni despliegue nuevo, y queda en línea el anterior. |
+| IA: sin `GROQ_API_KEY`, red, timeout, `429`, HTTP no 2xx, JSON inválido, esquema o longitud incorrectos | Fallback local, `source: 'fallback'`, se escriben los JSON, exit 0, motivo en el log. El workflow continúa. |
+| Nuestra lógica: no se pueden construir 3 diálogos válidos, fecha desalineada, historial corrupto o con una entrada futura | `exit 1` y **no se escribe nada**. El job se para antes de lint/test/build, no hay commit ni despliegue — y el artifact del forecast **ya está preservado**. |
 
 ## Estructura de archivos
 

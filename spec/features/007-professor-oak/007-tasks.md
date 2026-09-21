@@ -57,11 +57,13 @@ _Checklist derivada del `007-plan.md`, agrupada en bloques. Se implementa un blo
 
 ## Bloque 7 — Workflow
 
-- [ ] Paso `Generate Oak` en `.github/workflows/deploy.yml`, **después del `Upload raw forecast artifact`** (que no se mueve) y antes de lint/test/build, con el mismo `if:` que el fetch.
-- [ ] Paso propio de artifact para `oak-today.json` / `oak-history.json`, posterior a la generación.
-- [ ] Incluir `oak-today.json` y `oak-history.json` en el commit diario.
-- [ ] `GROQ_API_KEY` como secret del repositorio.
-- [ ] Ejecución manual (`workflow_dispatch`) de verificación de extremo a extremo, y una segunda seguida para comprobar la idempotencia del historial.
+- [x] Paso `Generate Oak` en `.github/workflows/deploy.yml`, **después del `Upload raw forecast artifact`** (que no se movió) y antes de lint/test/build, con el mismo `if:` que el fetch y sin `continue-on-error`.
+- [x] Paso propio de artifact para `oak-today.json` / `oak-history.json`, posterior a la generación y sin mezclarse con el snapshot meteorológico.
+- [x] Los tres JSON en el mismo commit diario, nunca en tres commits; mecanismo, autor, mensaje y push sin tocar.
+- [ ] `GROQ_API_KEY` como secret del repositorio — **pendiente en GitHub**. Su ausencia no bloquea nada: el paso se ejecuta igual y sale el fallback local.
+- [ ] Ejecución manual (`workflow_dispatch`) de verificación de extremo a extremo — **pendiente en GitHub**: es la que produce el primer `oak-today.json` real, a partir de un forecast fresco del mismo run. No se crea ningún seed a mano.
+- [ ] Segunda ejecución manual seguida, para comprobar la idempotencia del historial.
+- [ ] Tercera ejecución manual ya con `GROQ_API_KEY` dada de alta, para verificar la ruta `source: 'ai'`.
 
 ## Bloque 8 — cierre
 

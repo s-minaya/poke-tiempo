@@ -48,6 +48,39 @@ jobs:
           path: src/data/forecast.json
           retention-days: 30
 
+      # Misma condición que el fetch: Oak habla del día que dibuja el mapa, y
+      # su propia guarda aborta si `forecast.date` no es el objetivo de hoy.
+      # Va después del artifact de arriba a propósito: si Oak falla por un
+      # error nuestro, el snapshot meteorológico de este run ya está a salvo.
+      #
+      # Sin `continue-on-error`: el script ya distingue el fallo del proveedor
+      # (cae al fallback local y sale con 0) del fallo propio (sale con 1 sin
+      # escribir nada). Que falte `GROQ_API_KEY` no es un fallo — es el camino
+      # de fallback, y permite ejecutar el pipeline entero antes de dar de
+      # alta la clave. `GROQ_MODEL` no es secreto y el código ya trae
+      # `openai/gpt-oss-120b` por defecto.
+      - name: Generate Oak
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: npm run generate:oak
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
+      # Artifact aparte del meteorológico, no una mezcla: son dos instantes y
+      # dos propósitos distintos, y el de arriba se guarda para comparaciones
+      # históricas. Este es para diagnóstico: si lint/test/build fallan, este
+      # run no commitea nada y el texto se perdería — y cuando `source` es
+      # `ai` no es reproducible, porque la misma entrada no vuelve a dar la
+      # misma respuesta.
+      - name: Upload Oak generation artifact
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: oak-json-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            src/data/oak-today.json
+            src/data/oak-history.json
+          retention-days: 30
+
       - run: npm run lint
       - run: npm run test
       - run: npm run build
@@ -57,13 +90,19 @@ jobs:
       # main. Registro histórico en git — no dispara otro workflow: el push
       # usa el GITHUB_TOKEN por defecto, y GitHub no re-ejecuta workflows a
       # partir de un push hecho con ese token, así que el propio run sigue
-      # hacia el deploy sin esperar a nada externo.
-      - name: Commit forecast.json
+      # hacia el deploy sin esperar a nada externo. Añadir los dos JSON de
+      # Oak al mismo commit no cambia eso: es el mismo push, con el mismo
+      # token.
+      #
+      # Los tres archivos van juntos en un único commit, nunca en tres: un
+      # `oak-today.json` sin su `forecast.json` hablaría de un día que el
+      # mapa no dibuja.
+      - name: Commit daily data
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/data/forecast.json
+          git add src/data/forecast.json src/data/oak-today.json src/data/oak-history.json
           FORECAST_DATE=$(node -p "require('./src/data/forecast.json').date")
           git diff --staged --quiet || git commit -m "chore(datos): actualizar previsión $FORECAST_DATE"
           git push
