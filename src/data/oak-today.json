@@ -1,23 +1,23 @@
 {
   "date": "2026-09-23",
-  "generatedAt": "2026-09-22T13:46:31.705Z",
+  "generatedAt": "2026-09-22T14:07:23.560Z",
   "source": "ai",
   "dayMode": "invasion",
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
-      "text": "Hay avisos en 7 lugares, lluvia en 2, 74 sitios en total y aparecen 8 Pokémon distintos."
+      "text": "Vaya... hoy hay 7 lugares bajo algún aviso y 2 con lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "text": "¡Charmeleon surge en 35 sitios, entre ellos La Rioja, Navarra y Huesca! En Benasque la noche más fría llega a 30°C y baja a 10°C."
+      "text": "¡Increíble! Charmeleon aparece en 33 lugares, entre ellos La Rioja, Navarra y Huesca. En Benasque la mínima nocturna baja a 10 °C."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "text": "Gyarados aparece en 6 lugares, por ejemplo A Coruña, Pontevedra y Gijón. ¡Cuidado, que el mar no lo lleva solo!"
+      "text": "Curioso... Gyarados está en 6 sitios, como A Coruña, Pontevedra y Gijón. Mejor observarlo a distancia, que el mar ya basta."
     }
   ]
 }
