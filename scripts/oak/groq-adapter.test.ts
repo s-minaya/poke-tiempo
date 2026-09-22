@@ -43,9 +43,15 @@ const dialoguePlan: DialoguePlan = [
   { id: 'dialogue-3', role: 'cierre', tone: 'guasa', facts: [spotlight], leitmotif: 'gyarados-mar' },
 ]
 
+// Plan de transporte, montado a mano: existe para comprobar qué viaja y qué
+// no. No es un día serio a propósito — con un aviso naranja el reparto real
+// no habría elegido gag, y aquí hace falta uno para ver viajar su dirección
+// editorial. La regla de los días serios se prueba donde se aplica, en
+// `plan-dialogues.test.ts`.
 const dayPlan: DayPlan = {
   date: TODAY,
-  dayMode: 'alerta',
+  dayMode: 'parte',
+  serious: false,
   focusPokemonId: null,
   leitmotif: 'gyarados-mar',
   dialoguePlan,
@@ -99,9 +105,14 @@ describe('payload enviado a la IA', () => {
   const payload = buildPromptPayload(buildDayClaims(dayPlan))
   const serialized = JSON.stringify(payload)
 
-  it('lleva solo el modo y los tres huecos', () => {
-    expect(Object.keys(payload).sort()).toEqual(['dayMode', 'dialogues'])
+  it('lleva solo el modo, la bandera de día serio y los tres huecos', () => {
+    expect(Object.keys(payload).sort()).toEqual(['dayMode', 'dialogues', 'seriousDay'])
     expect(payload.dialogues).toHaveLength(3)
+  })
+
+  it('la bandera de día serio viaja resuelta, no deducida del modo', () => {
+    expect(payload.seriousDay).toBe(false)
+    expect(buildPromptPayload(buildDayClaims({ ...dayPlan, serious: true })).seriousDay).toBe(true)
   })
 
   it('cada hueco lleva su papel, su tono y sus claims, no sus hechos', () => {
@@ -190,6 +201,20 @@ describe('petición', () => {
 
     expect(body.max_completion_tokens).toBeGreaterThan(0)
     expect(body.max_tokens).toBeUndefined()
+  })
+
+  it('el system prompt lleva el personaje, los cinco tonos y la política de días serios', async () => {
+    const spy = mockFetch(() => completion(validPayload()))
+    await generateOakDialogues(dayPlan)
+    const system = JSON.parse(String(spy.mock.calls[0][1].body)).messages[0]
+
+    expect(system.role).toBe('system')
+    expect(system.content).toContain('Profesor Oak')
+    expect(system.content).toContain('DÍAS SERIOS')
+    expect(system.content).toContain('seriousDay')
+    for (const tone of ['neutral', 'cientifico', 'epico', 'consejo', 'guasa']) {
+      expect(system.content).toContain(`- ${tone}:`)
+    }
   })
 
   it('la clave viaja en la cabecera y en ningún otro sitio', async () => {

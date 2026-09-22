@@ -25,6 +25,7 @@ function planWith(...slots: DialogueSlot[]): DayPlan {
   return {
     date: '2026-09-23',
     dayMode: 'parte',
+    serious: false,
     focusPokemonId: null,
     leitmotif: null,
     dialoguePlan,

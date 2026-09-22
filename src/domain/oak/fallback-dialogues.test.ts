@@ -97,6 +97,7 @@ function dayPlan(dialoguePlan: DialoguePlan, date = TODAY): DayPlan {
   return {
     date,
     dayMode: 'parte',
+    serious: false,
     focusPokemonId: null,
     leitmotif: dialoguePlan[2].leitmotif,
     dialoguePlan,
@@ -469,6 +470,61 @@ describe('forma del día y calendario', () => {
     const numbers = ['74', '23', '6', '10'].filter((value) => text.includes(value))
 
     expect(numbers.length).toBeLessThanOrEqual(2)
+  })
+
+  /**
+   * Cuántos Pokémon distintos hay es cierto y no informa: casi cualquier día
+   * da un número parecido. Mismo criterio que los claims que recibe la IA,
+   * para que las dos vías no abran el día con cosas distintas.
+   */
+  it('nunca abre el día con cuántos Pokémon distintos hay', () => {
+    const dates = ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22']
+    const shapes: DayShapeFact[] = [
+      dayShape,
+      { kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 0, distinctPokemonCount: 10 },
+      { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, distinctPokemonCount: 10 },
+      { kind: 'day_shape', totalLocations: 74, rainingLocations: 1, alertedLocations: 1, distinctPokemonCount: 1 },
+    ]
+
+    for (const shape of shapes) {
+      for (const date of dates) {
+        const text = render([shape], { date })
+
+        expect(text).not.toContain('Pokémon distintos')
+        expect(text).not.toContain('un solo Pokémon')
+        expect(text).not.toContain(`${shape.distinctPokemonCount} Pokémon`)
+      }
+    }
+  })
+
+  /**
+   * Un aviso rojo llega al foco en `epico`, y los remates de ese tono se
+   * escribieron para una invasión: celebran. Delante de un fenómeno
+   * peligroso eso no es humor, pero sí es espectacularizarlo.
+   */
+  it('en un día serio, el épico no celebra: toma prestada la voz del consejo', () => {
+    const dates = ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22']
+
+    for (const date of dates) {
+      const ordinary = planWith([alert('rojo')], { tone: 'epico', date })
+      const serious = { ...ordinary, serious: true }
+      const [text] = generateFallbackDialogues(serious)
+
+      for (const celebration of ['Días así no se olvidan', 'Vaya con el mapa de hoy', 'Esto hay que contarlo', '¡Vaya!']) {
+        expect(text.text).not.toContain(celebration)
+      }
+    }
+  })
+
+  it('prioriza avisos, luego lluvia, y si no hay ninguno lo dice', () => {
+    const alerted: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 6, distinctPokemonCount: 10 }
+    const rainy: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 0, distinctPokemonCount: 10 }
+    const quiet: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, distinctPokemonCount: 10 }
+
+    expect(render([alerted])).toMatch(/avisos?|bajo aviso/)
+    expect(render([rainy])).toMatch(/llueve|lluvia/)
+    expect(render([rainy])).not.toMatch(/avisos?/)
+    expect(render([quiet])).toMatch(/no llueve|no hay lluvia/)
   })
 
   it('un día sin lluvia ni avisos no produce recuentos raros', () => {

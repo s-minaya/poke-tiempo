@@ -383,14 +383,18 @@ describe('planDialogues — entrada de historial', () => {
     expect(plan.historyEntry.focusPokemonId).toBeNull()
   })
 
-  it('el leitmotiv del cierre tampoco cambia el foco del día', () => {
+  // Antes este caso comprobaba que el gag del cierre no se colara como foco
+  // del día. En alerta ya no hay gag que pueda colarse: el día serio lo
+  // impide antes. Que el foco siga siendo null lo cubren los dos casos de
+  // arriba, que no dependen de ningún leitmotiv.
+  it('alerta: el gag que habría encajado no llega a elegirse', () => {
     const trigger = alert('naranja')
     const castform = spotlight('castform-rain', 20)
     const plan = planDialogues(
       ordinaryDay({ decision: { mode: 'alerta', trigger }, facts: [calendar, dayShape, castform, trigger, temperature('sevilla', 'charmander')] }),
     )
 
-    expect(plan.dialoguePlan[2].leitmotif).toBe('castform-vestuario')
+    expect(plan.dialoguePlan[2].leitmotif).toBeNull()
     expect(plan.historyEntry.focusPokemonId).toBeNull()
   })
 
@@ -494,5 +498,99 @@ describe('planDialogues — el gag va sobre su propio hecho', () => {
     expect(closing.facts).toHaveLength(1)
     // Un gag que no se cuenta tampoco consume su cooldown.
     expect(plan.historyEntry.leitmotifIds).toEqual([])
+  })
+})
+
+/**
+ * Un día serio es un día sin humor, y no por convenio de redacción: el plan
+ * no puede producirlo. El fixture pone a propósito un Castform con 20
+ * lugares —el gag perfecto, libre y sin cooldown— para que el día tenga algo
+ * que rechazar.
+ */
+describe('planDialogues — días serios', () => {
+  const castform = spotlight('castform-rain', 20)
+
+  function alertDay(level: AlertFact['level'], overrides: Partial<DayPlanInput> = {}): DayPlanInput {
+    const trigger = alert(level)
+    return ordinaryDay({
+      decision: { mode: 'alerta', trigger },
+      facts: [calendar, dayShape, castform, trigger, temperature('sevilla', 'charmander')],
+      ...overrides,
+    })
+  }
+
+  it.each(['naranja', 'rojo'] as const)('aviso %s: ningún slot puede ir en guasa', (level) => {
+    const { dialoguePlan } = planDialogues(alertDay(level))
+
+    expect(dialoguePlan.map((slot) => slot.tone)).not.toContain('guasa')
+  })
+
+  it.each(['naranja', 'rojo'] as const)('aviso %s: ningún slot lleva leitmotiv', (level) => {
+    const plan = planDialogues(alertDay(level))
+
+    expect(plan.leitmotif).toBeNull()
+    expect(plan.dialoguePlan.map((slot) => slot.leitmotif)).toEqual([null, null, null])
+  })
+
+  it.each(['naranja', 'rojo'] as const)('aviso %s: el día queda marcado como serio', (level) => {
+    expect(planDialogues(alertDay(level)).serious).toBe(true)
+  })
+
+  it('no entra nada en el historial, así que no se consume ningún cooldown', () => {
+    const plan = planDialogues(alertDay('naranja'))
+
+    expect(plan.historyEntry.leitmotifIds).toEqual([])
+  })
+
+  it('el gag que no se contó sigue disponible al día siguiente', () => {
+    const serious = planDialogues(alertDay('naranja'))
+    const headline = spotlight('zapdos', 3)
+    // El día siguiente hereda el historial del día serio: si aquel hubiera
+    // gastado el gag, este no podría contarlo. El foco se lo lleva Zapdos
+    // para que el hecho de Castform llegue libre al cierre.
+    const next = planDialogues(
+      ordinaryDay({
+        date: '2026-09-19',
+        facts: [calendar, dayShape, headline, castform, temperature('sevilla', 'charmander')],
+        protagonists: [protagonist('headline', headline), protagonist('spread', castform)],
+        decision: { mode: 'parte', trigger: null },
+        history: [serious.historyEntry],
+      }),
+    )
+
+    expect(next.dialoguePlan[2].leitmotif).toBe('castform-vestuario')
+  })
+
+  it('el tono del foco no cambia: naranja aconseja, rojo es grave', () => {
+    expect(planDialogues(alertDay('naranja')).dialoguePlan[1].tone).toBe('consejo')
+    expect(planDialogues(alertDay('rojo')).dialoguePlan[1].tone).toBe('epico')
+  })
+
+  it('el cierre se queda en un tono no humorístico', () => {
+    for (const level of ['naranja', 'rojo'] as const) {
+      expect(['neutral', 'cientifico', 'consejo']).toContain(planDialogues(alertDay(level)).dialoguePlan[2].tone)
+    }
+  })
+
+  it('los demás modos siguen pudiendo llevar gag y no son serios', () => {
+    const modes: DayPlanInput['decision'][] = [
+      { mode: 'parte', trigger: null },
+      { mode: 'invasion', trigger: castform },
+      { mode: 'avistamiento', trigger: castform },
+    ]
+
+    for (const decision of modes) {
+      const plan = planDialogues(
+        ordinaryDay({
+          facts: [calendar, dayShape, castform, spotlight('snorunt', 2), temperature('sevilla', 'charmander')],
+          protagonists: [protagonist('headline', castform)],
+          decision,
+        }),
+      )
+
+      expect(plan.serious).toBe(false)
+      expect(plan.dialoguePlan[2].leitmotif).not.toBeNull()
+      expect(plan.dialoguePlan[2].tone).toBe('guasa')
+    }
   })
 })

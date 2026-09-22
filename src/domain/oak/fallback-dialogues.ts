@@ -351,25 +351,48 @@ function spotlightClause(fact: PokemonSpotlightFact, context: ClauseContext): Cl
 
 /**
  * La forma del día. Cuatro recuentos, pero no los cuatro en la misma frase:
- * Oak sitúa la jornada, no recita una tabla. La elección es determinista y
- * descarta las variantes cuyo recuento no da una frase natural.
+ * Oak sitúa la jornada, no recita una tabla.
+ *
+ * **Qué recuento sitúa la jornada, en este orden: avisos, lluvia, y si no hay
+ * ninguno de los dos, decirlo.** `distinctPokemonCount` no abre nunca: "hoy
+ * tenemos 8 Pokémon distintos" es cierto y no informa de nada — casi
+ * cualquier día del año da un número parecido. El campo sigue en
+ * `DayShapeFact` porque el hecho no cambia; lo que cambia es qué merece ser
+ * la primera frase. Mismo criterio que los claims que recibe la IA, para que
+ * las dos vías no prioricen cosas distintas.
+ *
+ * El total entra como referencia del recuento que sí importa, nunca solo.
  */
 function dayShapeClause(fact: DayShapeFact, context: ClauseContext): Clause {
   const parts = [...context.parts, 'day_shape']
-  const total = whole(fact.totalLocations)
-  const everywhere = `los ${total} lugares del mapa`
-  const distinct = fact.distinctPokemonCount === 1 ? 'un solo Pokémon' : `${whole(fact.distinctPokemonCount)} Pokémon distintos`
+  const everywhere = `los ${whole(fact.totalLocations)} lugares del mapa`
 
-  if (context.compact) return { fragment: `${places(fact.totalLocations)} en el mapa y ${distinct}` }
+  if (fact.alertedLocations > 0) {
+    if (context.compact) return { fragment: `hay aviso en ${places(fact.alertedLocations)}` }
+    return {
+      fragment: pick(
+        fact.alertedLocations === 1
+          ? [`hoy hay aviso en uno de ${everywhere}`, `hoy solo uno de ${everywhere} está bajo aviso`]
+          : [`hoy hay avisos en ${whole(fact.alertedLocations)} de ${everywhere}`, `hoy ${whole(fact.alertedLocations)} de ${everywhere} están bajo aviso`],
+        parts,
+      ),
+    }
+  }
 
-  const variants = [`hoy tenemos ${distinct} repartidos por ${everywhere}`]
-  if (fact.rainingLocations === 1) variants.push(`solo llueve en uno de ${everywhere}`)
-  if (fact.rainingLocations > 1) variants.push(`hoy llueve en ${whole(fact.rainingLocations)} de ${everywhere}`)
-  if (fact.rainingLocations === 0 && fact.totalLocations > 0) variants.push(`no llueve en ninguno de ${everywhere}`)
-  if (fact.alertedLocations === 1) variants.push(`hoy hay aviso en uno de ${everywhere}`)
-  if (fact.alertedLocations > 1) variants.push(`hoy hay avisos en ${whole(fact.alertedLocations)} de ${everywhere}`)
+  if (fact.rainingLocations > 0) {
+    if (context.compact) return { fragment: `llueve en ${places(fact.rainingLocations)}` }
+    return {
+      fragment: pick(
+        fact.rainingLocations === 1
+          ? [`hoy solo llueve en uno de ${everywhere}`, `hoy llueve en uno de ${everywhere}`]
+          : [`hoy llueve en ${whole(fact.rainingLocations)} de ${everywhere}`, `hoy ${whole(fact.rainingLocations)} de ${everywhere} tienen lluvia`],
+        parts,
+      ),
+    }
+  }
 
-  return { fragment: pick(variants, parts) }
+  if (context.compact) return { fragment: `sin lluvia ni avisos en ${everywhere}` }
+  return { fragment: pick([`hoy no llueve en ninguno de ${everywhere}`, `hoy no hay lluvia ni avisos en ${everywhere}`], parts) }
 }
 
 /** Día de la semana y poco más: ni efemérides, ni estaciones, ni fiestas. */
@@ -540,8 +563,23 @@ function withParts(...parts: readonly (string | null)[]): string {
  * nuestro de redacción y se lanza un error en vez de publicar una frase
  * partida por la mitad.
  */
-function renderSlot(slot: DialogueSlot, date: string, used: Set<string>): string {
+/**
+ * Con qué voz se dice un tono. Casi siempre la suya — salvo el `epico` de un
+ * día serio, que toma prestada la del `consejo`.
+ *
+ * `epico` se escribió para una invasión de Charmeleon, y sus remates lo
+ * celebran: "Días así no se olvidan" delante de un aviso rojo no es humor,
+ * pero sí es espectacularizar un fenómeno peligroso. En un día serio épico
+ * significa gravedad y atención, así que se usa el registro que ya estaba
+ * escrito para atender. No hay voz nueva: hay una voz prestada.
+ */
+function voiceFor(tone: Tone, serious: boolean): Tone {
+  return serious && tone === 'epico' ? 'consejo' : tone
+}
+
+function renderSlot(slot: DialogueSlot, date: string, serious: boolean, used: Set<string>): string {
   const candidates: string[] = []
+  const voice = voiceFor(slot.tone, serious)
 
   if (slot.leitmotif) {
     const gag = pick(LEITMOTIF_LINES[slot.leitmotif], [date, slot.id, slot.leitmotif])
@@ -550,14 +588,14 @@ function renderSlot(slot: DialogueSlot, date: string, used: Set<string>): string
       withParts(gag, composeBody(slot, date, true, gag)),
     )
   } else {
-    const opener = pickFresh(OPENERS[slot.tone], [date, slot.id, 'opener'], used)
-    const tails = TAILS[slot.tone]
+    const opener = pickFresh(OPENERS[voice], [date, slot.id, 'opener'], used)
+    const tails = TAILS[voice]
     const tail = tails.length > 0 ? pickFresh(tails, [date, slot.id, 'tail'], used) : null
     if (opener !== '') used.add(opener)
     if (tail !== null) used.add(tail)
     // En `consejo` el remate es el sentido del tono, así que va primero;
     // en el resto lo decide la semilla, para que no todo acabe en coletilla.
-    const tailFirst = slot.tone === 'consejo' || seedOf([date, slot.id, 'tail-first']) % 2 === 0
+    const tailFirst = voice === 'consejo' || seedOf([date, slot.id, 'tail-first']) % 2 === 0
 
     for (const compact of [false, true]) {
       const body = composeBody(slot, date, compact, null)
@@ -585,6 +623,6 @@ export function generateFallbackDialogues(dayPlan: DayPlan): OakDialogues {
   // evita que el día entero suene a la misma muletilla sin romper el
   // determinismo.
   const used = new Set<string>()
-  const render = (slot: DialogueSlot): OakDialogue => ({ id: slot.id, text: renderSlot(slot, dayPlan.date, used) })
+  const render = (slot: DialogueSlot): OakDialogue => ({ id: slot.id, text: renderSlot(slot, dayPlan.date, dayPlan.serious, used) })
   return [render(opening), render(focus), render(closing)]
 }

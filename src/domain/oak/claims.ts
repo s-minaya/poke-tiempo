@@ -136,6 +136,8 @@ export interface DialogueClaims {
 
 export interface DayClaims {
   dayMode: DayMode
+  /** Día sin humor. Viene resuelto del `DayPlan`; aquí no se vuelve a decidir. */
+  serious: boolean
   dialogues: [DialogueClaims, DialogueClaims, DialogueClaims]
 }
 
@@ -375,6 +377,7 @@ function toDialogueClaims(slot: DialogueSlot): DialogueClaims {
 export function buildDayClaims(dayPlan: DayPlan): DayClaims {
   return {
     dayMode: dayPlan.dayMode,
+    serious: dayPlan.serious,
     dialogues: dayPlan.dialoguePlan.map(toDialogueClaims) as [DialogueClaims, DialogueClaims, DialogueClaims],
   }
 }

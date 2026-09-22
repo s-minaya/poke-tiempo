@@ -67,6 +67,12 @@ export interface PromptSlot {
 
 export interface PromptPayload {
   dayMode: string
+  /**
+   * Día sin humor. Va como bandera propia y no deducido de `dayMode` a
+   * propósito: el día que algo no meteorológico marque el día como serio, el
+   * prompt no se entera — ya reacciona a la bandera, no a la causa.
+   */
+  seriousDay: boolean
   dialogues: PromptSlot[]
 }
 
@@ -83,6 +89,7 @@ function toPromptSlot(slot: DialogueClaims): PromptSlot {
 export function buildPromptPayload(claims: DayClaims): PromptPayload {
   return {
     dayMode: claims.dayMode,
+    seriousDay: claims.serious,
     dialogues: claims.dialogues.map(toPromptSlot),
   }
 }

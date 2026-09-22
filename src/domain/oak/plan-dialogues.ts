@@ -7,6 +7,7 @@ import { recentHistory, resolveFocusSpotlight } from './history.ts'
 import type { LeitmotifId } from './leitmotifs.ts'
 import { leitmotifPokemonIds, orderedLeitmotifs } from './leitmotifs.ts'
 import type { Protagonist } from './protagonists.ts'
+import { isSeriousDay } from './serious-day.ts'
 import type { AlertFact, CalendarFact, NarrativeFact, PokemonSpotlightFact } from './types.ts'
 
 /**
@@ -65,6 +66,12 @@ export interface DayPlanInput {
 export interface DayPlan {
   date: string
   dayMode: DayMode
+  /**
+   * Día sin humor. Lo decide `serious-day.ts` y viaja resuelto para que
+   * nadie vuelva a preguntárselo: la respuesta es la misma para el fallback,
+   * para el prompt y para quien venga después.
+   */
+  serious: boolean
   focusPokemonId: PokedexId | null
   leitmotif: LeitmotifId | null
   dialoguePlan: DialoguePlan
@@ -319,17 +326,35 @@ function resolveFocusPokemonId(focus: DialogueSlot): PokedexId | null {
   return spotlight?.pokemonId ?? null
 }
 
+/**
+ * La invariante de un día serio, comprobada y no confiada. Llegar aquí con
+ * un gag o con tono `guasa` sería un bug nuestro, no un dato raro: se lanza
+ * antes de que nadie redacte nada.
+ */
+function assertNoHumour(dialoguePlan: DialoguePlan): void {
+  const offender = dialoguePlan.find((slot) => slot.tone === 'guasa' || slot.leitmotif !== null)
+  if (offender) {
+    throw new Error(`Día serio con humor en ${offender.id}: tono ${offender.tone}, leitmotiv ${String(offender.leitmotif)}.`)
+  }
+}
+
 export function planDialogues(input: DayPlanInput): DayPlan {
   const { date, facts, protagonists, decision, history } = input
 
   const recent = recentHistory(history, date)
   const focusSpotlight = resolveFocusSpotlight(decision, protagonists, recent)
-  const leitmotifCandidates = orderedLeitmotifs(facts, recent, date)
+  // Un día serio no elige gag, así que tampoco lo gasta: el cooldown de los
+  // cinco leitmotivs se queda exactamente como estaba.
+  const serious = isSeriousDay(decision)
+  const leitmotifCandidates = serious ? [] : orderedLeitmotifs(facts, recent, date)
 
   const used = new Set<NarrativeFact>()
   const opening = buildOpening(facts, used)
   const focus = buildFocus(decision, focusSpotlight, facts, used)
   const closing = buildClosing(facts, protagonists, used, leitmotifCandidates)
+
+  const dialoguePlan: DialoguePlan = [opening, focus, closing]
+  if (serious) assertNoHumour(dialoguePlan)
 
   const focusPokemonId = resolveFocusPokemonId(focus)
   // El gag que de verdad se cuenta, no el preseleccionado: si se cayó por
@@ -339,9 +364,10 @@ export function planDialogues(input: DayPlanInput): DayPlan {
   return {
     date,
     dayMode: decision.mode,
+    serious,
     focusPokemonId,
     leitmotif: usedLeitmotif,
-    dialoguePlan: [opening, focus, closing],
+    dialoguePlan,
     historyEntry: { date, focusPokemonId, leitmotifIds: usedLeitmotif ? [usedLeitmotif] : [] },
   }
 }
