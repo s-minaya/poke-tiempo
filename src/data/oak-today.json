@@ -1,23 +1,23 @@
 {
-  "date": "2026-09-22",
-  "generatedAt": "2026-09-21T13:12:44.529Z",
+  "date": "2026-09-23",
+  "generatedAt": "2026-09-22T10:36:34.048Z",
   "source": "fallback",
   "dayMode": "invasion",
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
-      "text": "Bien. Hoy tenemos 6 Pokémon distintos repartidos por los 74 lugares del mapa. Tomo nota."
+      "text": "Veamos. Hoy tenemos 8 Pokémon distintos repartidos por los 74 lugares del mapa."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "text": "¡Vaya! Charmeleon se deja ver en 35 lugares, entre ellos La Rioja, Huesca y Jaca; además, en Benasque la mínima baja hasta 8 °C. Vaya con el mapa de hoy."
+      "text": "Esto hay que contarlo. Charmeleon se deja ver en 34 lugares, entre ellos La Rioja, Navarra y Huesca."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "text": "Castform ha vuelto a cambiarse de ropa. Esta vez, Niebla: aparece en 2 lugares, entre ellos Lugo y Oviedo."
+      "text": "Gyarados parece tener la agenda llena. Se le ve en 6 lugares, entre ellos A Coruña, Pontevedra y Gijón."
     }
   ]
 }
