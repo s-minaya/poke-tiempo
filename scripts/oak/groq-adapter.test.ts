@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { POKEMON_LABELS } from '../../src/domain/pokemon-labels.ts'
+import { buildDayClaims } from '../../src/domain/oak/claims.ts'
 import type { DayPlan, DialoguePlan } from '../../src/domain/oak/plan-dialogues.ts'
 import type { NarrativeFact, PokemonSpotlightFact } from '../../src/domain/oak/types.ts'
 import { DEFAULT_MODEL, GROQ_ENDPOINT, buildPromptPayload, generateOakDialogues } from './groq-adapter.ts'
@@ -52,7 +53,7 @@ const dayPlan: DayPlan = {
 }
 
 const VALID_TEXTS = [
-  'Bien. Hoy hay avisos en 6 de los 74 lugares del mapa. Seguimos observando.',
+  'Bien. Hoy hay 6 lugares bajo aviso y 23 con lluvia. Seguimos observando.',
   'Tenemos un aviso naranja por lluvia en Ibiza, y allí se esperan 7,6 mm.',
   'Yo miraría el mar desde una distancia prudente. Mega-Gyarados anda por Gijón.',
 ]
@@ -67,6 +68,11 @@ function completion(content: unknown, status = 200): Response {
 
 function validPayload() {
   return { dialogues: VALID_TEXTS.map((text, index) => ({ id: `dialogue-${index + 1}`, text })) }
+}
+
+/** La misma respuesta válida con un solo texto cambiado. */
+function replacing(index: number, text: string) {
+  return { dialogues: validPayload().dialogues.map((dialogue, at) => (at === index ? { ...dialogue, text } : dialogue)) }
 }
 
 function mockFetch(implementation: (url: string, init: RequestInit) => Promise<Response> | Response) {
@@ -90,16 +96,24 @@ afterEach(() => {
 })
 
 describe('payload enviado a la IA', () => {
-  const payload = buildPromptPayload(dayPlan)
+  const payload = buildPromptPayload(buildDayClaims(dayPlan))
   const serialized = JSON.stringify(payload)
 
-  it('lleva solo fecha, modo y los tres huecos', () => {
-    expect(Object.keys(payload).sort()).toEqual(['date', 'dayMode', 'dialogues'])
+  it('lleva solo el modo y los tres huecos', () => {
+    expect(Object.keys(payload).sort()).toEqual(['dayMode', 'dialogues'])
     expect(payload.dialogues).toHaveLength(3)
   })
 
-  it('cada hueco lleva su papel, su tono, su leitmotiv y sus hechos', () => {
-    expect(payload.dialogues[2]).toMatchObject({ id: 'dialogue-3', role: 'cierre', tone: 'guasa', leitmotif: 'gyarados-mar' })
+  it('cada hueco lleva su papel, su tono y sus claims, no sus hechos', () => {
+    expect(payload.dialogues[2]).toMatchObject({ id: 'dialogue-3', role: 'cierre', tone: 'guasa' })
+    expect(payload.dialogues[2].claims[0]).toContain('Mega-Gyarados aparece en 2 lugares del mapa')
+    expect(serialized).not.toContain('"kind"')
+  })
+
+  it('el leitmotiv viaja con su dirección editorial, no como un identificador suelto', () => {
+    expect(payload.dialogues[2].leitmotif?.id).toBe('gyarados-mar')
+    expect(payload.dialogues[2].leitmotif?.direction).toContain('distancia prudente')
+    expect(payload.dialogues[0].leitmotif).toBeNull()
   })
 
   it('el nombre humano va resuelto: el modelo no tiene que deducirlo del id', () => {
@@ -122,6 +136,15 @@ describe('payload enviado a la IA', () => {
     expect(serialized).not.toContain('historyEntry')
     expect(serialized).not.toContain('locationId')
     expect(serialized).not.toContain('focusPokemonId')
+  })
+
+  it('no viaja la fecha: Oak no la dice y solo aportaría dígitos prohibidos', () => {
+    expect(serialized).not.toContain(TODAY)
+  })
+
+  it('no viaja el recuento de Pokémon distintos: decidimos no contarlo', () => {
+    expect(payload.dialogues[0].claims.join(' ')).not.toContain('10')
+    expect(serialized).not.toContain('distinctPokemonCount')
   })
 })
 
@@ -221,6 +244,12 @@ describe('todo lo que cae al fallback', () => {
     { name: 'campo extra en la raíz', respond: () => completion(extraRoot) },
     { name: 'texto vacío', respond: () => completion({ dialogues: validPayload().dialogues.map((d) => ({ ...d, text: '' })) }) },
     { name: 'text que no es cadena', respond: () => completion({ dialogues: validPayload().dialogues.map((d) => ({ ...d, text: 42 })) }) },
+    // La forma es correcta y el contenido no: una respuesta que se inventa
+    // una entidad es tan inválida como una que llega torcida.
+    { name: 'una cifra que no estaba en los claims', respond: () => completion(replacing(0, 'Bien. Hoy hay 6 lugares bajo aviso y 40 con lluvia. Seguimos observando.')) },
+    { name: 'un lugar que no estaba en los claims', respond: () => completion(replacing(1, 'Tenemos un aviso naranja por lluvia en Ibiza, y en Teruel se esperan 7,6 mm.')) },
+    { name: 'un Pokémon que no estaba en los claims', respond: () => completion(replacing(2, 'Yo miraría el mar desde lejos. Snorunt anda por Gijón, como siempre.')) },
+    { name: 'un nivel de aviso que no estaba en los claims', respond: () => completion(replacing(1, 'Tenemos un aviso rojo por lluvia en Ibiza, y allí se esperan 7,6 mm.')) },
   ]
 
   it.each(cases)('$name → null', async ({ respond }) => {
