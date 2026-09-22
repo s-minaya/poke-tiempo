@@ -1,23 +1,23 @@
 {
   "date": "2026-09-23",
-  "generatedAt": "2026-09-22T11:24:37.623Z",
-  "source": "fallback",
+  "generatedAt": "2026-09-22T11:48:37.846Z",
+  "source": "ai",
   "dayMode": "invasion",
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
-      "text": "Veamos. Hoy tenemos 7 Pokémon distintos repartidos por los 74 lugares del mapa."
+      "text": "Hoy hay 74 zonas, solo 2 con lluvia y 7 avisos. Ocho tipos de Pokémon se asoman."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "text": "Esto hay que contarlo. Charmeleon se deja ver en 34 lugares, entre ellos La Rioja, Navarra y Huesca."
+      "text": "Charmeleon arde en 34 rincones, desde La Rioja hasta Navarra y Huesca."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "text": "Gyarados parece tener la agenda llena. Se le ve en 6 lugares, entre ellos A Coruña, Pontevedra y Gijón."
+      "text": "Gyarados surfeando en 6 costas: A Coruña, Pontevedra y Gijón. ¡Qué ola!"
     }
   ]
 }
