@@ -2,7 +2,7 @@
 
 _Checklist derivada del `007-plan.md`, agrupada en bloques. Se implementa un bloque, se para y se enseña al usuario antes de pasar al siguiente (`AGENTS.md`, paso 5)._
 
-**Estado.** Hechos y cerrados los bloques 0 a 5, el 7 y el 7 bis. El 7 se adelantó al 6 a propósito: el primer `oak-today.json` tenía que salir de una generación diaria válida y no de un seed escrito a mano. Quedan el **Bloque 6** (frontend, a la espera de decidir la UX de Oak) y el **Bloque 8** (cierre).
+**Estado.** Feature cerrada. El bloque del workflow (7) se implementó antes que el del frontend (6): el primer `oak-today.json` tenía que salir de una generación diaria válida y no de un seed escrito a mano, y el frontend necesitaba ese JSON real para construirse contra él.
 
 ## Bloque 0 — Preparar el dominio (movimientos, sin lógica nueva)
 
@@ -51,11 +51,17 @@ _Checklist derivada del `007-plan.md`, agrupada en bloques. Se implementa un blo
 - [x] `npm run generate:oak` en `package.json`; `GROQ_API_KEY` y `GROQ_MODEL` en `.env.example`, nunca `VITE_*`.
 - [x] Tests del adapter con `fetch` simulado (429, 500, red, timeout, sin content, JSON inválido, ids invertidos, texto corto/largo, campos extra, respuesta correcta) y del generador contra directorio temporal (guarda de fecha, historial ausente/corrupto, rerun idempotente, `role` desde el plan, fallo propio que no se convierte en fallback, ningún archivo escrito hasta tener los dos válidos).
 
-## Bloque 6 — Consumo desde el frontend
+## Bloque 6 — La escena de Oak en el frontend
 
-- [ ] Tipar e importar `src/data/oak-today.json` en `App.tsx` y pasarlo a `WeatherApp`, igual que `forecast.json`.
-- [ ] Componente `src/components/ProfessorOak/` — **solo tras decidir su UX con el usuario**; sin lógica narrativa propia, sin voz ni TTS.
-- [ ] Tests de renderizado y de acceso por teclado a los 3 diálogos.
+- [x] `OakToday` amplía el contrato con `serious` y un `tone` por diálogo, los dos tomados del `DayPlan` en `generate.ts` y exigidos por `assertValidOakToday`. El frontend recibe resuelto lo que necesita para elegir la pose: no lo deduce del texto ni del modo.
+- [x] `readOakToday` valida el JSON importado antes de montar nada: otra fecha que el mapa, o el contrato anterior, y la escena no sale — EMPEZAR lleva al mapa como antes.
+- [x] Seis poses de PNG a WebP con alfa sin pérdida (1.893 → 618 KB, mismas dimensiones, nada recortado) y el blip de la máquina de escribir, en `src/assets/oak/`. `oak-tired` queda como pose secundaria: ningún tono la pide y no entra en el bundle.
+- [x] `oak-pose.ts` — `Record<Tone, OakPose>` completo (un tono nuevo no compila hasta tener pose) y la regla de día serio: nunca `playful` ni `epic`.
+- [x] Componente `src/components/ProfessorOak/` con el retrato y el cuadro de texto clásico recreado en HTML + SCSS, sin lógica narrativa propia, sin voz ni TTS y sin librerías.
+- [x] Etapa `oak` en el flujo de entrada de `App.tsx`, con el mapa montado debajo e `inert` mientras Oak habla.
+- [x] El jingle de EMPEZAR se funde a 0 al salir la portada y Oak espera 200 ms antes de hablar: el blip no se solapa con él. Medido en el build de producción.
+- [x] Tests de renderizado, pose, máquina de escribir, audio, movimiento reducido y acceso por teclado a los 3 diálogos, más los del flujo completo en `App`.
+- [x] Verificación visual en navegador a cinco tamaños, con el peor caso de 160 caracteres, día serio y movimiento reducido: Oak entero en pantalla, sin desbordes y con el texto siempre por encima del retrato.
 
 ## Bloque 7 — Workflow
 
@@ -69,7 +75,7 @@ _Checklist derivada del `007-plan.md`, agrupada en bloques. Se implementa un blo
 
 ## Bloque 7 bis — Frontera claims → IA, guarda factual y días serios
 
-_No estaba en el plan original. Sale de auditar las generaciones reales: con el payload de `NarrativeFact` serializados, el modelo tenía que interpretar nuestro modelo de dominio y lo interpretaba mal ("la noche más fría: 10-30 °C", "7 avisos", "desde La Rioja hasta Huesca"). Se cierra moviendo la frontera, no apretando el prompt._
+_Con un payload de `NarrativeFact` serializados, el modelo tiene que interpretar nuestro modelo de dominio, y lo interpreta mal ("la noche más fría: 10-30 °C", "7 avisos", "desde La Rioja hasta Huesca"). La frontera se mueve; el prompt no se apreta._
 
 - [x] `src/domain/oak/claims.ts` — transformación pura `DayPlan → afirmaciones en español ya resueltas`, una por hecho, con el vocabulario que cada diálogo autoriza. Solo viaja el valor que el papel señala: la `maxC` de una noche fría no sale del dominio.
 - [x] Selección de `day_shape` nuestra y no suya: avisos > lluvia > ausencia de ambos, el total como contexto y nunca `distinctPokemonCount`. El campo sigue en el contrato.
@@ -84,15 +90,15 @@ _No estaba en el plan original. Sale de auditar las generaciones reales: con el 
 ## Bloque 8 — cierre
 
 - [x] `npm run lint` y `npm run test` en verde.
-- [ ] Revisar accesibilidad de los diálogos (semántica, foco, teclado).
-- [ ] Actualizar `constitution/tech-stack.md`: proveedor y modelo de IA, secret nuevo, `oak-today.json`/`oak-history.json` en `src/data/`, comando `generate:oak`, y los módulos que pasan a `src/domain/`.
-- [ ] Actualizar `constitution/roadmap.md`: mover la 007 a "Hecho" y cerrar las entradas de "Decisiones pendientes" sobre el umbral de `alerta` y la cobertura de avisos.
-- [ ] Barrer la narración del proceso de comentarios, `007-spec.md`, `007-plan.md` y este archivo (`AGENTS.md`, paso 7).
-- [ ] Validar contra los criterios de aceptación de `007-spec.md`.
+- [x] Accesibilidad de los diálogos, repasada en navegador: `role="dialog"` con `aria-modal`, nombre accesible "Profesor Oak" (sin placa visible), `aria-describedby` con la pista de avance, el foco entra en la escena al aparecer, el mapa queda `inert` debajo y recupera la interacción al salir, y el bocadillo completo se anuncia de una vez en una región viva en vez de carácter a carácter. **Hallazgo anotado:** `Escape` no cierra la escena, cosa que un diálogo modal sí suele ofrecer; queda como decisión de producto porque el juego de interacciones (clic/toque/Intro/Espacio) está fijado a propósito.
+- [x] `constitution/tech-stack.md` actualizado: proveedor y modelo de IA, `GROQ_API_KEY`, los dos JSON de Oak en `src/data/`, `npm run generate:oak`, los módulos que pasan a `src/domain/`, `src/assets/oak/`, la excepción de unidades para lo que se superpone a la réplica fija y tres límites duros nuevos.
+- [x] `constitution/roadmap.md` actualizado: la 007 en "Hecho", y cerradas las entradas de "Decisiones pendientes" sobre el umbral de `alerta` (naranja y rojo) y la cobertura de avisos (los 74 proxies).
+- [x] Barrida la narración del proceso de `007-spec.md`, `007-plan.md` y este archivo (`AGENTS.md`, paso 7).
+- [x] Validada contra los criterios de aceptación de `007-spec.md`: los 21 se cumplen.
 
 ## Definición de "hecho" (además de los criterios de la spec)
 
 - [x] Sin dependencias nuevas. La 007 solo añade el script `generate:oak` al `package.json`.
 - [x] Ningún dato nuevo se pide a AEMET/IPMA/Open-Meteo/Groq desde el navegador.
 - [x] `src/domain/` sigue sin importar nada de `src/components/` ni de `scripts/`.
-- [ ] Ningún valor de espaciado/color nuevo se escribe como literal si ya existe un token. Sin comprobar todavía: la 007 no ha escrito SCSS, y el único bloque que puede romperlo es el 6.
+- [x] Ningún valor de espaciado/color nuevo se escribe como literal si ya existe un token. El SCSS de la escena no contiene ni un hex: todo color sale de `_variables.scss`, y los dos tokens nuevos (`$z-oak`, `$z-landing`) se añadieron ahí. Las medidas en `px`/`vw` con `clamp()` son la excepción documentada en `tech-stack.md` para lo que se superpone a la réplica fija.

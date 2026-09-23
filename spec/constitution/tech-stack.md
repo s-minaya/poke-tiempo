@@ -13,6 +13,7 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
 - **Estilos:** Sass (SCSS) + BEM.
 - **Proyección geográfica:** **d3-geo** (solo build) — convierte latitud/longitud a coordenadas del `viewBox` del SVG. Se ejecuta en el script de build, no en runtime: el front recibe las coordenadas ya calculadas.
 - **Geometría del mapa (`scripts/config/*.geo.json`):** [Natural Earth](https://www.naturalearthdata.com/) — capas *Admin 0 – Map Subunits* (silueta de España/Portugal/Andorra/Baleares/Ceuta/Melilla/Canarias/Marruecos/Argelia) y *Admin 1 – States/Provinces (lines)* (fronteras internas de comunidad autónoma/distrito), ambas 1:10m, distribuidas en GeoJSON por [martynafford/natural-earth-geojson](https://github.com/martynafford/natural-earth-geojson). **Dominio público** (Natural Earth no exige atribución; el repo de conversión es CC0). Se filtran y redondean una vez y se commitean — no hay descarga en runtime ni en el workflow diario.
+- **Redacción de los diálogos del Profesor Oak (007):** **Groq**, capa gratuita, modelo `openai/gpt-oss-120b` por defecto y configurable con `GROQ_MODEL` (que no es secreto). Se llama con el `fetch` de Node desde el workflow diario, sin SDK y sin dependencia nueva: la API es OpenAI-compatible y una sola llamada por generación no la justifica. **Coste operativo obligatorio: 0 €** — nunca se habilita billing, y cualquier `429`, timeout o indisponibilidad cae al fallback local determinista del dominio. La IA no decide ningún hecho: recibe claims ya resueltos y solo pone la voz.
 - **Ejecución de scripts TS en Node:** **tsx** (solo dev).
 - **Verificación visual:** **playwright** (solo dev) — navegador headless para comprobar visualmente el mapa cuando el repaso de código y los tests no bastan. No es el framework de tests de la suite habitual (esa es Vitest + RTL).
 
@@ -27,9 +28,13 @@ cron diario (GitHub Actions)
    → script Node lee AEMET_API_KEY de GitHub Secrets
    → descarga la previsión de los 74 lugares (AEMET / IPMA / Open-Meteo según la zona)
    → normaliza cada fuente al vocabulario propio del dominio y escribe src/data/forecast.json
-   → npm run build  (Vite empaqueta el JSON)
+   → genera los diálogos del día (dominio puro → claims → Groq o fallback local)
+     y escribe src/data/oak-today.json y src/data/oak-history.json
+   → npm run build  (Vite empaqueta los JSON)
    → deploy a GitHub Pages
 ```
+
+**El navegador tampoco habla con la IA.** Vale lo mismo que para la meteorología: la generación de los diálogos ocurre en el runner, la clave vive en los secrets y lo que llega al bundle es un JSON ya escrito.
 
 **Tres fuentes, un único `forecast.json` normalizado:**
 
@@ -55,13 +60,13 @@ Motivos, para que nadie los reabra por costumbre:
 ## Archivos / módulos clave
 
 - `src/components/` — componentes reutilizables. Un componente por carpeta, con su `.tsx`, `.scss` y `.test.tsx` del mismo nombre. El `.tsx` importa siempre su propio `.scss`.
-- `src/domain/` — lógica pura del proyecto: tipos compartidos y el motor de asignación de Pokémon. Sin React ni DOM. Es lo único que se testea de forma exhaustiva.
-- `src/data/` — `locations.ts` (generado) y `forecast.json` (generado a diario). Ninguno se edita a mano.
+- `src/domain/` — lógica pura del proyecto: tipos compartidos, el motor de asignación de Pokémon, el criterio editorial del mapa (`map-priority.ts`, `pokemon-labels.ts`, `pokemon-names.ts`, `location-views.ts`, `alerts.ts`) y el dominio narrativo de Oak (`oak/`). Sin React ni DOM. Es lo único que se testea de forma exhaustiva.
+- `src/data/` — `locations.ts` (generado), `forecast.json` (generado a diario) y los dos JSON de Oak: `oak-today.json` (los 3 diálogos del día) y `oak-history.json` (solo IDs y categorías, una entrada por fecha, para la continuidad narrativa). Ninguno se edita a mano.
 - `src/styles/abstracts/` — `_breakpoints.scss`, `_variables.scss`, `_reset.scss` (reseteo base + raíz `rem` fluida, tope `62.5%` — ver "Escala (réplica fija, no breakpoints de reorganización)").
 - `src/styles/main.scss` — estilos globales.
 - `src/test/setup.ts` — setup de Vitest.
 - `scripts/` — código que solo se ejecuta en Node (descarga de AEMET, generación de listados, proyección de coordenadas). Nunca se importa desde `src/`.
-- `src/assets/` — recursos por tipo de uso: `sprites/`, `map/`, `fonts/`, `shared/`.
+- `src/assets/` — recursos por tipo de uso: `sprites/`, `map/`, `fonts/`, `oak/`, `shared/`.
 
 ## Comandos
 
@@ -70,6 +75,7 @@ Motivos, para que nadie los reabra por costumbre:
 - `npm run lint` — ESLint (TS/TSX, flat config) + Stylelint (Sass).
 - `npm run build` — compila para producción (`dist/`). `npm run preview` para previsualizar.
 - `npm run fetch:forecast` — descarga la previsión del día de las tres fuentes (AEMET, IPMA, Open-Meteo) y reescribe `src/data/forecast.json`. Necesita `AEMET_API_KEY`.
+- `npm run generate:oak` — regenera `src/data/oak-today.json` y `src/data/oak-history.json` a partir del `forecast.json` actual. Sin `GROQ_API_KEY` funciona igual y publica el fallback local: es el camino normal en desarrollo.
 - `npm run build:locations` — regenera `src/data/locations.ts` a partir de la lista fija de 74 lugares (no del maestro completo de municipios de AEMET, que solo cubriría España). Solo hace falta al cambiar la lista de lugares.
 
 ## Modelo de datos / dominio
@@ -114,6 +120,7 @@ El contrato de datos completo (tipos, ejes meteorológicos simultáneos, provena
 - Un `.scss` por componente, junto a su `.tsx`, con el bloque BEM como selector raíz y elementos/modificadores anidados (`&__part`, `&--variant`).
 - **El `.scss` se importa siempre desde su `.tsx`.** Sin ese import, Vite no lo incluye en el bundle y el componente se queda sin ninguna regla propia, sin error ni warning: es un fallo silencioso.
 - **Unidades:** `rem` por defecto; `px` solo cuando sea técnicamente necesario (p. ej. `1px` de borde). Nada de `em`. Reseteo base con `html { font-size: 62.5%; }` para que `1rem = 10px`.
+  - **Excepción: lo que no forma parte de la réplica.** La raíz es fluida desde la 008 y en un iPhone SE deja `1rem` en ~2,3 px, que es justo lo que se quiere para la composición del mapa —encoge entera— y lo contrario de lo que se quiere para un texto que hay que leer encima. Un componente que se superpone a la réplica en vez de formar parte de ella (hoy, la escena del Profesor Oak) dimensiona en `px` y `vw` con `clamp()`: mínimo legible en móvil y tope en escritorio. No es libertad para volver a los `px`: fuera de ese caso la regla sigue siendo `rem`.
 - **Sin valores hardcodeados:** los breakpoints se definen en `_breakpoints.scss` y se importan; nunca se escribe un `px` de breakpoint en un componente.
 - **Sin estilos inline** salvo necesidad justificada (p. ej. un valor dinámico calculado en runtime que no tiene sentido como clase).
 - **Modificador BEM que cambia el color de varios elementos hijos: custom properties, no selectores anidados literales.** Stylelint exige kebab-case estricto en cualquier selector de clase escrito con `.`, y un elemento BEM escrito así fuera de la nomenclatura `&__`/`&--` lo rechaza por llevar `__`. Solución: declarar custom properties en el bloque raíz que cada hijo lee con `var(--foo)`, y redefinirlas dentro del modificador.
@@ -144,6 +151,7 @@ _Identidad: pixel art, interfaz de Game Boy, Pokédex de primera generación. No
 - **Tipografía del título:** **"Poketiempo Unown"**, fuente propia construida para el proyecto — no un archivo de terceros. Se vectorizó cada letra A–Z a partir de imágenes de referencia del alfabeto Unown con `potrace` y se compiló a `.woff2`/`.ttf` con `opentype.js`/`wawoff2` (herramientas de build, ninguna se añade como dependencia de la app) — las imágenes de referencia eran solo entrada de ese proceso puntual, no se conservan en el repositorio. Como el propio glifo reproduce el diseño de Unown, queda cubierto por el mismo disclaimer de Pokémon que los sprites (fan project, sin monetización) — no hay licencia de fuente de terceros que anotar. Archivos en `src/assets/fonts/` (`poketiempo-unown.woff2` para web, `.ttf` de respaldo).
   - _Descartadas:_ dos fuentes "Unown" de terceros (MangaShino/FontStruct, CC BY-SA 3.0; y "elementcollector1", que prohibía explícitamente su uso como webfont) — sustituidas por la vectorización propia porque ninguna reproducía el trazo original con suficiente fidelidad.
 - **Sprites:** pixel art de una sola generación/estilo, no mezclados. Redimensionados a 160px de lado máximo (el tamaño real de render en el mapa, 004, es muy inferior) y servidos como PNG indexado — comparado contra WebP sobre el mismo redimensionado, PNG queda por debajo en peso para este conjunto de sprites, así que WebP no entra. Se sirven desde el repositorio (`src/assets/sprites/`), no en caliente desde un servicio externo, y los originales de alta resolución no se commitean. ⚠️ **Origen y licencia pendientes de fijar.**
+- **Retratos del Profesor Oak** (`src/assets/oak/`): seis poses ilustradas, **WebP con alfa** (calidad 0,9, plano alfa sin pérdida). Es el caso contrario al de los sprites: son ilustraciones grandes con degradados, donde WebP baja a un tercio del PNG sin diferencia visible, mientras que en los sprites pixel art indexados ganaba PNG. El formato se elige midiendo cada conjunto, no por norma general.
 - **Paleta:** fijada en la 005, centralizada en `src/styles/abstracts/_variables.scss` — un hex repetido en más de un sitio usa una única variable, nunca dos con el mismo valor (ver "Convenciones de variables SCSS" más abajo).
 
   | Uso | Valor | Variable |
@@ -182,7 +190,7 @@ _Identidad: pixel art, interfaz de Game Boy, Pokédex de primera generación. No
 
 - `vite.config.ts` necesita `base: '/poke-tiempo/'` para que las rutas de los assets resuelvan bajo el subdirectorio del repositorio (nombre real: `github.com/s-minaya/poke-tiempo`).
 - Workflow diario: cron a las 06:00 UTC (la pasada de las 00 UTC de AEMET ya está publicada), más `workflow_dispatch` para poder lanzarlo a mano.
-- `AEMET_API_KEY` vive en los secrets del repositorio. En local, en un `.env` ignorado por git.
+- `AEMET_API_KEY` y `GROQ_API_KEY` viven en los secrets del repositorio. En local, en un `.env` ignorado por git. Nunca como `VITE_*`: eso las metería en el bundle. La de Groq, además, puede faltar sin consecuencias — el paso se ejecuta igual y publica el fallback local.
 
 **Dos mantenimientos conocidos, para que no sorprendan:**
 
@@ -192,6 +200,9 @@ _Identidad: pixel art, interfaz de Game Boy, Pokédex de primera generación. No
 ## Límites duros
 
 - No llamar a AEMET desde el navegador.
+- No llamar a ningún proveedor de IA desde el navegador, ni exponer su clave o su modelo al bundle.
+- No monetizar ni habilitar billing en el proveedor de IA: el coste operativo del proyecto es 0 €.
+- No dejar que la IA decida ningún dato: redacta afirmaciones ya resueltas por el dominio, y lo que devuelve se valida antes de publicarse.
 - No subir `.env*` ni credenciales al repositorio.
 - No añadir dependencias nuevas sin avisar antes.
 - No `display: none` para ocultar componentes que no están en uso — se desmontan del DOM.

@@ -37,7 +37,7 @@ export type DialoguePlan = [DialogueSlot, DialogueSlot, DialogueSlot]
 
 /**
  * Un bocadillo ya redactado. Es la forma mínima que comparten las dos vías
- * de generación — el fallback local y, más adelante, la IA — y por eso vive
+ * de generación — el fallback local y la IA — y por eso vive
  * aquí, junto al `DialogueId` que le da la identidad, y no en cada una.
  */
 export interface OakDialogue {
@@ -75,7 +75,7 @@ export interface DayPlan {
   focusPokemonId: PokedexId | null
   leitmotif: LeitmotifId | null
   dialoguePlan: DialoguePlan
-  /** Listo para persistir; el upsert por fecha es del bloque de I/O. */
+  /** Listo para persistir; el upsert por fecha lo hace la capa de I/O. */
   historyEntry: OakHistoryEntry
 }
 

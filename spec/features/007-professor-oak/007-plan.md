@@ -20,34 +20,6 @@ Toda decisión de contenido es determinista y vive en `src/domain/oak/`: sin red
 IA               → redacta los hechos. No decide ninguno.
 ```
 
-## Reconciliación con el plan anterior
-
-### Decisiones que ya no aplican
-
-| Decisión antigua | Estado hoy |
-|---|---|
-| "Bloqueada hasta que existan la 002 y la 003" | Obsoleta: ambas implementadas. |
-| "`types.ts` no declara ningún tipo de la 003" | Obsoleta: se importan `PokedexId` y `src/domain/types.ts` directamente. |
-| `DialogueSlot` con el payload factual deliberadamente vacío | Resuelta: `NarrativeFact` queda definido abajo. |
-| `priority.ts` "sin ranking fijo, esperando metadata de la 003" | Obsoleta: el ranking ya existe (`MAP_PRIORITY`) y no hace falta metadata nueva de la 003. |
-| 13 modos narrativos + 4 deshabilitados | Obsoleta: se reducen a 4, todos con condición comprobable. |
-| `Flavour` como eje propio junto a `Tone` | Obsoleta: dos ejes de estilo paralelos para tres frases. Se colapsa en `Tone`. |
-| `OakHistoryEntry.openingStyle` / `.flavour` | Obsoletas: vocabulario extra sin problema real que resolver. |
-| "Oak necesita el conjunto completo de avisos" | Cerrada: solo los 74 proxies. Ver "Avisos oficiales". |
-| Cifras de cuota gratuita de Groq como propiedad del sistema | Se mantienen fuera del diseño; ver "IA". |
-
-### Lo que sigue siendo válido
-
-Dominio puro separado del I/O; una única llamada a la IA por generación; fallback local de primera clase; historial de solo IDs versionado en git; `oak-today.json` en `src/data/` (no en `public/`); `alerta` con prioridad absoluta y nunca inferida del Pokémon asignado; `anomalia`/`relevo`/`migracion` fuera por falta de dato.
-
-### Bloqueos de diseño
-
-Ninguno bloquea la implementación. Una única deuda menor, que no es dato nuevo sino colocación:
-
-- `isActiveOnDate` (solape de un `OfficialAlert` con una fecha) es privada en `assign-pokemon.ts`. Oak necesita exactamente el mismo criterio. Se **mueve** a `src/domain/alerts.ts` (su sitio natural, junto a `selectAlertsForZones`) y `assign-pokemon.ts` la importa. Cero cambio de comportamiento, cero criterio duplicado.
-
-**No hace falta añadir metadata nueva a la 003.**
-
 ## Contratos reales que Oak consume
 
 De la 002 (`src/domain/types.ts`), sin redeclarar nada: `Forecast`, `LocationForecast`, `Location`, `Temperature`, `Precipitation`, `Snow`, `Wind`, `SkyCondition`, `MarineAvailability`, `AlertsAvailability`, `OfficialAlert`, `AlertLevel`, `AlertPhenomenon`.
@@ -432,7 +404,7 @@ Reglas de redacción que no son de estilo sino de verdad:
 
 - **Nombres humanos** desde `src/domain/pokemon-names.ts`, la única fuente. Las cuatro formas de Castform se llaman "Castform", sin sufijo inventado.
 - **La etiqueta (`POKEMON_LABELS`) no se verbaliza.** Mezcla sustantivos ("Niebla"), adjetivos ("Caluroso") y sintagmas ("Nevadas intensas"), así que ninguna plantilla la admite entera y clasificarlos gramaticalmente sería un vocabulario nuevo a cambio de muy poco. El nombre y el reparto ya dicen la verdad del spotlight, y cuando el hueco lleva además un hecho meteorológico, sus cifras dicen bastante más que una etiqueta. Decisión tomada, no deuda pendiente.
-- **Ningún hecho meteorológico nombra al Pokémon del mapa, y es deliberado.** Ni con `mapRepresentsFact: false` (sería atribuirle un fenómeno ajeno) ni con `true`, donde el contrato solo afirma coincidencia y no causa. Los Pokémon se nombran por `PokemonSpotlightFact` y por los leitmotivs, que son las dos piezas que existen para eso; así la regla del `false` no depende de acordarse de ella, sino de que no haya por dónde romperla. Abrir asociaciones Pokémon-fenómeno desde `RainFact` o `WindFact` sería una decisión de producto aparte, no un pendiente de este bloque.
+- **Ningún hecho meteorológico nombra al Pokémon del mapa, y es deliberado.** Ni con `mapRepresentsFact: false` (sería atribuirle un fenómeno ajeno) ni con `true`, donde el contrato solo afirma coincidencia y no causa. Los Pokémon se nombran por `PokemonSpotlightFact` y por los leitmotivs, que son las dos piezas que existen para eso; así la regla del `false` no depende de acordarse de ella, sino de que no haya por dónde romperla. Abrir asociaciones Pokémon-fenómeno desde `RainFact` o `WindFact` sería una decisión de producto aparte.
 - **Lo opcional se omite cuando no existe**: sin `probabilityPercent` no hay porcentaje, sin `gustKmh` no hay racha, sin `wavePeriodS` no hay periodo. Y la probabilidad se cuenta como probabilidad: un 60 % nunca es una certeza.
 - **Trazabilidad que no se lee en voz alta**: `officialZoneId`, `source` y `sourcePhenomenon` no aparecen nunca en un texto.
 - **Muestra, no censo**: cuando `locationCount` supera a los lugares nombrados, la lista se presenta como muestra ("entre ellos"). "Solo" se reserva al único caso que lo justifica, un lugar.
@@ -456,7 +428,7 @@ Da variedad suficiente sin tabla combinatoria: unas 60 piezas cortas bien escrit
 - **Capa gratuita, 0 €.** Nunca se habilita billing. Cualquier `429`, indisponibilidad o cambio de cuota cae al fallback. Las cifras concretas de cuota no se fijan en el diseño: se consultan en la consola de Groq y cambian sin aviso.
 - **Parámetros:** `reasoning_effort: 'low'`, `stream: false` y `max_completion_tokens` — no `max_tokens`, deprecado en Groq. Sin herramientas, sin búsqueda web, sin tool calling: Oak no necesita ninguna capacidad externa.
 - **Timeout** corto y explícito (`AbortSignal.timeout`), sin reintentos: si falla, fallback. Un segundo intento no arregla un 429.
-- **Capa de claims (`src/domain/oak/claims.ts`):** transformación pura `DayPlan → afirmaciones en español ya resueltas`. La IA dejó de recibir `NarrativeFact` serializados cuando dos generaciones reales demostraron que tenía que interpretar nuestros campos, y los interpretaba mal: `papel: coldest_night` con `maximaC: 30` y `minimaC: 10` salió como "la noche más fría: 10-30 °C"; `lugaresConAviso: 7` salió como "7 avisos"; una muestra de tres lugares salió como "desde La Rioja hasta Huesca". Los claims cierran esa decisión antes de preguntar: un claim por hecho, seco, con el valor que el papel señala y **sin el que no** — la `maxC` de una noche fría ya no viaja. No es una segunda redacción con personalidad: la voz la pone quien redacta después, y el fallback no pasa por aquí.
+- **Capa de claims (`src/domain/oak/claims.ts`):** transformación pura `DayPlan → afirmaciones en español ya resueltas`. La IA no recibe `NarrativeFact` serializados, porque eso la obligaría a interpretar nuestro modelo de dominio: `papel: coldest_night` con `maximaC: 30` y `minimaC: 10` se lee como "la noche más fría: 10-30 °C"; `lugaresConAviso: 7` se lee como "7 avisos"; una muestra de tres lugares se lee como "desde La Rioja hasta Huesca". Los claims cierran esa interpretación antes de preguntar: un claim por hecho, seco, con el valor que el papel señala y **sin el que no** — la `maxC` de una noche fría no viaja. No es una segunda redacción con personalidad: la voz la pone quien redacta después, y el fallback no pasa por aquí.
 - **Qué ve la IA:** ni el `forecast.json`, ni los 74 lugares, ni el historial, ni el `historyEntry`, ni los hechos. Solo el modo y los tres huecos con su papel, su tono, sus claims y la dirección editorial de su leitmotiv. Se quedan fuera los ids técnicos, la trazabilidad del aviso (`officialZoneId`, `source`, `sourcePhenomenon`), `mapPokemonId`/`mapRepresentsFact` — la forma más segura de que el modelo no nombre al Pokémon del mapa desde un hecho meteorológico es que no lo tenga —, el recuento que decidimos no contar (`distinctPokemonCount`, que sigue en `DayShapeFact`), el valor térmico que el papel no señala, y también la fecha: Oak no la dice y solo aportaría dígitos que no le están permitidos. El nombre humano va ya resuelto (`gyarados-mega` → "Mega-Gyarados"): es presentación nuestra, no una deducción suya.
 - **Personalidad (`scripts/oak/oak-prompt.ts`):** el prompt es prosa y vive aparte del transporte. Character bible del personaje, qué significa cada uno de los cinco tonos, la política de días serios y una dirección editorial por leitmotiv. Al no quedarle ninguna decisión factual al proveedor, todo el encargo es de voz. El payload lleva `seriousDay` como bandera propia y no deducida de `dayMode`: el día que la causa no sea meteorológica, el prompt no se entera porque ya reacciona a la bandera.
 - **Secreto:** `GROQ_API_KEY` en GitHub Secrets y en `.env` local. Nunca `VITE_*`, nunca en el JSON publicado, nunca en la URL ni en el cuerpo — solo en la cabecera `Authorization`. Que falte **no es un fallo**: es el camino normal en desarrollo local, y sale el fallback.
@@ -519,6 +491,7 @@ Flujo: loader → portada → EMPEZAR → Oak → mapa. Oak se monta ya durante 
 - **Poses.** `neutral → neutral`, `cientifico → confused`, `epico → epic`, `consejo → warning`, `guasa → playful`. En un día serio nunca `playful` ni `epic`: `consejo`/`epico` → `warning`, el resto → `neutral`. `oak-tired` existe pero ningún tono la pide, y no entra en el bundle.
 - **Máquina de escribir** a 30 ms por carácter, sin librerías. El texto pendiente ocupa ya su sitio, invisible, para que las líneas no salten mientras se escriben. Clic, toque, Intro o Espacio: si escribe, completa; si ha terminado, pasa; tras el tercero, cierra. Un único oyente de teclado y ningún botón dentro, para que una tecla no pueda disparar dos avances; la tecla mantenida no encadena bocadillos.
 - **Audio.** Una sola instancia de `<audio>` como pista continua (~9 s): desde 0 al empezar a escribir, se para y se rebobina al terminar, al completar o al desmontar. Sin bucle —160 caracteres son 4,8 s— y a volumen discreto. Un `play()` bloqueado no cambia nada.
+- **Entrada sin solape con el jingle.** El jingle de EMPEZAR dura ~1,4 s, más que la salida de la portada, así que `Landing` lo guarda en un ref y lo funde a 0 al salir (250 ms: medido, es lo que cabe antes de que React desmonte la portada, y un fundido cortado a media bajada es el chasquido que se quiere evitar). Oak espera además 200 ms desde que entra en escena antes de hablar, para que el blip empiece en silencio limpio. Con `prefers-reduced-motion`, el jingle se corta en seco y no hay nada que acompañar.
 - **Movimiento reducido:** texto entero de inmediato, sin blip y sin animaciones.
 - **Lectores de pantalla:** la escena es un `dialog` modal con nombre accesible "Profesor Oak" —la caja no lleva placa visible, así que el nombre vive solo en el `aria-label`—; el texto que se escribe letra a letra es `aria-hidden`, y el bocadillo completo se anuncia de una vez en una región viva.
 - **Tamaños en px y `vw` con `clamp()`, no en `rem`.** La raíz fluida de `_reset.scss` deja `1rem` en ~2,3 px en un iPhone SE: la réplica del mapa encoge entera a propósito, pero Oak es una escena que se lee encima y a ese tamaño sería ilegible.
@@ -583,13 +556,18 @@ src/domain/
     leitmotifs.ts               catálogo de 5 gags
     history.ts                  puro, sin I/O, idempotente por fecha
     plan-dialogues.ts           los 3 DialogueSlot sin solapar, DayPlan y OakDialogue
+    serious-day.ts              política de días serios, con motivo extensible
+    claims.ts                   DayPlan → afirmaciones en español ya resueltas
     fallback-dialogues.ts       DayPlan → 3 textos, determinista, sin red
+    oak-today.ts                el contrato publicado (OakToday)
 scripts/oak/
   build-day-plan.ts             I/O: forecast + historial, guarda de fecha, arma el DayPlan
   history-file.ts               lee y valida oak-history.json (ausente = [], corrupto = aborta)
+  oak-prompt.ts                 character bible, tonos, días serios y dirección por leitmotiv
   validate.ts                   aduana: respuesta de la IA y OakToday antes de publicar
+  factual-guard.ts              ninguna entidad factual que no esté en los claims del hueco
   groq-adapter.ts               única frontera con la IA
-  generate.ts                   entrypoint: report → IA o fallback → escribe los JSON
+  generate.ts                   entrypoint: plan → IA o fallback → escribe los JSON
 src/data/
   oak-today.json                generado
   oak-history.json              generado, una entrada por fecha
@@ -601,6 +579,10 @@ src/components/ProfessorOak/
   read-oak-today.ts             guarda del contrato antes de montar la escena
 src/assets/oak/                 seis poses en WebP con alfa + el blip de la máquina de escribir
 ```
+
+Cada `.tsx` de la escena lleva su `.scss` al lado, con el mismo nombre.
+
+Tocados fuera de esas carpetas: `App.tsx` (la etapa `oak` del flujo de entrada), `WeatherApp.tsx` (la prop `inert`), `Landing.tsx` (el jingle se funde al salir), `Landing.scss` y `_variables.scss` (`$z-oak` y `$z-landing`).
 
 Sin cambios en `sprite-sources.ts`, `Legend.scss`, `thermal-mood.ts` ni `marker-temperature.ts`.
 
@@ -621,7 +603,6 @@ Sin cambios en `sprite-sources.ts`, `Legend.scss`, `thermal-mood.ts` ni `marker-
 ## Riesgos
 
 - **Que la voz de Oak suene a boletín.** Se mitiga en el prompt y, sobre todo, en el fallback: si las cláusulas locales no suenan a Oak, el problema es de redacción y se corrige sin tocar el motor.
-- **Que la IA cuele un dato que no está en los hechos.** Pasó, dos veces, y por eso ya no recibe hechos sino claims: lo que no viaja no se puede publicar. Encima va la guarda factual, que rechaza cualquier entidad nueva. Riesgo residual aceptado y conocido: lo que la guarda **no** ve es el error puramente semántico sin entidad nueva — leer "7 lugares bajo aviso" como "7 avisos" usa el mismo 7, y una entidad inventada al empezar una frase se confunde con la mayúscula normal del español. Distinguir eso pediría un diccionario y semántica; la defensa ahí es el claim, que ya no ofrece esa lectura, y el prompt, que la prohíbe.
-- **Mover `location-views.ts`/`pick-map-pokemon.ts`/las etiquetas a `src/domain/`** toca imports de componentes ya cerrados (004/005). Es un movimiento mecánico cubierto por los tests existentes, pero se hace en su propio bloque y se ve verde antes de seguir.
+- **Que la IA cuele un dato que no está en los hechos.** Por eso no recibe hechos sino claims: lo que no viaja no se puede publicar. Encima va la guarda factual, que rechaza cualquier entidad nueva. Riesgo residual aceptado y conocido: lo que la guarda **no** ve es el error puramente semántico sin entidad nueva — leer "7 lugares bajo aviso" como "7 avisos" usa el mismo 7, y una entidad inventada al empezar una frase se confunde con la mayúscula normal del español. Distinguir eso pediría un diccionario y semántica; la defensa ahí es el claim, que ya no ofrece esa lectura, y el prompt, que la prohíbe.
 - **`avistamiento` puede quedarse silencioso semanas enteras** si no hay ningún Pokémon significativo con ≤ 2 lugares. Es aceptable: `parte` cubre el resto y es mejor que un modo que se active por costumbre.
 - **Ruido en el historial de git:** commit diario con tres JSON en vez de uno. Aceptado: mismo patrón que ya tiene el proyecto.
