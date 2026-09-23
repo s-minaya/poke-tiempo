@@ -1,23 +1,27 @@
 {
-  "date": "2026-09-23",
-  "generatedAt": "2026-09-22T14:07:23.560Z",
+  "date": "2026-09-24",
+  "generatedAt": "2026-09-23T11:02:41.315Z",
   "source": "ai",
   "dayMode": "invasion",
+  "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
-      "text": "Vaya... hoy hay 7 lugares bajo algún aviso y 2 con lluvia."
+      "tone": "neutral",
+      "text": "Vaya... hoy hay 3 lugares bajo algún aviso y 1 con lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "text": "¡Increíble! Charmeleon aparece en 33 lugares, entre ellos La Rioja, Navarra y Huesca. En Benasque la mínima nocturna baja a 10 °C."
+      "tone": "epico",
+      "text": "¡Increíble! Charmeleon aparece en 31 lugares, entre ellos Oviedo, La Rioja y Navarra. En Valladolid la mínima nocturna desciende a 9,8 °C."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "text": "Curioso... Gyarados está en 6 sitios, como A Coruña, Pontevedra y Gijón. Mejor observarlo a distancia, que el mar ya basta."
+      "tone": "neutral",
+      "text": "Hoy Castform (Niebla) está en 4 lugares, como Lugo, Valencia y Murcia."
     }
   ]
 }
