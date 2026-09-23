@@ -65,12 +65,14 @@ export function assertValidOakToday(today: OakToday, expectedDate: string): void
   if (today.date !== expectedDate) problems.push(`date ${today.date} no coincide con el objetivo ${expectedDate}`)
   if (Number.isNaN(Date.parse(today.generatedAt))) problems.push(`generatedAt no es una fecha ISO (${today.generatedAt})`)
   if (today.source !== 'ai' && today.source !== 'fallback') problems.push(`source desconocido (${String(today.source)})`)
+  if (typeof today.serious !== 'boolean') problems.push(`serious no es booleano (${String(today.serious)})`)
   if (today.dialogues.length !== DIALOGUE_IDS.length) problems.push(`${today.dialogues.length} diálogos`)
 
   for (const [index, dialogue] of today.dialogues.entries()) {
     const expectedId = DIALOGUE_IDS[index]
     if (dialogue.id !== expectedId) problems.push(`posición ${index}: id ${dialogue.id}`)
     if (dialogue.role === undefined) problems.push(`${expectedId}: sin role`)
+    if (dialogue.tone === undefined) problems.push(`${expectedId}: sin tone`)
     const textProblem = checkText(dialogue.text, expectedId)
     if (textProblem) problems.push(textProblem)
   }

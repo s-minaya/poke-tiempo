@@ -1,5 +1,5 @@
 import type { DayMode } from './day-mode.ts'
-import type { DialogueRole, OakDialogue } from './plan-dialogues.ts'
+import type { DialogueRole, OakDialogue, Tone } from './plan-dialogues.ts'
 
 /**
  * Lo que se publica en `src/data/oak-today.json` y lo único que el frontend
@@ -7,12 +7,15 @@ import type { DialogueRole, OakDialogue } from './plan-dialogues.ts'
  * interfaz no los necesita y el JSON público no debe cargar con el andamiaje
  * que los produjo.
  *
- * `role` no lo decide quien redacta — sale del `DialoguePlan`, igual que el
- * `id`. Por eso el diálogo publicado es el `OakDialogue` compartido más el
- * papel que ya tenía asignado en el plan, y no un tipo nuevo.
+ * `role` y `tone` no los decide quien redacta — salen del `DialoguePlan`,
+ * igual que el `id`. Por eso el diálogo publicado es el `OakDialogue`
+ * compartido más lo que ya tenía asignado en el plan, y no un tipo nuevo.
+ * El frontend necesita el tono para elegir la pose de Oak, y lo recibe
+ * resuelto: no lo deduce del texto ni del modo.
  */
 export interface OakTodayDialogue extends OakDialogue {
   role: DialogueRole
+  tone: Tone
 }
 
 export interface OakToday {
@@ -26,5 +29,11 @@ export interface OakToday {
    */
   source: 'ai' | 'fallback'
   dayMode: DayMode
+  /**
+   * Día sin humor, copiado de `DayPlan.serious`. Viaja aparte del modo por
+   * la misma razón que en el payload de la IA: quien lo lee reacciona a la
+   * bandera, no a la causa.
+   */
+  serious: boolean
   dialogues: [OakTodayDialogue, OakTodayDialogue, OakTodayDialogue]
 }

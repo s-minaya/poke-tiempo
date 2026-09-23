@@ -1,0 +1,92 @@
+@use 'sass:color';
+@use '../../../styles/abstracts/variables' as vars;
+
+// El cuadro de texto de los juegos clásicos: marco oscuro, una segunda línea
+// de color por dentro y fondo blanco. Nada de tarjeta moderna.
+
+// **Sin `rem`, a propósito.** El resto del proyecto escala con la raíz
+// fluida de `_reset.scss`, que en un iPhone SE deja `1rem` en ~2,3 px: la
+// composición del mapa es una réplica fija y encoge entera. Oak no forma
+// parte de esa réplica — es una escena que se lee encima —, y a ese tamaño
+// 160 caracteres serían ilegibles. Aquí todo va en `clamp()` sobre px y
+// `vw`: un mínimo legible en móvil y un tope en escritorio.
+.oak-dialogue {
+  --oak-pad-block: clamp(14px, 2.2vw, 24px);
+  --oak-pad-inline: clamp(16px, 2.8vw, 32px);
+  --oak-frame: clamp(3px, 0.45vw, 5px);
+  --oak-ring-gap: clamp(3px, 0.4vw, 5px);
+  --oak-ring: clamp(3px, 0.35vw, 4px);
+
+  position: relative;
+
+  // Por encima del retrato: el texto nunca queda tapado por Oak.
+  z-index: 1;
+  width: 100%;
+  padding: var(--oak-pad-block) var(--oak-pad-inline);
+
+  // Un poco más abajo, para que el ▼ quepa bajo la última línea sin pisarla.
+  padding-bottom: calc(var(--oak-pad-block) + 0.3em);
+  border: var(--oak-frame) solid vars.$color-near-black;
+  border-radius: clamp(8px, 1.2vw, 14px);
+  background: vars.$color-white;
+  box-shadow:
+    inset 0 0 0 var(--oak-ring-gap) vars.$color-white,
+    inset 0 0 0 calc(var(--oak-ring-gap) + var(--oak-ring)) vars.$color-sky-blue,
+    0 clamp(4px, 0.6vw, 8px) 0 color.change(vars.$color-near-black, $alpha: 0.45);
+  color: vars.$color-near-black;
+  font-family: vars.$font-heading;
+  font-size: clamp(15px, 0.9vw + 11px, 24px);
+  font-weight: 500;
+  line-height: 1.45;
+
+  // Tres líneas como mínimo: la caja no cambia de alto con cada bocadillo
+  // corto. Crece si hace falta — en un iPhone SE, 160 caracteres son cinco.
+  &__text {
+    min-height: calc(3 * 1.45em);
+
+    // Una palabra más ancha que la caja se parte antes que desbordarla.
+    overflow-wrap: anywhere;
+  }
+
+  &__pending {
+    visibility: hidden;
+  }
+
+  &__sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  &__next {
+    position: absolute;
+    right: var(--oak-pad-inline);
+    bottom: calc(var(--oak-pad-block) * 0.45);
+    width: 0.7em;
+    height: 0.45em;
+    background: vars.$color-near-black;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+
+    // Dos fotogramas, como un sprite: salta, no se desliza.
+    animation: oak-dialogue-next 0.8s steps(1, end) infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oak-dialogue__next {
+    animation: none;
+  }
+}
+
+@keyframes oak-dialogue-next {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(0.18em);
+  }
+}

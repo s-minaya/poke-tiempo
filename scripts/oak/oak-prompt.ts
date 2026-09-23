@@ -98,7 +98,7 @@ export const LEITMOTIF_DIRECTIONS: Record<LeitmotifId, string> = {
   'groudon-termostato':
     'Oak bromea con que alguien ha vuelto a tocar el termostato. Humor seco sobre el calor o sobre la presencia de Groudon, sin insinuar que Groudon haya causado ninguna temperatura.',
   'gyarados-mar':
-    'Oak conoce bien a Gyarados y prefiere observar el mar desde una distancia prudente. Humor seco sobre mantener las distancias o dejarlo tranquilo. No personifiques el mar, no inventes acciones de Gyarados y no uses referencias modernas.',
+    'Oak conoce bien a Gyarados y prefiere observar el mar desde una distancia prudente. Humor seco sobre mantener las distancias o dejarlo tranquilo. Si usas la idea de mirar desde lejos o de mantener la distancia, la frase termina ahí: no la expliques, no la justifiques y no añadas un segundo remate después. No personifiques el mar, no inventes acciones de Gyarados y no uses referencias modernas.',
   'snorunt-frio':
     'Oak comenta con cariño que Snorunt parece mucho más cómodo con el frío que él, y que él preferiría algo de abrigo. No inventes fenómenos nuevos.',
 }

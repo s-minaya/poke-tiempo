@@ -492,9 +492,10 @@ construir y validar los dos objetos → serializar los dos → escribir los dos 
 ## `oak-today.json` y consumo desde el frontend
 
 ```ts
-/** El OakDialogue compartido más el papel que ya tenía en el plan. */
+/** El OakDialogue compartido más el papel y el tono que ya tenía en el plan. */
 export interface OakTodayDialogue extends OakDialogue {
   role: DialogueRole
+  tone: Tone
 }
 
 export interface OakToday {
@@ -502,15 +503,27 @@ export interface OakToday {
   generatedAt: string             // ISO UTC real de la ejecución
   source: 'ai' | 'fallback'       // 'ai' solo si pasó NUESTRA validación; un 200 no basta
   dayMode: DayMode
+  serious: boolean                // === DayPlan.serious
   dialogues: [OakTodayDialogue, OakTodayDialogue, OakTodayDialogue]
 }
 ```
 
-No lleva los hechos ni el plan: el frontend no los necesita y el JSON público no debe cargar con el andamiaje.
+No lleva los hechos ni el plan: el frontend no los necesita y el JSON público no debe cargar con el andamiaje. `tone` y `serious` sí viajan porque el frontend elige con ellos la pose de Oak, y los recibe resueltos del `DayPlan`: React no los deduce del texto ni del modo.
 
-Consumo idéntico al de `forecast.json`: `import oakData from './data/oak-today.json'` en `App.tsx`, tipado como `OakToday` y pasado a `WeatherApp`. Sin `fetch`, sin estado global, sin lógica narrativa en el componente. `date` viaja para que la interfaz pueda mostrar de qué día habla y detectar un desfase con `forecast.date`.
+Consumo parecido al de `forecast.json`: `import oakData from './data/oak-today.json'` en `App.tsx`, sin `fetch` ni estado global. La diferencia es que el JSON pasa antes por `readOakToday`, porque el commit que cambia el contrato llega a `main` antes que la primera generación con el contrato nuevo, y un deploy por push publica el JSON que haya: con un JSON del contrato anterior, o de otro día que el mapa, la escena no sale y EMPEZAR lleva al mapa como antes. No se inventa lo que falta.
 
-El componente concreto (`src/components/ProfessorOak/`) y su UX se diseñan en una fase posterior. Sin voz ni TTS en esta feature: el gesto de `EMPEZAR` (006) existe, pero no se da por resuelto el autoplay a futuro.
+## Escena de Oak (`src/components/ProfessorOak/`)
+
+Flujo: loader → portada → EMPEZAR → Oak → mapa. Oak se monta ya durante el cruce desde la portada, por debajo de ella (`$z-landing` > `$z-oak`), para que el fundido lleve directamente a la escena; no habla ni escucha hasta que el cruce termina (`ready`). El mapa se monta a la vez, debajo de Oak e `inert`, y queda al descubierto cuando la escena se funde.
+
+- **Poses.** `neutral → neutral`, `cientifico → confused`, `epico → epic`, `consejo → warning`, `guasa → playful`. En un día serio nunca `playful` ni `epic`: `consejo`/`epico` → `warning`, el resto → `neutral`. `oak-tired` existe pero ningún tono la pide, y no entra en el bundle.
+- **Máquina de escribir** a 30 ms por carácter, sin librerías. El texto pendiente ocupa ya su sitio, invisible, para que las líneas no salten mientras se escriben. Clic, toque, Intro o Espacio: si escribe, completa; si ha terminado, pasa; tras el tercero, cierra. Un único oyente de teclado y ningún botón dentro, para que una tecla no pueda disparar dos avances; la tecla mantenida no encadena bocadillos.
+- **Audio.** Una sola instancia de `<audio>` como pista continua (~9 s): desde 0 al empezar a escribir, se para y se rebobina al terminar, al completar o al desmontar. Sin bucle —160 caracteres son 4,8 s— y a volumen discreto. Un `play()` bloqueado no cambia nada.
+- **Movimiento reducido:** texto entero de inmediato, sin blip y sin animaciones.
+- **Lectores de pantalla:** la escena es un `dialog` modal con nombre accesible "Profesor Oak" —la caja no lleva placa visible, así que el nombre vive solo en el `aria-label`—; el texto que se escribe letra a letra es `aria-hidden`, y el bocadillo completo se anuncia de una vez en una región viva.
+- **Tamaños en px y `vw` con `clamp()`, no en `rem`.** La raíz fluida de `_reset.scss` deja `1rem` en ~2,3 px en un iPhone SE: la réplica del mapa encoge entera a propósito, pero Oak es una escena que se lee encima y a ese tamaño sería ilegible.
+
+Sin voz ni TTS: el blip es un efecto de sonido de la máquina de escribir, no una voz.
 
 ## Integración en el workflow
 
@@ -580,7 +593,13 @@ scripts/oak/
 src/data/
   oak-today.json                generado
   oak-history.json              generado, una entrada por fecha
-src/components/ProfessorOak/    fase posterior
+src/components/ProfessorOak/
+  ProfessorOak.tsx              la escena: bocadillo actual, máquina de escribir, audio, teclado
+  components/OakPortrait.tsx    la pose, apoyada detrás de la caja
+  components/OakDialogueBox.tsx el cuadro de texto clásico, con su ▼
+  oak-pose.ts                   tono + día serio → pose
+  read-oak-today.ts             guarda del contrato antes de montar la escena
+src/assets/oak/                 seis poses en WebP con alfa + el blip de la máquina de escribir
 ```
 
 Sin cambios en `sprite-sources.ts`, `Legend.scss`, `thermal-mood.ts` ni `marker-temperature.ts`.

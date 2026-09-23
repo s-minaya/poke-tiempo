@@ -1,0 +1,115 @@
+@use 'sass:color';
+@use '../../styles/abstracts/variables' as vars;
+
+$oak-enter-ms: 350ms;
+
+// Debe coincidir con EXIT_MS (ProfessorOak.tsx).
+$oak-exit-ms: 300ms;
+
+// La escena entera: el mapa oscurecido detrás, Oak de pie y la caja abajo.
+// No es un modal: no hay tarjeta centrada ni botón de cerrar, hay un
+// personaje delante del mapa hablando en su cuadro de texto. Tamaños en px y
+// `vw` con `clamp()`, no en `rem` — la explicación está en
+// `OakDialogueBox.scss`.
+.professor-oak {
+  --oak-gutter: clamp(12px, 3vw, 32px);
+
+  position: fixed;
+  inset: 0;
+  z-index: vars.$z-oak;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: var(--oak-gutter);
+  padding-bottom: max(var(--oak-gutter), env(safe-area-inset-bottom));
+  overflow: hidden;
+
+  // Más oscuro abajo, donde está Oak: el mapa sigue asomando arriba y la
+  // parte baja se lee como el suelo de la escena, no como página vacía — en
+  // móvil la réplica del mapa deja media pantalla sin nada detrás.
+  background: linear-gradient(
+    to bottom,
+    color.change(vars.$color-near-black, $alpha: 0.45),
+    color.change(vars.$color-near-black, $alpha: 0.85)
+  );
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  // El foco llega aquí por programa, para que Intro y Espacio funcionen y
+  // un lector de pantalla entre en la escena; no es un control que se
+  // recorra con el tabulador, y el indicador visible es el ▼.
+  &:focus {
+    outline: none;
+  }
+
+  &__stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 880px;
+  }
+
+  // Durante el cruce desde la portada solo está el fondo: Oak y su caja
+  // entran cuando la escena ya se ve.
+  .oak-portrait,
+  .oak-dialogue {
+    opacity: 0;
+  }
+
+  &--ready {
+    .oak-portrait {
+      opacity: 1;
+      animation: professor-oak-rise $oak-enter-ms ease-out both;
+    }
+
+    .oak-dialogue {
+      opacity: 1;
+      animation: professor-oak-box-in $oak-enter-ms * 0.7 ease-out both;
+    }
+  }
+
+  // Sale fundiéndose y deja el mapa, que ya estaba debajo.
+  &--closing {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity $oak-exit-ms ease-in;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .professor-oak--ready .oak-portrait,
+  .professor-oak--ready .oak-dialogue {
+    animation: none;
+  }
+
+  .professor-oak--closing {
+    transition: none;
+  }
+}
+
+@keyframes professor-oak-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6%);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes professor-oak-box-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

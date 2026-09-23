@@ -38,17 +38,18 @@ export interface GenerateResult {
 }
 
 /**
- * El papel de cada bocadillo sale del plan, nunca de quien redacta: la IA
- * solo devuelve `id` y `text`, y el `id` es lo que los empareja.
+ * El papel y el tono de cada bocadillo salen del plan, nunca de quien
+ * redacta: la IA solo devuelve `id` y `text`, y el `id` es lo que los
+ * empareja.
  */
-function withRoles(dayPlan: DayPlan, dialogues: OakDialogues): [OakTodayDialogue, OakTodayDialogue, OakTodayDialogue] {
-  const roles = dayPlan.dialoguePlan.map((slot) => {
+function withPlan(dayPlan: DayPlan, dialogues: OakDialogues): [OakTodayDialogue, OakTodayDialogue, OakTodayDialogue] {
+  const published = dayPlan.dialoguePlan.map((slot) => {
     const dialogue = dialogues.find((candidate) => candidate.id === slot.id)
     if (!dialogue) throw new Error(`Falta el diálogo ${slot.id} en la redacción: no se escribe nada.`)
-    return { id: slot.id, role: slot.role, text: dialogue.text }
+    return { id: slot.id, role: slot.role, tone: slot.tone, text: dialogue.text }
   })
 
-  return roles as [OakTodayDialogue, OakTodayDialogue, OakTodayDialogue]
+  return published as [OakTodayDialogue, OakTodayDialogue, OakTodayDialogue]
 }
 
 export async function generateOak({ dataDir, now, generateDialogues = generateOakDialogues }: GenerateOptions): Promise<GenerateResult> {
@@ -63,7 +64,8 @@ export async function generateOak({ dataDir, now, generateDialogues = generateOa
     generatedAt: now.toISOString(),
     source: fromAi ? 'ai' : 'fallback',
     dayMode: dayPlan.dayMode,
-    dialogues: withRoles(dayPlan, dialogues),
+    serious: dayPlan.serious,
+    dialogues: withPlan(dayPlan, dialogues),
   }
   assertValidOakToday(today, dayPlan.date)
 

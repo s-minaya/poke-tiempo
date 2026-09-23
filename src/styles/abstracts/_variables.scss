@@ -43,6 +43,12 @@ $marker-temp-hot-stroke: #ffd54f;
 $marker-temp-scorching: #9b1c31;
 $marker-temp-scorching-stroke: #c69214;
 
+// Capas de pantalla completa (App.tsx). Durante el cruce desde la portada,
+// la portada se funde **por encima** de la escena de Oak, y Oak queda por
+// encima del mapa — incluidos los créditos, que llevan `z-index: 1`.
+$z-oak: 10;
+$z-landing: 20;
+
 // Tipografía
 $font-title: 'Poketiempo Unown', sans-serif; // cabecera (POKETIEMPO) + encabezado de la leyenda
 $font-heading: 'Pixelify Sans', monospace; // línea de previsión de la cabecera

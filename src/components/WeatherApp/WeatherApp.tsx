@@ -9,11 +9,13 @@ import './WeatherApp.scss'
 
 interface WeatherAppProps {
   forecast: Forecast
+  /** Montada pero fuera de alcance mientras otra escena está delante (Oak): ni foco, ni clics, ni lectores de pantalla. */
+  inert?: boolean
 }
 
-function WeatherApp({ forecast }: WeatherAppProps) {
+function WeatherApp({ forecast, inert = false }: WeatherAppProps) {
   return (
-    <main>
+    <main inert={inert}>
       {/* Grid con nombres de área (WeatherApp.scss): cabecera arriba, ocupando
           todo el ancho; leyenda bajo el título; mapa como cuerpo
           (mission.md). Cada componente fija su propio `grid-area` en su

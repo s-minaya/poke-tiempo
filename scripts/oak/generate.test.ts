@@ -213,6 +213,23 @@ describe('OakToday', () => {
     expect(today.dialogues.map((dialogue) => dialogue.id)).toEqual(['dialogue-1', 'dialogue-2', 'dialogue-3'])
   })
 
+  // El frontend elige la pose de Oak con estos dos datos, así que tienen que
+  // llegar resueltos: React no los deduce del texto ni del modo.
+  it('el tono y el día serio salen del plan, no de la IA', async () => {
+    let plan: DayPlan | undefined
+    const { today } = await generateOak({
+      dataDir,
+      now: NOW,
+      generateDialogues: async (dayPlan) => {
+        plan = dayPlan
+        return aiReturning(AI_TEXTS)()
+      },
+    })
+
+    expect(today.dialogues.map((dialogue) => dialogue.tone)).toEqual(plan?.dialoguePlan.map((slot) => slot.tone))
+    expect(today.serious).toBe(plan?.serious)
+  })
+
   it('generatedAt es el instante real de la ejecución, en ISO', async () => {
     const { today } = await generateOak({ dataDir, now: NOW, generateDialogues: noAi })
 
@@ -300,7 +317,8 @@ describe('escritura segura', () => {
     await generateOak({ dataDir, now: NOW, generateDialogues: noAi })
     const today = await readJson<OakToday>('oak-today.json')
 
-    expect(Object.keys(today).sort()).toEqual(['date', 'dayMode', 'dialogues', 'generatedAt', 'source'])
+    expect(Object.keys(today).sort()).toEqual(['date', 'dayMode', 'dialogues', 'generatedAt', 'serious', 'source'])
+    for (const dialogue of today.dialogues) expect(Object.keys(dialogue).sort()).toEqual(['id', 'role', 'text', 'tone'])
     expect(JSON.stringify(today)).not.toContain('mapPokemonId')
     expect(JSON.stringify(today)).not.toContain('officialZoneId')
   })

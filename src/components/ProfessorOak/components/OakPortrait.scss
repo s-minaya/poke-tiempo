@@ -1,0 +1,35 @@
+// Oak asomando por detrás de la caja de diálogo, como en los juegos.
+
+// Las seis ilustraciones están cortadas a la cintura por el propio arte, en
+// su borde inferior. Ese corte nunca se ve: la caja se monta encima de los
+// últimos píxeles del retrato (el margen negativo de abajo). Lo que tapa es
+// un 6 % de la altura — por debajo del libro y la mano más bajos de las seis
+// poses (`oak-confused`, a un ~9 % del borde): ni cabeza ni manos quedan
+// nunca detrás de la caja.
+
+// Las poses no comparten proporción (van de 1254×1254 a 1312×1199), así que
+// todas se encajan en el mismo cuadrado apoyadas en su borde inferior: la
+// cintura cae siempre en el mismo sitio al cambiar de pose.
+.oak-portrait {
+  // Manda el límite que antes se acabe: el ancho de la escena, el alto de la
+  // pantalla o un tope en escritorio. El `100%` resuelve contra el ancho
+  // también en el margen, así que el solape es proporcional al retrato.
+  --oak-size: min(100%, 58vh, 560px);
+
+  width: var(--oak-size);
+  aspect-ratio: 1;
+  margin-bottom: calc(var(--oak-size) * -0.06);
+
+  // En móvil, `vh` cuenta con la barra de Safari escondida y el retrato
+  // podría no caber con ella visible. `svh` es el alto que siempre está.
+  @supports (height: 1svh) {
+    --oak-size: min(100%, 58svh, 560px);
+  }
+
+  &__image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+  }
+}

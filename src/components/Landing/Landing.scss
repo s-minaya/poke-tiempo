@@ -8,6 +8,7 @@ $landing-fade-ms: 350ms;
 .landing {
   position: fixed;
   inset: 0;
+  z-index: vars.$z-landing;
   display: flex;
   flex-direction: column;
   align-items: center;
