@@ -1,6 +1,6 @@
 {
-  "date": "2026-09-24",
-  "generatedAt": "2026-09-23T11:02:41.315Z",
+  "date": "2026-09-25",
+  "generatedAt": "2026-09-24T10:47:22.428Z",
   "source": "ai",
   "dayMode": "invasion",
   "serious": false,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... hoy hay 3 lugares bajo algún aviso y 1 con lluvia."
+      "text": "Vaya... hoy hay 11 lugares bajo aviso y 1 con lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "epico",
-      "text": "¡Increíble! Charmeleon aparece en 31 lugares, entre ellos Oviedo, La Rioja y Navarra. En Valladolid la mínima nocturna desciende a 9,8 °C."
+      "text": "¡Increíble! Magmar aparece en 29 lugares, por ejemplo La Rioja, Huesca y Jaca. En Córdoba la máxima alcanza 39 °C."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Hoy Castform (Niebla) está en 4 lugares, como Lugo, Valencia y Murcia."
+      "text": "Kyogre está presente en 1 lugar del mapa: La Palma."
     }
   ]
 }
