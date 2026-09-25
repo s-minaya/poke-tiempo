@@ -1,6 +1,6 @@
 {
-  "date": "2026-09-25",
-  "generatedAt": "2026-09-24T10:47:22.428Z",
+  "date": "2026-09-26",
+  "generatedAt": "2026-09-25T10:49:28.640Z",
   "source": "ai",
   "dayMode": "invasion",
   "serious": false,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... hoy hay 11 lugares bajo aviso y 1 con lluvia."
+      "text": "Vaya... hoy hay 4 lugares bajo aviso y 1 con lluvia. Además, es sábado, fin de semana."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "epico",
-      "text": "¡Increíble! Magmar aparece en 29 lugares, por ejemplo La Rioja, Huesca y Jaca. En Córdoba la máxima alcanza 39 °C."
+      "text": "¡Interesante! Charmeleon se muestra en 30 lugares del mapa; entre ellos Ourense, La Rioja y Navarra."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Kyogre está presente en 1 lugar del mapa: La Palma."
+      "text": "Curioso... Castform (Niebla) está en 2 lugares: Ceuta y Melilla."
     }
   ]
 }
