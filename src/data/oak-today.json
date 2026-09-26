@@ -1,6 +1,6 @@
 {
-  "date": "2026-09-26",
-  "generatedAt": "2026-09-25T10:49:28.640Z",
+  "date": "2026-09-27",
+  "generatedAt": "2026-09-26T10:33:37.013Z",
   "source": "ai",
   "dayMode": "invasion",
   "serious": false,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... hoy hay 4 lugares bajo aviso y 1 con lluvia. Además, es sábado, fin de semana."
+      "text": "Vaya... hoy hay 2 lugares bajo aviso y 9 con lluvia. Además, es domingo, fin de semana."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "epico",
-      "text": "¡Interesante! Charmeleon se muestra en 30 lugares del mapa; entre ellos Ourense, La Rioja y Navarra."
+      "text": "¡Curioso! Charmeleon se avista en 31 lugares del mapa, entre ellos Ourense, La Rioja y Navarra."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Curioso... Castform (Niebla) está en 2 lugares: Ceuta y Melilla."
+      "text": "Interesante... Castform (Niebla) aparece en 1 lugar del mapa: Castellón."
     }
   ]
 }
