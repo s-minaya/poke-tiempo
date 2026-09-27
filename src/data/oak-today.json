@@ -1,27 +1,27 @@
 {
-  "date": "2026-09-27",
-  "generatedAt": "2026-09-26T10:33:37.013Z",
+  "date": "2026-09-28",
+  "generatedAt": "2026-09-27T11:05:06.893Z",
   "source": "ai",
-  "dayMode": "invasion",
-  "serious": false,
+  "dayMode": "alerta",
+  "serious": true,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... hoy hay 2 lugares bajo aviso y 9 con lluvia. Además, es domingo, fin de semana."
+      "text": "Vaya, hoy hay 21 lugares bajo aviso y 52 con lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "epico",
-      "text": "¡Curioso! Charmeleon se avista en 31 lugares del mapa, entre ellos Ourense, La Rioja y Navarra."
+      "tone": "consejo",
+      "text": "Aviso naranja por lluvia en Barcelona; se esperan 0,2 mm con probabilidad del 100 %."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Interesante... Castform (Niebla) aparece en 1 lugar del mapa: Castellón."
+      "text": "Zapdos aparece en 9 lugares del mapa; Oviedo, León y Cáceres son algunos ejemplos."
     }
   ]
 }
