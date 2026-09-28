@@ -1,7 +1,7 @@
 {
-  "date": "2026-09-28",
-  "generatedAt": "2026-09-27T11:05:06.893Z",
-  "source": "ai",
+  "date": "2026-09-29",
+  "generatedAt": "2026-09-28T12:18:27.638Z",
+  "source": "fallback",
   "dayMode": "alerta",
   "serious": true,
   "dialogues": [
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya, hoy hay 21 lugares bajo aviso y 52 con lluvia."
+      "text": "Hoy hay avisos en 15 de los 74 lugares del mapa."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Aviso naranja por lluvia en Barcelona; se esperan 0,2 mm con probabilidad del 100 %."
+      "text": "Un apunte. Tenemos un aviso oficial naranja por lluvia en Barcelona y Barcelona; además, allí se esperan 13,8 mm, con un 100 % de probabilidad."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Zapdos aparece en 9 lugares del mapa; Oviedo, León y Cáceres son algunos ejemplos."
+      "text": "Mega-Gyarados aparece en Pontevedra y Porto."
     }
   ]
 }
