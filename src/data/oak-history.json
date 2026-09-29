@@ -1,5 +1,12 @@
 [
   {
+    "date": "2026-09-30",
+    "focusPokemonId": "castform-rain",
+    "leitmotifIds": [
+      "castform-vestuario"
+    ]
+  },
+  {
     "date": "2026-09-29",
     "focusPokemonId": null,
     "leitmotifIds": []
@@ -22,11 +29,6 @@
   {
     "date": "2026-09-25",
     "focusPokemonId": "magmar",
-    "leitmotifIds": []
-  },
-  {
-    "date": "2026-09-24",
-    "focusPokemonId": "charmeleon",
     "leitmotifIds": []
   }
 ]

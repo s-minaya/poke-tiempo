@@ -1,27 +1,27 @@
 {
-  "date": "2026-09-29",
-  "generatedAt": "2026-09-28T12:18:27.638Z",
+  "date": "2026-09-30",
+  "generatedAt": "2026-09-29T11:50:18.152Z",
   "source": "fallback",
-  "dayMode": "alerta",
-  "serious": true,
+  "dayMode": "invasion",
+  "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Hoy hay avisos en 15 de los 74 lugares del mapa."
+      "text": "Bien. Hoy hay avisos en 5 de los 74 lugares del mapa."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "consejo",
-      "text": "Un apunte. Tenemos un aviso oficial naranja por lluvia en Barcelona y Barcelona; además, allí se esperan 13,8 mm, con un 100 % de probabilidad."
+      "tone": "epico",
+      "text": "Castform (Lluvia moderada) aparece en 37 lugares, entre ellos A Coruña, Oviedo y Gijón; además, A Coruña recoge 0,2 mm previstos, con un 100 % de probabilidad."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "neutral",
-      "text": "Mega-Gyarados aparece en Pontevedra y Porto."
+      "tone": "guasa",
+      "text": "Castform se ha vestido para la ocasión, como siempre. Esta vez, Niebla: aparece en 3 lugares, entre ellos Benasque, Huelva y Cádiz."
     }
   ]
 }
