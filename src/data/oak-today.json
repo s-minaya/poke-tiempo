@@ -1,27 +1,27 @@
 {
-  "date": "2026-09-30",
-  "generatedAt": "2026-09-29T11:50:18.152Z",
+  "date": "2026-10-01",
+  "generatedAt": "2026-09-30T11:37:29.049Z",
   "source": "fallback",
-  "dayMode": "invasion",
-  "serious": false,
+  "dayMode": "alerta",
+  "serious": true,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Bien. Hoy hay avisos en 5 de los 74 lugares del mapa."
+      "text": "Veamos. Hoy hay avisos en 18 de los 74 lugares del mapa."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "epico",
-      "text": "Castform (Lluvia moderada) aparece en 37 lugares, entre ellos A Coruña, Oviedo y Gijón; además, A Coruña recoge 0,2 mm previstos, con un 100 % de probabilidad."
+      "tone": "consejo",
+      "text": "Tenemos un aviso oficial naranja por lluvia en Teruel; además, allí se esperan 22,1 mm, con un 100 % de probabilidad. Yo tendría cuidado."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "guasa",
-      "text": "Castform se ha vestido para la ocasión, como siempre. Esta vez, Niebla: aparece en 3 lugares, entre ellos Benasque, Huelva y Cádiz."
+      "tone": "neutral",
+      "text": "Mega-Gyarados aparece en 5 lugares, entre ellos A Coruña, Pontevedra y Gijón."
     }
   ]
 }
