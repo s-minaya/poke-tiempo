@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-10-02",
+    "focusPokemonId": null,
+    "leitmotifIds": []
+  },
+  {
     "date": "2026-10-01",
     "focusPokemonId": null,
     "leitmotifIds": []
@@ -23,11 +28,6 @@
   },
   {
     "date": "2026-09-27",
-    "focusPokemonId": "charmeleon",
-    "leitmotifIds": []
-  },
-  {
-    "date": "2026-09-26",
     "focusPokemonId": "charmeleon",
     "leitmotifIds": []
   }

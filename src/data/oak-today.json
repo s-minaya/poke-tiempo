@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-01",
-  "generatedAt": "2026-09-30T11:37:29.049Z",
+  "date": "2026-10-02",
+  "generatedAt": "2026-10-01T12:05:29.664Z",
   "source": "fallback",
   "dayMode": "alerta",
   "serious": true,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Veamos. Hoy hay avisos en 18 de los 74 lugares del mapa."
+      "text": "Bien. Hoy 23 de los 74 lugares del mapa están bajo aviso. Tomo nota."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "consejo",
-      "text": "Tenemos un aviso oficial naranja por lluvia en Teruel; además, allí se esperan 22,1 mm, con un 100 % de probabilidad. Yo tendría cuidado."
+      "tone": "epico",
+      "text": "Un apunte. Tenemos un aviso oficial rojo por lluvia en Castellón y Castellón; además, allí se esperan 19,4 mm, con un 100 % de probabilidad."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Mega-Gyarados aparece en 5 lugares, entre ellos A Coruña, Pontevedra y Gijón."
+      "text": "Veamos. Mega-Gyarados aparece en 5 lugares, entre ellos A Coruña, Gijón y Cantabria. Seguimos observando."
     }
   ]
 }
