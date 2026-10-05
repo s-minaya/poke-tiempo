@@ -151,6 +151,35 @@ describe('WeatherApp', () => {
     expect(row).toHaveFocus()
   })
 
+  it('abierta desde un marcador, cerrarla desde la tarjeta devuelve el foco a ese marcador', () => {
+    render(<WeatherApp forecast={forecastData as Forecast} />)
+
+    const marker = map().getByRole('button', { name: /^Jaca/ })
+    marker.focus()
+    fireEvent.keyDown(marker, { key: 'Enter' })
+    const close = within(screen.getByRole('region', { name: 'Jaca' })).getByRole('button', { name: 'Cerrar' })
+    close.focus()
+    fireEvent.click(close)
+
+    expect(screen.queryByRole('region', { name: 'Jaca' })).not.toBeInTheDocument()
+    expect(marker).toHaveFocus()
+  })
+
+  it('Tab no toca la selección: ni sobre el marcador, ni sobre la fila, ni dentro de la tarjeta', () => {
+    render(<WeatherApp forecast={forecastData as Forecast} />)
+
+    const marker = map().getByRole('button', { name: /^Jaca/ })
+    fireEvent.click(marker)
+    const row = list().getByRole('button', { pressed: true })
+    const close = within(screen.getByRole('region', { name: 'Jaca' })).getByRole('button', { name: 'Cerrar' })
+
+    for (const element of [marker, row, close]) fireEvent.keyDown(element, { key: 'Tab' })
+
+    expect(screen.getByRole('region', { name: 'Jaca' })).toBeInTheDocument()
+    expect(marker).toHaveAttribute('aria-pressed', 'true')
+    expect(row).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('al seleccionar, lleva a la vista lo que se activó, aunque un toque no lo enfoque', () => {
     // jsdom no implementa `scrollIntoView`: se anota a quién se le pide.
     const original = Element.prototype.scrollIntoView
