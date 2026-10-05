@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 
 import App from './App.tsx'
 
@@ -108,7 +108,10 @@ describe('App', () => {
 
     start(container)
 
-    expect(screen.getByRole('button', { name: 'EMPEZAR', hidden: true })).toBeDisabled()
+    // Dentro de la portada: con el mapa ya montado, buscar en todo el
+    // documento calcularía el nombre de cada marcador y cada fila.
+    const landing = container.querySelector<HTMLElement>('.landing')!
+    expect(within(landing).getByRole('button', { name: 'EMPEZAR', hidden: true })).toBeDisabled()
     expect(screen.queryByRole('dialog', { name: 'Profesor Oak' })).not.toBeInTheDocument()
   })
 
@@ -119,7 +122,9 @@ describe('App', () => {
     wait(TRANSITION_MS)
 
     expect(screen.getByRole('dialog', { name: 'Profesor Oak' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'EMPEZAR', hidden: true })).not.toBeInTheDocument()
+    // Por texto: comprobar por rol que no queda en ninguna parte calcularía
+    // el nombre de cada marcador y cada fila del mapa ya montado.
+    expect(screen.queryByText('EMPEZAR')).not.toBeInTheDocument()
     // `inert` vive en el contenedor de la escena, no en `<main>`: cubre
     // también los créditos, que son hermanos suyos y no descendientes.
     expect(container.querySelector('.app')).toHaveAttribute('inert')

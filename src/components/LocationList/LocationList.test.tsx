@@ -176,7 +176,10 @@ describe('LocationList — barra, órdenes y grupos', () => {
 
     expect(onToggleLocation).not.toHaveBeenCalled()
     expect(onClearLocation).not.toHaveBeenCalled()
-    expect(rowOf('Gijón')).toHaveAttribute('aria-pressed', 'true')
+    // Por la fila pulsada: tras reordenar, buscar por nombre recalcularía el de las 74.
+    const pressed = screen.getAllByRole('button', { pressed: true })
+    expect(pressed).toHaveLength(1)
+    expect(pressed[0]).toHaveAccessibleName(/^Gijón/)
   })
 
   it('con filtros, solo las filas que coinciden, y el recuento lo dice', () => {

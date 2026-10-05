@@ -122,13 +122,18 @@ describe('WeatherApp', () => {
 
   it('la alternancia cruza las vías: lo abierto desde el marcador se cierra desde su fila, y al revés', () => {
     const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+    // Marcador y fila siguen montados al seleccionar: se buscan una vez. La
+    // fila, por ser la pulsada, sin calcular el nombre de las otras 73.
+    const marker = map().getByRole('button', { name: /^Jaca/ })
+    fireEvent.click(marker)
+    const row = list().getByRole('button', { pressed: true })
+    expect(row).toHaveAccessibleName(/^Jaca/)
 
-    fireEvent.click(map().getByRole('button', { name: /^Jaca/ }))
-    fireEvent.click(list().getByRole('button', { name: /^Jaca/ }))
+    fireEvent.click(row)
     expect(container.querySelector('.location-card')).not.toBeInTheDocument()
 
-    fireEvent.click(list().getByRole('button', { name: /^Jaca/ }))
-    fireEvent.click(map().getByRole('button', { name: /^Jaca/ }))
+    fireEvent.click(row)
+    fireEvent.click(marker)
     expect(container.querySelector('.location-card')).not.toBeInTheDocument()
   })
 
@@ -138,7 +143,7 @@ describe('WeatherApp', () => {
     const row = list().getByRole('button', { name: /^Jaca/ })
     row.focus()
     fireEvent.click(row)
-    const close = screen.getByRole('button', { name: 'Cerrar' })
+    const close = within(screen.getByRole('region', { name: 'Jaca' })).getByRole('button', { name: 'Cerrar' })
     close.focus()
     fireEvent.click(close)
 
@@ -314,8 +319,11 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
       .map((marker) => marker.getAttribute('aria-label')!.split(',')[0])
       .sort()
   }
+  // Dentro de su propia lista: en todo el documento entrarían en la búsqueda
+  // los nombres de los 74 marcadores y las 74 filas.
   function chips() {
-    return screen.queryAllByRole('button', { name: /quitar filtro$/ }).map((chip) => chip.textContent)
+    const active = screen.queryByRole('list', { name: 'Filtros activos' })
+    return active ? within(active).getAllByRole('button', { name: /quitar filtro$/ }).map((chip) => chip.textContent) : []
   }
   function card() {
     return document.querySelector('.location-card')
@@ -400,7 +408,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
 
     expect(chips()).toEqual([])
     expect(screen.getByText('74 lugares')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Limpiar filtros' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Limpiar filtros')).not.toBeInTheDocument()
     expect(map().getAllByRole('button')).toHaveLength(74)
   })
 
@@ -411,7 +419,11 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
     for (const label of [/A–Z/, /Más calor/, /Más frío/, /Zona/]) {
       fireEvent.click(screen.getByRole('radio', { name: label }))
       expect(screen.getByRole('region', { name: 'Jaca' })).toBeInTheDocument()
-      expect(list().getByRole('button', { name: /^Jaca/ })).toHaveAttribute('aria-pressed', 'true')
+      // Por la fila pulsada, no por nombre: reordenar rehace las 74 filas, y
+      // buscar por nombre volvería a calcular el de todas en cada vuelta.
+      const pressed = list().getAllByRole('button', { pressed: true })
+      expect(pressed).toHaveLength(1)
+      expect(pressed[0]).toHaveAccessibleName(/^Jaca/)
     }
   })
 
