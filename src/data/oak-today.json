@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-05",
-  "generatedAt": "2026-10-04T11:34:49.158Z",
+  "date": "2026-10-06",
+  "generatedAt": "2026-10-05T12:59:32.737Z",
   "source": "ai",
   "dayMode": "alerta",
   "serious": true,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Observación: hoy 14 lugares del mapa están bajo aviso y 47 presentan lluvia."
+      "text": "Hoy hay 33 lugares bajo aviso y 69 con lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Aviso oficial naranja por tormentas afecta al lugar de Salamanca; se recomienda precaución."
+      "text": "Aviso naranja por lluvia en Jaca y Benasque; en Jaca se esperan 14,3 mm con 100 % de probabilidad. Precaución."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Zapdos aparece en 14 lugares del mapa; Teruel, Zaragoza y Guadalajara son ejemplos."
+      "text": "Zapdos se observa en 26 lugares del mapa; Ourense, Oviedo y Gijón son ejemplos."
     }
   ]
 }
