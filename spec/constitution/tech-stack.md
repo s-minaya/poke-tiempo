@@ -15,6 +15,7 @@ _Cómo está construido el proyecto y las reglas que todo el código debe respet
 - **Geometría del mapa (`scripts/config/*.geo.json`):** [Natural Earth](https://www.naturalearthdata.com/) — capas *Admin 0 – Map Subunits* (silueta de España/Portugal/Andorra/Baleares/Ceuta/Melilla/Canarias/Marruecos/Argelia) y *Admin 1 – States/Provinces (lines)* (fronteras internas de comunidad autónoma/distrito), ambas 1:10m, distribuidas en GeoJSON por [martynafford/natural-earth-geojson](https://github.com/martynafford/natural-earth-geojson). **Dominio público** (Natural Earth no exige atribución; el repo de conversión es CC0). Se filtran y redondean una vez y se commitean — no hay descarga en runtime ni en el workflow diario.
 - **Redacción de los diálogos del Profesor Oak (007):** **Groq**, capa gratuita, modelo `openai/gpt-oss-120b` por defecto y configurable con `GROQ_MODEL` (que no es secreto). Se llama con el `fetch` de Node desde el workflow diario, sin SDK y sin dependencia nueva: la API es OpenAI-compatible y una sola llamada por generación no la justifica. **Coste operativo obligatorio: 0 €** — nunca se habilita billing, y cualquier `429`, timeout o indisponibilidad cae al fallback local determinista del dominio. La IA no decide ningún hecho: recibe claims ya resueltos y solo pone la voz.
 - **Ejecución de scripts TS en Node:** **tsx** (solo dev).
+- **Cobertura de tests:** **@vitest/coverage-v8** (solo dev) — proveedor V8 de Vitest, misma versión que Vitest. Sin umbrales obligatorios: es una medida, no una puerta de CI. El informe se genera en `coverage/`, ignorado por git y fuera del deploy.
 - **Verificación visual:** **playwright** (solo dev) — navegador headless para comprobar visualmente el mapa cuando el repaso de código y los tests no bastan. No es el framework de tests de la suite habitual (esa es Vitest + RTL).
 
 _Ninguna dependencia se añade sin avisar antes. Al añadirla, se anota aquí con su rol y si es de runtime o solo de desarrollo._
@@ -71,7 +72,7 @@ Motivos, para que nadie los reabra por costumbre:
 ## Comandos
 
 - `npm run dev` — entorno local (Vite).
-- `npm run test` — tests una vez. `npm run test:watch` para modo watch.
+- `npm run test` — tests una vez. `npm run test:watch` para modo watch. `npm run test:coverage` — la suite con informe de cobertura (V8) en `coverage/`.
 - `npm run lint` — ESLint (TS/TSX, flat config) + Stylelint (Sass).
 - `npm run build` — compila para producción (`dist/`). `npm run preview` para previsualizar.
 - `npm run fetch:forecast` — descarga la previsión del día de las tres fuentes (AEMET, IPMA, Open-Meteo) y reescribe `src/data/forecast.json`. Necesita `AEMET_API_KEY`.

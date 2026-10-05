@@ -5,6 +5,10 @@ node_modules/
 dist/
 dist-ssr/
 
+# Informes de tests (npm run test:coverage)
+coverage/
+.vitest/
+
 # Credenciales — la API key de AEMET nunca entra al repositorio
 .env
 .env.*

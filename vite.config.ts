@@ -8,6 +8,15 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
+    // Solo con `npm run test:coverage`. Sin umbrales: de momento es una
+    // línea base, no una puerta de CI. Los datos generados (`src/data/`)
+    // no son lógica y solo inflarían el porcentaje.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}', 'scripts/**/*.ts'],
+      exclude: ['**/*.test.{ts,tsx}', '**/__fixtures__/**', 'src/test/**', 'src/data/**', '**/*.d.ts'],
+      reporter: ['text-summary', 'html'],
+    },
     // Un entorno por tipo de test. Los `.test.tsx` montan componentes y
     // necesitan jsdom y jest-dom. Los `.test.ts` son lógica pura —dominio,
     // datos, scripts de build y helpers de componentes— y corren en Node:
