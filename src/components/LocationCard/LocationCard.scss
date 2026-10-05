@@ -1,0 +1,192 @@
+@use 'sass:color';
+@use '../../styles/abstracts/breakpoints' as bp;
+@use '../../styles/abstracts/variables' as vars;
+
+// Mientras hay una tarjeta abierta, en la composición apilada. La hoja tapa
+// el pie de la pantalla, así que el documento reserva ese hueco: el
+// navegador, al llevar el foco a un marcador con el tabulador, lo deja por
+// encima de la hoja y nunca debajo (WCAG 2.4.11), y lo último de la página
+// —los créditos— sigue pudiendo subir por encima de ella. El tope es el
+// mismo que el alto máximo de la hoja: si la hoja queda más baja, el hueco
+// sobra un poco, que es el error inofensivo.
+html:has(.location-card) {
+  --location-sheet-max: min(50vh, 30rem);
+
+  scroll-padding-block-end: var(--location-sheet-max);
+
+  @supports (height: 1svh) {
+    --location-sheet-max: min(50svh, 30rem);
+  }
+
+  body {
+    padding-block-end: var(--location-sheet-max);
+  }
+
+  // En dos columnas la tarjeta va dentro del mapa, no encima de la página.
+  @include bp.respond-from(bp.$breakpoint-desktop) {
+    scroll-padding-block-end: auto;
+
+    body {
+      padding-block-end: 0;
+    }
+  }
+}
+
+// El cuadro de texto de los juegos clásicos, igual que el de Oak
+// (`OakDialogueBox.scss`): marco oscuro, una segunda línea celeste por
+// dentro y fondo blanco. Texto $color-near-black sobre blanco, 18,9:1.
+.location-card {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-areas:
+    'heading close'
+    'weather weather'
+    'temperatures temperatures';
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.8rem 1.2rem;
+  padding: 1.6rem;
+  border: 0.4rem solid vars.$color-near-black;
+  border-radius: 1.2rem;
+  background: vars.$color-white;
+  box-shadow:
+    inset 0 0 0 0.3rem vars.$color-white,
+    inset 0 0 0 0.6rem vars.$color-sky-blue;
+  color: vars.$color-near-black;
+  font-family: vars.$font-body;
+  z-index: vars.$z-location-card;
+
+  // Composición apilada: hoja inferior a todo el ancho, con tope en tablet
+  // para no convertirse en una franja de un metro de ancho. Si alguna vez
+  // su contenido no cupiera (zoom muy alto en un móvil pequeño), se
+  // desplaza dentro de la propia hoja en lugar de salirse de la pantalla.
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  margin-inline: auto;
+  max-inline-size: 48rem;
+  max-block-size: var(--location-sheet-max);
+  overflow-y: auto;
+  padding-block-end: max(1.6rem, env(safe-area-inset-bottom));
+  border-block-end-width: 0;
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+
+  // Composición de dos columnas: anclada junto al marcador, hacia el lado
+  // donde hay más mapa libre (`SpainMap.tsx` elige `--east` o `--west`).
+  // En vertical, el desplazamiento propio es proporcional a la altura del
+  // marcador: arriba del todo la tarjeta cuelga hacia abajo, abajo del todo
+  // sube, y en medio queda centrada. Así nunca se sale del mapa por arriba
+  // ni por abajo, sin medir nada en JS.
+  @include bp.respond-from(bp.$breakpoint-desktop) {
+    position: absolute;
+    inset: auto;
+    top: calc(var(--anchor-y) * 100%);
+    translate: 0 calc(var(--anchor-y) * -100%);
+    inline-size: 28rem;
+    max-block-size: none;
+    margin-inline: 0;
+    overflow-y: visible;
+    padding-block-end: 1.6rem;
+    border-block-end-width: 0.4rem;
+    border-radius: 1.2rem;
+    box-shadow:
+      inset 0 0 0 0.3rem vars.$color-white,
+      inset 0 0 0 0.6rem vars.$color-sky-blue,
+      0 0.6rem 0 color.change(vars.$color-near-black, $alpha: 0.45);
+
+    // `--anchor-clearance` es medio sprite en fracción del ancho del mapa:
+    // la tarjeta empieza donde acaba el Pokémon, más un respiro.
+    &--east {
+      left: calc((var(--anchor-x) + var(--anchor-clearance)) * 100% + 0.8rem);
+    }
+
+    &--west {
+      right: calc((1 - var(--anchor-x) + var(--anchor-clearance)) * 100% + 0.8rem);
+    }
+
+    // Anclada, tapa a los marcadores vecinos de ese lado. Si el tabulador
+    // lleva el foco a uno de ellos (otro que no es el seleccionado), la
+    // tarjeta se aparta mientras tanto, para que el marcador enfocado nunca
+    // quede tapado entero (WCAG 2.4.11). Vuelve en cuanto el foco regresa
+    // al seleccionado, se activa el nuevo, o el tabulador llega a su botón
+    // de cerrar. Transparente y no `visibility: hidden`, que la sacaría
+    // también del orden de tabulación y dejaría ese botón inalcanzable
+    // desde el último marcador. Solo con foco de teclado: con el ratón,
+    // hacer clic en otro marcador ya lo selecciona.
+    .spain-map:has(.location-marker:focus-visible:not([aria-pressed='true'])) & {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  &__heading {
+    grid-area: heading;
+    align-self: center;
+  }
+
+  &__name {
+    margin: 0;
+    font-family: vars.$font-heading;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  &__area {
+    margin: 0.2rem 0 0;
+    font-size: 1.4rem;
+  }
+
+  // 44×44, el objetivo de diseño de la 008 (2.5.8 solo pide 24×24).
+  &__close {
+    grid-area: close;
+    align-self: start;
+    inline-size: 4.4rem;
+    block-size: 4.4rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0.8rem;
+    background: transparent;
+    color: inherit;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+      background: color.change(vars.$color-sky-blue, $alpha: 0.25);
+    }
+  }
+
+  &__weather {
+    grid-area: weather;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+  }
+
+  &__sprite {
+    flex: none;
+    inline-size: 5.6rem;
+    block-size: 5.6rem;
+
+    // Los sprites no son todos cuadrados (`Legend.scss`).
+    object-fit: contain;
+  }
+
+  &__pokemon {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+
+  &__condition {
+    margin: 0;
+    font-size: 1.4rem;
+  }
+
+  &__temperatures {
+    grid-area: temperatures;
+    margin: 0;
+    font-size: 1.6rem;
+  }
+}

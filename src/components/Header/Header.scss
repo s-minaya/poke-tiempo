@@ -12,13 +12,14 @@
 
 .header {
   // Dos custom properties en el bloque raíz, redefinidas por cada
-  // modificador de mood — título y línea de previsión leen el mismo
-  // relleno/borde sin duplicar selectores (tech-stack.md → convenciones de
-  // variables SCSS).
+  // modificador de mood — la línea de previsión lee de ellas su relleno y
+  // su halo sin un selector anidado por mood (tech-stack.md → convenciones
+  // de variables SCSS). El título no: va en un color fijo de la paleta de
+  // interfaz.
   --mood-fill: #{vars.$color-green};
   --mood-border: #{vars.$header-mood-neutral-border};
 
-  // `grid-area: header` (App.scss) ocupa toda la fila superior, columnas
+  // `grid-area: header` (`WeatherApp.scss`) ocupa toda la fila superior, columnas
   // incluidas — el mismo azul que `.spain-map__sea`, para que se lea como
   // una única superficie continua entre cabecera y mapa, no dos bloques de
   // color separados. `padding-inline` vive aquí (no en el contenedor)
@@ -28,9 +29,17 @@
   padding-inline: 2rem;
   display: flex;
 
-  // Réplica fija (008-plan.md): título y previsión se mantienen siempre en
-  // la misma fila — la composición se reduce de tamaño junto con el resto
-  // de la página (raíz fluida, `_reset.scss`), nunca se reorganiza.
+  // Título y previsión comparten fila mientras quepan, y pasan a dos
+  // líneas cuando no. Lo decide el contenido, no un punto de corte: el
+  // salto ocurre donde el título a su tamaño de ese ancho deja de convivir
+  // con la palabra más larga de la previsión, que es justo donde debe
+  // ocurrir. La alternativa —mantenerlos en una fila encogiendo el
+  // título— pedía ~17px en un móvil pequeño: ilegible (008-spec.md).
+  flex-wrap: wrap;
+
+  // Con una sola pieza por línea, `space-between` las deja a la izquierda:
+  // la previsión, que a esos anchos se reparte en varias líneas, mantiene
+  // el mismo margen izquierdo que el título en vez de quedar en bandera.
   align-items: baseline;
   justify-content: space-between;
   gap: 1.2rem;
@@ -61,18 +70,29 @@
     --mood-border: #{vars.$header-mood-sweltering-border};
   }
 
-  &__title,
-  &__forecast {
-    color: var(--mood-fill);
-  }
-
   &__title {
     font-family: vars.$font-title;
 
+    // Sin trazo: cualquier borde alrededor de los glifos Unown —trazo fino y
+    // un ojo en cada letra— los empasta. El contraste lo da el propio color,
+    // de la paleta de interfaz y no del mood (tech-stack.md → Estilo
+    // visual): 6,28:1 contra el mar en los cinco moods, por encima también
+    // del 4,5:1 del texto normal.
+    color: vars.$ui-accent;
+
     // "POKETIEMPO" no puede partirse en dos líneas (es una palabra sin
-    // espacios): un único tamaño, sin pasos por breakpoint — toda la
-    // composición escala junto con el `rem` de la raíz (`_reset.scss`).
-    font-size: 4.8rem;
+    // espacios), así que su tamaño es lo que fija el ancho mínimo de toda
+    // la página: a 48px mide 347px y no cabe en un móvil pequeño. El suelo
+    // de 3,6rem es el mayor que entra en los 280px útiles de un viewport de
+    // 320px, y el techo es el tamaño de diseño. Los extremos van en `rem` y
+    // no en px para que el texto acompañe la preferencia de tamaño base del
+    // navegador. Unos tamaños en px no anularían el zoom —lo anula una raíz
+    // que se recalcula con el viewport—, pero esa preferencia sí se
+    // perdería. El `max(19px, …)` de fuera es el mismo suelo duro que llevan
+    // la previsión y las etiquetas; el contraste del título no lo necesita.
+    // El término fluido en `vw` alcanza el techo justo al entrar la
+    // composición de dos columnas.
+    font-size: max(19px, clamp(3.6rem, 1.36vw + 3.16rem, 4.8rem));
     letter-spacing: 0.05em;
 
     // Poketiempo Unown solo tiene un peso propio (no trae "bold" real):
@@ -83,18 +103,29 @@
 
   &__forecast {
     font-family: vars.$font-heading;
+    color: var(--mood-fill);
 
     // Peso visual comparable al título, como en la imagen de referencia
-    // original — la previsión no es un texto secundario discreto.
-    font-size: 2.4rem;
+    // original — la previsión no es un texto secundario discreto. El suelo
+    // de 1,9rem es la regla transversal de la 008: todo texto en color de
+    // mood entra en el "texto grande" de WCAG 1.4.3 (≥19px y bold) para que
+    // le baste el 3:1 que su halo sí alcanza. Es el caso donde el suelo de
+    // 19px de verdad muerde: con una base de navegador por debajo de 16px,
+    // 1,9rem se quedaría corto y el umbral volvería a ser 4,5:1, que el halo
+    // de "cold" (4,07:1) no alcanza.
+    font-size: max(19px, clamp(1.9rem, 0.57vw + 1.72rem, 2.4rem));
     letter-spacing: 0.03em;
 
-    // Aquí sí --mood-border: un matiz (mismo tono que el relleno, más
-    // oscuro — ver _variables.scss), no un contorno negro — a los glifos
-    // finos de Pixelify Sans un borde negro se veía como un contorno duro.
-    // Sin ningún borde, el relleno tampoco se separaba bien del mar en
+    // Pixelify Sans trae 700 real (index.html): negrita de verdad, no
+    // sintética como la del título.
+    font-weight: 700;
+
+    // Aquí sí hay halo: --mood-border, un matiz (mismo tono que el relleno,
+    // más oscuro — ver _variables.scss), no un contorno negro — a los glifos
+    // finos de Pixelify Sans un borde negro se ve como un contorno duro.
+    // Sin ningún borde, el relleno tampoco se separa bien del mar en
     // varios moods (ej. "cold"/"neutral", muy cercanos en luminosidad a
     // $map-sea).
-    -webkit-text-stroke: 1px var(--mood-border);
+    -webkit-text-stroke: vars.$mood-text-halo var(--mood-border);
   }
 }

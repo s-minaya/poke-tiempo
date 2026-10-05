@@ -15,6 +15,8 @@ function location(id: string, name: string): Location {
   return {
     id,
     name,
+    administrativeArea: name,
+    zone: 'Comunidad de Madrid',
     country: 'ES',
     latitude: 40,
     longitude: -3,

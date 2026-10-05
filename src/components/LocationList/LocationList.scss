@@ -1,0 +1,228 @@
+@use 'sass:color';
+@use 'sass:map';
+@use '../../styles/abstracts/accessibility' as a11y;
+@use '../../styles/abstracts/variables' as vars;
+
+$divider: color.change(vars.$ui-ink, $alpha: 0.15);
+
+// Un panel claro: es contenido para leer y tocar, no parte del dibujo del
+// mapa, así que no va sobre el mar. Solo usa la paleta de interfaz —tinta,
+// nube, azul y blanco—; lo único con color de significado es la muestra de
+// franja de los encabezados de temperatura.
+.location-list {
+  grid-area: list;
+  background: vars.$color-white;
+  color: vars.$ui-ink;
+  font-family: vars.$font-body;
+
+  // La banda de título: tinta, con la Poké Ball en trazo blanco.
+  &__titlebar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.6rem;
+    background: vars.$ui-ink;
+    color: vars.$color-white;
+  }
+
+  &__ball {
+    flex: none;
+    inline-size: 2rem;
+    block-size: 2rem;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2.2;
+  }
+
+  // En mayúsculas por CSS, para que el lector de pantalla no lo deletree.
+  &__heading {
+    margin: 0;
+    font-family: vars.$font-heading;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  // Buscar, zona, ordenar, recuento y filtros activos, sobre nube, separados
+  // de los grupos por una línea de tinta.
+  &__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding: 1.6rem 1.6rem 1.4rem;
+    border-block-end: 0.2rem solid vars.$ui-ink;
+    background: vars.$ui-surface;
+  }
+
+  &__group-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 0;
+    padding: 0.9rem 1.6rem;
+    border-block-end: 1px solid $divider;
+    background: vars.$ui-surface;
+    font-family: vars.$font-heading;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__group-title {
+    min-inline-size: 0;
+  }
+
+  // La franja de color con la que el mapa pinta esa cifra: significado, no
+  // decoración de la interfaz. El título dice el rango en texto, así que la
+  // muestra es un refuerzo (`aria-hidden`). Un trazo blanco se pinta en
+  // tinta, porque sobre la nube no se vería; sin trazo, el del relleno.
+  &__swatch {
+    flex: none;
+    inline-size: 1.4rem;
+    block-size: 1.4rem;
+    border: 0.3rem solid;
+
+    @each $band, $colors in vars.$marker-temp-bands {
+      $fill: map.get($colors, fill);
+      $stroke: map.get($colors, stroke);
+
+      &--#{$band} {
+        background: $fill;
+
+        @if not $stroke {
+          border-color: $fill;
+        } @else if $stroke == vars.$color-white {
+          border-color: vars.$ui-ink;
+        } @else {
+          border-color: $stroke;
+        }
+      }
+    }
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 2.8rem;
+    block-size: 2.4rem;
+    margin-inline-start: auto;
+    padding: 0 0.7rem;
+    border-radius: 0.6rem;
+    background: vars.$ui-ink;
+    font-family: vars.$font-body;
+    font-size: 1.3rem;
+    letter-spacing: 0;
+    color: vars.$color-white;
+  }
+
+  &__visually-hidden {
+    @include a11y.visually-hidden;
+  }
+
+  // Cuántas columnas caben lo decide el hueco, como en la leyenda: una en
+  // un móvil, varias en tablet y escritorio, sin punto de corte propio.
+  // `min(100%, …)`: si la pantalla es más estrecha que la columna mínima, la
+  // columna se estrecha con ella en vez de desbordar. 30rem es lo que ocupa
+  // una fila completa —sprite, nombre con su detalle y las dos cifras— sin
+  // partir las cifras.
+  &__items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+    column-gap: 1.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // Con varias columnas, una fila de la rejilla mide lo que su celda más
+  // alta (un detalle que ocupa dos líneas). Como grid, el `<li>` estira a su
+  // botón hasta ese alto, y las líneas divisorias quedan a la misma altura.
+  &__item {
+    display: grid;
+  }
+
+  // 56px de alto como mínimo: el área táctil con la que la lista sostiene la
+  // excepción «Equivalent» de 2.5.8, holgada respecto a los 44×44 del
+  // objetivo de diseño. En px con suelo, y en `rem` por encima, para que siga
+  // creciendo si el usuario agranda la letra.
+  &__row {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    inline-size: 100%;
+    min-block-size: max(56px, 5.6rem);
+    padding: 0.8rem 1.6rem 0.8rem 1.2rem;
+    border: 0;
+    border-block-end: 1px solid $divider;
+
+    // La barra de la izquierda marca la fila seleccionada. Es forma y no
+    // solo color (WCAG 1.4.1), y no usa `box-shadow`, que es lo que pinta
+    // el anillo de foco de `_reset.scss`: los dos estados conviven.
+    border-inline-start: 0.4rem solid transparent;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+
+    &:hover {
+      background: color.change(vars.$ui-accent, $alpha: 0.06);
+    }
+
+    &[aria-pressed='true'] {
+      border-inline-start-color: vars.$ui-accent;
+      background: color.change(vars.$ui-accent, $alpha: 0.12);
+    }
+
+    // El anillo de `_reset.scss` va por fuera, y en una sola columna la fila
+    // llega de borde a borde de la pantalla: por los lados quedaría fuera de
+    // la vista. Aquí va por dentro, justo después de la barra (0,4rem), para
+    // que una fila seleccionada con el foco siga mostrando las dos señales.
+    &:focus-visible {
+      outline-offset: calc(-0.4rem - 3px);
+    }
+  }
+
+  &__sprite {
+    flex: none;
+    inline-size: 4rem;
+    block-size: 4rem;
+
+    // Los sprites no son todos cuadrados (`Legend.scss`).
+    object-fit: contain;
+  }
+
+  &__text {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
+  &__name {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+
+  &__detail {
+    display: block;
+    font-size: 1.4rem;
+  }
+
+  &__temperatures {
+    flex: none;
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  // En los órdenes de temperatura, la cifra por la que se ordena.
+  &__figure--emphasis {
+    font-size: 1.7rem;
+  }
+}

@@ -62,7 +62,7 @@ Motivos, para que nadie los reabra por costumbre:
 - `src/components/` — componentes reutilizables. Un componente por carpeta, con su `.tsx`, `.scss` y `.test.tsx` del mismo nombre. El `.tsx` importa siempre su propio `.scss`.
 - `src/domain/` — lógica pura del proyecto: tipos compartidos, el motor de asignación de Pokémon, el criterio editorial del mapa (`map-priority.ts`, `pokemon-labels.ts`, `pokemon-names.ts`, `location-views.ts`, `alerts.ts`) y el dominio narrativo de Oak (`oak/`). Sin React ni DOM. Es lo único que se testea de forma exhaustiva.
 - `src/data/` — `locations.ts` (generado), `forecast.json` (generado a diario) y los dos JSON de Oak: `oak-today.json` (los 3 diálogos del día) y `oak-history.json` (solo IDs y categorías, una entrada por fecha, para la continuidad narrativa). Ninguno se edita a mano.
-- `src/styles/abstracts/` — `_breakpoints.scss`, `_variables.scss`, `_reset.scss` (reseteo base + raíz `rem` fluida, tope `62.5%` — ver "Escala (réplica fija, no breakpoints de reorganización)").
+- `src/styles/abstracts/` — `_breakpoints.scss` (los dos puntos de corte y el umbral del mapa), `_variables.scss` (paleta, capas y tipografía), `_reset.scss` (reseteo base, raíz fija `62.5%` y anillo de foco de dos tonos) y `_accessibility.scss` (el mixin `visually-hidden`, sin salida CSS propia: `_reset.scss` no puede alojar mixins, porque cada componente que lo usara volvería a emitir el reseteo) — ver "Composición y puntos de corte".
 - `src/styles/main.scss` — estilos globales.
 - `src/test/setup.ts` — setup de Vitest.
 - `scripts/` — código que solo se ejecuta en Node (descarga de AEMET, generación de listados, proyección de coordenadas). Nunca se importa desde `src/`.
@@ -104,7 +104,7 @@ El contrato de datos completo (tipos, ejes meteorológicos simultáneos, provena
 ## Convenciones de rendimiento (React)
 
 - Toda lista renderizada con `.map()` que tenga interacción por fila usa callbacks estables (`useCallback`, id como argumento, no capturado en closure) y el componente de fila envuelto en `React.memo`. **Aplica directamente al mapa:** son 74 marcadores con hover/foco.
-- `loading="lazy"` en `<img>` dentro de listas **solo cuando el contenido está por debajo del pliegue**. Los sprites del mapa y los de la leyenda no lo llevan: la composición es una réplica fija que siempre cabe en pantalla (`mission.md`), así que todo está visible en la carga inicial y diferirlos empeoraría la carga percibida.
+- `loading="lazy"` en `<img>` dentro de listas **solo cuando el contenido está por debajo del pliegue**. Los sprites de la lista de lugares lo llevan: queda por debajo del pliegue en las dos composiciones. Los del mapa no, porque están a la vista en la carga inicial; y los de la leyenda tampoco, porque son los mismos archivos que ya pinta el mapa —la leyenda solo muestra Pokémon que salen hoy en él—, así que diferirlos no ahorra ninguna descarga.
 - Ningún cálculo derivado (`filter`/`sort`/`map` sobre los datos) va sin `useMemo` si el componente se re-renderiza por motivos ajenos a ese cálculo.
 
 ## Convenciones de variables SCSS
@@ -119,22 +119,25 @@ El contrato de datos completo (tipos, ejes meteorológicos simultáneos, provena
 - Nomenclatura BEM: bloque `.component-name`, elemento `.component-name__part`, modificador `.component-name--variant`.
 - Un `.scss` por componente, junto a su `.tsx`, con el bloque BEM como selector raíz y elementos/modificadores anidados (`&__part`, `&--variant`).
 - **El `.scss` se importa siempre desde su `.tsx`.** Sin ese import, Vite no lo incluye en el bundle y el componente se queda sin ninguna regla propia, sin error ni warning: es un fallo silencioso.
-- **Unidades:** `rem` por defecto; `px` solo cuando sea técnicamente necesario (p. ej. `1px` de borde). Nada de `em`. Reseteo base con `html { font-size: 62.5%; }` para que `1rem = 10px`.
-  - **Excepción: lo que no forma parte de la réplica.** La raíz es fluida desde la 008 y en un iPhone SE deja `1rem` en ~2,3 px, que es justo lo que se quiere para la composición del mapa —encoge entera— y lo contrario de lo que se quiere para un texto que hay que leer encima. Un componente que se superpone a la réplica en vez de formar parte de ella (hoy, la escena del Profesor Oak) dimensiona en `px` y `vw` con `clamp()`: mínimo legible en móvil y tope en escritorio. No es libertad para volver a los `px`: fuera de ese caso la regla sigue siendo `rem`.
+- **Unidades:** `rem` por defecto, sobre una raíz fija `html { font-size: 62.5%; }`: `1rem` son 10px con la base de 16px que traen los navegadores, y proporcionalmente más si el usuario la sube. La raíz no depende del viewport (ver "Composición y puntos de corte"). Excepciones, cada una con su motivo:
+  - **`em`** en lo que debe pesar lo mismo respecto a su glifo sea cual sea el tamaño: el halo del texto de mood (`$mood-text-halo`), el espaciado entre letras, el relleno, el borde y el radio del botón de la portada, y las piezas del bocadillo de Oak que se miden en líneas de su propio texto.
+  - **`px`** en los suelos duros, que no pueden depender de la base del navegador (`max(19px, …)` en el texto de cabecera y leyenda, `min-height: 48px` en EMPEZAR); en la portada y la escena del Profesor Oak, que dimensionan con `clamp()` entre un mínimo en `px` y un término en `vw`; en los bordes finos; y en `$map-temperature-threshold`, que mide una caja y no texto.
 - **Sin valores hardcodeados:** los breakpoints se definen en `_breakpoints.scss` y se importan; nunca se escribe un `px` de breakpoint en un componente.
 - **Sin estilos inline** salvo necesidad justificada (p. ej. un valor dinámico calculado en runtime que no tiene sentido como clase).
 - **Modificador BEM que cambia el color de varios elementos hijos: custom properties, no selectores anidados literales.** Stylelint exige kebab-case estricto en cualquier selector de clase escrito con `.`, y un elemento BEM escrito así fuera de la nomenclatura `&__`/`&--` lo rechaza por llevar `__`. Solución: declarar custom properties en el bloque raíz que cada hijo lee con `var(--foo)`, y redefinirlas dentro del modificador.
 
-### Escala (réplica fija, no breakpoints de reorganización)
+### Composición y puntos de corte
 
-**Desde la 008, la composición no se reorganiza por punto de corte** (`mission.md` → "Réplica fija, no una app adaptativa"): cabecera, leyenda y mapa mantienen siempre la misma disposición y las mismas proporciones entre sí, a cualquier tamaño de pantalla — lo único que cambia es el tamaño de la composición completa, mediante una raíz `rem` fluida (`html { font-size: min(...) }`, `_reset.scss`) en vez de plantillas de grid alternativas por `min-width`. `_breakpoints.scss` sigue existiendo, pero ya no se consume como puntos de corte de layout — `$breakpoint-mobile`/`$breakpoint-tablet`/`$breakpoint-desktop` no tienen ningún consumidor real hoy (candidatos a limpieza, ver "Convenciones de variables SCSS"); `$breakpoint-desktop-large` (1600px) sí se usa, pero como referencia numérica de la fórmula fluida (el ancho al que la raíz deja de crecer), no como `min-width` de una media query. `respond-from` (el mixin de `_breakpoints.scss`) no tiene ningún uso en el proyecto en este momento.
+**La composición se reorganiza en vez de escalarse entera** (`mission.md` → "Una sola composición, que se adapta en vez de encogerse"). Dos plantillas de grid sobre las mismas áreas nombradas (`WeatherApp.scss`): apilada por debajo de `$breakpoint-desktop` —cabecera, mapa a todo el ancho, leyenda y lista— y de dos columnas a partir de ahí —cabecera arriba, leyenda en columna junto al mapa y lista en una banda debajo—, con `<main>` adoptando las columnas de `.app` por `subgrid`. A partir de `$breakpoint-desktop-large` la composición deja de crecer y queda centrada. `$breakpoint-tablet` no decide maquetación: solo qué ilustración de portada se sirve. Las temperaturas del mapa aparecen con `@container` sobre la propia caja del mapa, no sobre el viewport: el mismo mapa mide distinto en cada composición.
+
+No llevan punto de corte, a propósito: el número de columnas de leyenda y lista (`auto-fit` + `minmax`), el tamaño del mapa (el menor de su ancho y su alto disponibles), la tipografía (`clamp()`) y la orientación. Ninguna decisión de maquetación se toma en JS a partir del viewport, la orientación o el dispositivo. Motivos y medidas en `features/008-responsive-and-accessibility/008-plan.md`.
 
 ```scss
 // src/styles/abstracts/_breakpoints.scss
-$breakpoint-mobile: 480px;
-$breakpoint-tablet: 768px;
-$breakpoint-desktop: 1200px;
-$breakpoint-desktop-large: 1600px;
+$breakpoint-tablet: 768px; // solo el <picture> de la portada
+$breakpoint-desktop: 1200px; // apilado → dos columnas
+$breakpoint-desktop-large: 1600px; // tope de la composición
+$map-temperature-threshold: 1150px; // @container sobre la caja del mapa
 
 @mixin respond-from($breakpoint) {
   @media (min-width: $breakpoint) {
@@ -147,12 +150,14 @@ $breakpoint-desktop-large: 1600px;
 
 _Identidad: pixel art, interfaz de Game Boy, Pokédex de primera generación. No una app del tiempo moderna._
 
-- **Composición** (fijada por el usuario): título arriba a la izquierda, fecha de previsión arriba a la derecha, leyenda en columna bajo el título, mapa en el cuerpo, créditos a todo el ancho debajo de leyenda/mapa. Réplica fija (`mission.md`): la misma disposición y las mismas proporciones a cualquier tamaño de pantalla, sin reorganizarse por breakpoint.
+- **Composición** (fijada por el usuario): título arriba a la izquierda, fecha de previsión arriba a la derecha, leyenda en columna bajo el título, mapa en el cuerpo y créditos sobre el mar al pie del mapa; la lista de los 74 lugares, en una banda debajo. Es la composición de dos columnas; en pantallas estrechas se apila —mapa a todo el ancho, y leyenda, lista y créditos debajo— (ver "Composición y puntos de corte").
 - **Tipografía del título:** **"Poketiempo Unown"**, fuente propia construida para el proyecto — no un archivo de terceros. Se vectorizó cada letra A–Z a partir de imágenes de referencia del alfabeto Unown con `potrace` y se compiló a `.woff2`/`.ttf` con `opentype.js`/`wawoff2` (herramientas de build, ninguna se añade como dependencia de la app) — las imágenes de referencia eran solo entrada de ese proceso puntual, no se conservan en el repositorio. Como el propio glifo reproduce el diseño de Unown, queda cubierto por el mismo disclaimer de Pokémon que los sprites (fan project, sin monetización) — no hay licencia de fuente de terceros que anotar. Archivos en `src/assets/fonts/` (`poketiempo-unown.woff2` para web, `.ttf` de respaldo).
   - _Descartadas:_ dos fuentes "Unown" de terceros (MangaShino/FontStruct, CC BY-SA 3.0; y "elementcollector1", que prohibía explícitamente su uso como webfont) — sustituidas por la vectorización propia porque ninguna reproducía el trazo original con suficiente fidelidad.
 - **Sprites:** pixel art de una sola generación/estilo, no mezclados. Redimensionados a 160px de lado máximo (el tamaño real de render en el mapa, 004, es muy inferior) y servidos como PNG indexado — comparado contra WebP sobre el mismo redimensionado, PNG queda por debajo en peso para este conjunto de sprites, así que WebP no entra. Se sirven desde el repositorio (`src/assets/sprites/`), no en caliente desde un servicio externo, y los originales de alta resolución no se commitean. ⚠️ **Origen y licencia pendientes de fijar.**
 - **Retratos del Profesor Oak** (`src/assets/oak/`): seis poses ilustradas, **WebP con alfa** (calidad 0,9, plano alfa sin pérdida). Es el caso contrario al de los sprites: son ilustraciones grandes con degradados, donde WebP baja a un tercio del PNG sin diferencia visible, mientras que en los sprites pixel art indexados ganaba PNG. El formato se elige midiendo cada conjunto, no por norma general.
-- **Paleta:** fijada en la 005, centralizada en `src/styles/abstracts/_variables.scss` — un hex repetido en más de un sitio usa una única variable, nunca dos con el mismo valor (ver "Convenciones de variables SCSS" más abajo).
+- **Paleta:** dos sistemas de color, centralizados en `src/styles/abstracts/_variables.scss` — un hex repetido en más de un sitio usa una única variable, nunca dos con el mismo valor (ver "Convenciones de variables SCSS" más abajo):
+  - **Significado meteorológico** (005): el mar y los territorios del mapa, el mood térmico de la previsión y de las etiquetas de la leyenda, y las franjas de temperatura de las cifras del mapa. Ningún control lo usa.
+  - **Interfaz** (009): tres colores de la paleta de pokemon.com para lo que se escribe, se pulsa o se elige, y para el título y «Leyenda». Ninguno repite un color que ya significa algo.
 
   | Uso | Valor | Variable |
   |---|---|---|
@@ -173,8 +178,14 @@ _Identidad: pixel art, interfaz de Game Boy, Pokédex de primera generación. No
   | Temperatura de marcador "pleasant" (21–25°C) | relleno `#09E230` (`$color-green`), borde blanco | — |
   | Temperatura de marcador "hot" (26–34°C) | `#E53935`, borde `#FFD54F` | `$marker-temp-hot` / `-stroke` |
   | Temperatura de marcador "scorching" (>= 35°C) | `#9B1C31`, borde `#C69214` | `$marker-temp-scorching` / `-stroke` |
+  | Interfaz: texto, bordes de campos y controles, banda de la lista, insignias de recuento y «Leyenda» | `#323232` | `$ui-ink` |
+  | Interfaz: superficie de la zona de controles y de los encabezados de grupo | `#F5F5F5` | `$ui-surface` |
+  | Interfaz: lo elegido y el hover de los controles, y el título POKETIEMPO | `#1B53BA` | `$ui-accent` |
 
-  Los tonos de borde de mood son el mismo matiz que su relleno, un 25% más oscuro (HSL, mismo h/s, `-0.25` de lightness) — nunca negro plano, salvo el título de la cabecera (`$color-near-black` fijo en las cinco categorías, ver `005-plan.md` → Decisiones).
+  Los tonos de borde de mood son el mismo matiz que su relleno, un 25% más oscuro (HSL, mismo h/s, `-0.25` de lightness), y son el halo de la previsión y de las etiquetas de la leyenda. El título y «Leyenda» no llevan color de mood: van sin halo en `$ui-accent` y `$ui-ink` (008).
+
+  De la paleta de pokemon.com se descartan `#2F2F2F` (la misma tinta), `#30A7D7` (el celeste del mood frío), `#B89355` (el trazo de 35° o más), `#B32A0A` y `#FD7D24` (calor, y niveles de aviso de AEMET) y `#734BB2` (el trazo bajo cero): repiten un color que ya significa algo. Detalle y contrastes medidos en `features/009-location-explorer/009-plan.md` → Paleta de interfaz y Contrastes medidos.
+- **Estados de los controles** (009): reposo, blanco con borde `$ui-ink`; hover, el control toma `$ui-accent` sin rellenarse; elegido, `$ui-accent` con una señal que no es color (▸, ✓, ✕ o una barra); foco, el anillo de dos tonos de `_reset.scss`, igual en toda la app y nunca azul.
 - **Accesibilidad — daltonismo:** ningún significado depende solo del matiz. Cada condición se distingue por su Pokémon y por texto; el mapa debe seguir siendo legible en escala de grises. Cualquier estado que dependa del color (activo, hover, foco) se refuerza con una señal no cromática.
 
 ## Legal y atribución

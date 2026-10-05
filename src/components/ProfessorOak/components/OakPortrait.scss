@@ -14,7 +14,10 @@
   // Manda el límite que antes se acabe: el ancho de la escena, el alto de la
   // pantalla o un tope en escritorio. El `100%` resuelve contra el ancho
   // también en el margen, así que el solape es proporcional al retrato.
-  --oak-size: min(100%, 58vh, 560px);
+  // El tope de 720px deja que Oak llene la escena en una pantalla grande en
+  // vez de quedarse pequeño bajo media pantalla vacía; por debajo de ~1240px
+  // de alto manda `58svh`.
+  --oak-size: min(100%, 58vh, 720px);
 
   width: var(--oak-size);
   aspect-ratio: 1;
@@ -23,7 +26,7 @@
   // En móvil, `vh` cuenta con la barra de Safari escondida y el retrato
   // podría no caber con ella visible. `svh` es el alto que siempre está.
   @supports (height: 1svh) {
-    --oak-size: min(100%, 58svh, 560px);
+    --oak-size: min(100%, 58svh, 720px);
   }
 
   &__image {

@@ -1,15 +1,15 @@
 @use 'sass:color';
+@use '../../../styles/abstracts/accessibility' as a11y;
 @use '../../../styles/abstracts/variables' as vars;
 
 // El cuadro de texto de los juegos clásicos: marco oscuro, una segunda línea
 // de color por dentro y fondo blanco. Nada de tarjeta moderna.
 
-// **Sin `rem`, a propósito.** El resto del proyecto escala con la raíz
-// fluida de `_reset.scss`, que en un iPhone SE deja `1rem` en ~2,3 px: la
-// composición del mapa es una réplica fija y encoge entera. Oak no forma
-// parte de esa réplica — es una escena que se lee encima —, y a ese tamaño
-// 160 caracteres serían ilegibles. Aquí todo va en `clamp()` sobre px y
-// `vw`: un mínimo legible en móvil y un tope en escritorio.
+// **`clamp()` sobre px y `vw`**: un mínimo legible en móvil —160
+// caracteres caben a 15px en un iPhone SE— y un tope en escritorio. Al ir en
+// px, el texto no sigue la preferencia de tamaño de letra del navegador,
+// pero sí su zoom, con el que llega al 200 % antes del tope del navegador
+// (WCAG 1.4.4, `008-plan.md` → auditoría).
 .oak-dialogue {
   --oak-pad-block: clamp(14px, 2.2vw, 24px);
   --oak-pad-inline: clamp(16px, 2.8vw, 32px);
@@ -35,7 +35,10 @@
     0 clamp(4px, 0.6vw, 8px) 0 color.change(vars.$color-near-black, $alpha: 0.45);
   color: vars.$color-near-black;
   font-family: vars.$font-heading;
-  font-size: clamp(15px, 0.9vw + 11px, 24px);
+
+  // Techo de 28px: acompaña al retrato de 720px y al ancho de hasta 1100px
+  // de las pantallas grandes. Se alcanza hacia los 1890px de ancho.
+  font-size: clamp(15px, 0.9vw + 11px, 28px);
   font-weight: 500;
   line-height: 1.45;
 
@@ -53,12 +56,7 @@
   }
 
   &__sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+    @include a11y.visually-hidden;
   }
 
   &__next {
@@ -70,8 +68,10 @@
     background: vars.$color-near-black;
     clip-path: polygon(0 0, 100% 0, 50% 100%);
 
-    // Dos fotogramas, como un sprite: salta, no se desliza.
-    animation: oak-dialogue-next 0.8s steps(1, end) infinite;
+    // Dos fotogramas, como un sprite: salta, no se desliza. Seis saltos y se
+    // queda quieto: 4,8 s, por debajo de los 5 s a partir de los cuales WCAG
+    // 2.2.2 exige un mecanismo para pararlo.
+    animation: oak-dialogue-next 0.8s steps(1, end) 6;
   }
 }
 

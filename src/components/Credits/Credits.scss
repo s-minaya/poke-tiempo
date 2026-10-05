@@ -1,16 +1,12 @@
+@use '../../styles/abstracts/breakpoints' as bp;
 @use '../../styles/abstracts/variables' as vars;
 
 .credits {
-  // Comparte celda con `.spain-map` (misma `grid-area: map`) en vez de
-  // tener su propia fila: una fila propia suma altura fija que la fórmula
-  // fluida de `_reset.scss` no contempla y provoca scroll vertical — la
-  // réplica fija (`mission.md`) no puede crecer más allá de lo que esa
-  // fórmula ya mide. Se ancla al final de la celda del mapa, centrado, por
-  // encima de la franja de contexto norteafricano (zona decorativa, sin
-  // `LocationMarker` con el que pueda competir — `SpainMap.tsx`).
-  grid-area: map;
-  place-self: end center;
-  z-index: 1;
+  // En apilado, una banda propia en flujo normal bajo la composición: la
+  // página crece lo que haga falta, y bajo un mapa a todo el ancho no hay
+  // mar donde apoyarse.
+  inline-size: fit-content;
+  margin: 0.8rem auto;
   padding: 0.4rem 1.2rem;
   border-radius: 999px;
   font-family: vars.$font-body;
@@ -21,9 +17,30 @@
   // mood no bastaría en todos los casos — una pastilla clara sí garantiza
   // contraste sea cual sea el color de fondo real en ese punto.
   background: rgb(255 255 255 / 80%);
-  font-size: 1.2rem;
+
+  // Suelo de 1,2rem: el mínimo que la 008 admite para cualquier texto de la
+  // interfaz. No lleva color de mood —va en $color-near-black sobre pastilla
+  // clara, 18,4:1— así que no le aplica la regla de ≥19px y bold.
+  font-size: clamp(1.2rem, 0.25vw + 1.12rem, 1.4rem);
   color: vars.$color-near-black;
   text-align: center;
+
+  // En dos columnas vuelven sobre el mar, como en la cuenta original: en el
+  // área del mapa de la rejilla de `.app` (`WeatherApp.scss`), apoyados en
+  // su borde inferior, por encima de la franja de contexto norteafricano —
+  // zona decorativa, sin ningún `LocationMarker` con el que puedan competir
+  // (`SpainMap.tsx`). Siguen siendo el mismo `<footer>` fuera de `<main>`:
+  // sólo cambia dónde se pintan. Los márgenes automáticos los centran
+  // dentro de la columna.
+  @include bp.respond-from(bp.$breakpoint-desktop) {
+    grid-area: map;
+    align-self: end;
+    margin-block: 0;
+
+    // Los grid items respetan `z-index` sin necesidad de `position`: la
+    // pastilla se pinta por encima del mapa (ver `_variables.scss` → capas).
+    z-index: 1;
+  }
 
   &__line {
     margin: 0;

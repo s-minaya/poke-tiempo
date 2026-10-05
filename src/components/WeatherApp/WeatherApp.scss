@@ -1,35 +1,104 @@
+@use '../../styles/abstracts/accessibility' as a11y;
+@use '../../styles/abstracts/breakpoints' as bp;
+@use '../../styles/abstracts/variables' as vars;
+
 // Bloque BEM `.app`, no `.weather-app`: nombre heredado de cuando este
 // componente era `App.tsx` (006-entry-landing lo extrajo a `WeatherApp`
 // para dejar sitio al loader/portada) — sin motivo funcional para
 // renombrar el selector, se deja como está.
 .app {
-  // Réplica fija de la composición (mission.md → "Réplica fija, no una app
-  // adaptativa", 008-plan.md): una única plantilla de grid a cualquier
-  // ancho — cabecera arriba a todo el ancho, leyenda bajo el título, mapa
-  // como cuerpo. Lo que cambia con el ancho de pantalla es el tamaño de la
-  // composición completa (raíz fluida, `_reset.scss`), nunca su forma.
+  // Tope de la composición: a partir de aquí deja de crecer y queda centrada
+  // con el espacio sobrante. Envuelve también a los créditos, que quedan
+  // alineados con el resto aunque no formen parte de `<main>`.
+  position: relative;
+  max-inline-size: bp.$breakpoint-desktop-large;
+  margin-inline: auto;
+
+  // «Saltar al buscador»: fuera de la vista hasta que recibe el foco, y
+  // entonces arriba a la izquierda, por encima de la cabecera. Posición
+  // absoluta: no ocupa ninguna celda de la rejilla.
+  &__skip-link {
+    @include a11y.visually-hidden;
+
+    &:focus {
+      inset-block-start: 0.8rem;
+      inset-inline-start: 0.8rem;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      inline-size: auto;
+      block-size: auto;
+      min-block-size: max(44px, 4.4rem);
+      padding: 0 1.6rem;
+      overflow: visible;
+      clip-path: none;
+      border-radius: 0.8rem;
+      background: vars.$ui-ink;
+      font-family: vars.$font-body;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: vars.$color-white;
+    }
+  }
+
   &__layout {
+    display: grid;
+
+    // Composición apilada: el mapa ocupa todo el ancho justo bajo la
+    // cabecera, y la leyenda y la lista de lugares van debajo. En vertical
+    // una columna lateral le quitaría al mapa casi un tercio del ancho a
+    // cambio de nada.
+    grid-template-areas:
+      'header'
+      'map'
+      'legend'
+      'list';
+
+    // `minmax(0, …)` y no el `auto` por defecto: sin ese suelo explícito, la
+    // columna se dimensiona por el contenido más ancho que no sabe partirse
+    // —el título, que es una palabra sola— y arrastra con ella al mapa, que
+    // acabaría más ancho que la pantalla. Con el suelo a cero, la columna
+    // vale siempre lo que el contenedor, y lo que no quepa desborda dentro
+    // de su propia caja sin deformar el resto.
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  // Composición de la cuenta original: cabecera a todo el ancho, leyenda en
+  // columna bajo el título y mapa como cuerpo; la lista de lugares, en una
+  // banda a todo el ancho por debajo. Vuelve en cuanto el mapa puede
+  // quedarse con los ~880px que mantienen sus marcadores en el objetivo de
+  // diseño de 44px (880 + la columna de la leyenda + márgenes).
+
+  // La rejilla la define `.app`, no `<main>`, y `<main>` la adopta con
+  // `subgrid`. Es lo que permite a los créditos —que viven fuera de `<main>`
+  // para ser el `contentinfo` de la página— colocarse en el área del mapa y
+  // apoyarse sobre el mar al pie del dibujo, como en la cuenta original,
+  // aunque la lista siga debajo (`Credits.scss`).
+  @include bp.respond-from(bp.$breakpoint-desktop) {
     display: grid;
     grid-template-areas:
       'header header'
-      'legend map';
-    grid-template-columns: minmax(22rem, 26rem) 1fr;
+      'legend map'
+      'list list';
 
-    // `stretch` (el valor por defecto de grid): la leyenda ocupa toda la
-    // altura de su fila, no solo la de su contenido — sin esto, cuando el
-    // mapa es más alto que la leyenda queda un hueco en blanco debajo de
-    // ella (el fondo de mar de la leyenda no llega hasta abajo).
-    align-items: stretch;
+    // La columna de la leyenda: una entrada completa de `Legend.scss`
+    // (26,8rem, con el borde y la columna del ✓) más su relleno de 2rem a
+    // cada lado. A 1200px deja 892px al mapa, por encima de los 880.
+    grid-template-columns: minmax(26.8rem, 30.8rem) minmax(0, 1fr);
 
-    // Tope del ancho de diseño completo (26rem de leyenda + 134rem que
-    // ocupa el mapa de forma natural a `$breakpoint-desktop-large`, ver
-    // `SpainMap.scss`) — sin él, la columna `map` (`1fr`) sigue creciendo
-    // por encima de ese punto mientras la raíz fluida (`_reset.scss`) deja
-    // de hacerlo, dejando huecos en blanco (sin el azul del mar) a los
-    // lados del mapa ya centrado dentro de una columna más ancha que él.
-    // Al topar aquí el contenedor entero, `1fr` nunca pide más de lo que
-    // el mapa realmente ocupa y no queda hueco que rellenar.
-    max-width: 160rem;
-    margin-inline: auto;
+    &__layout {
+      grid-area: 1 / 1 / -1 / -1;
+
+      // Filas y columnas de `.app`. Los nombres de área también llegan de
+      // allí: una subrejilla hereda las líneas con nombre de la suya, así
+      // que `grid-area: map` en cada componente sigue funcionando. El
+      // shorthand anula además las áreas de la composición apilada.
+      grid-template: subgrid / subgrid;
+
+      // `stretch` (el valor por defecto de grid): la leyenda rellena su
+      // celda hasta la altura del mapa, para que el azul del mar llegue de
+      // lado a lado sin cortes.
+      align-items: stretch;
+    }
   }
 }

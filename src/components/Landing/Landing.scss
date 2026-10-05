@@ -13,9 +13,21 @@ $landing-fade-ms: 350ms;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  padding-bottom: 8rem;
+
+  // Anclaje del botón al pie, proporcional al alto de la pantalla: una
+  // distancia fija se come en apaisado la parte de la ilustración donde
+  // están el personaje y su Pokémon. El segundo término es el suelo en
+  // pantallas muy bajas, y respeta la zona segura del dispositivo cuando
+  // existe.
+  padding-bottom: max(9vh, env(safe-area-inset-bottom) + 24px);
   background: vars.$color-near-black;
   animation: landing-fade-in $landing-fade-ms ease-out;
+
+  @supports (height: 1svh) {
+    // `svh` es el alto que siempre está disponible; `vh` cuenta con la barra
+    // del navegador escondida (mismo criterio que `SpainMap` y `OakPortrait`).
+    padding-bottom: max(9svh, env(safe-area-inset-bottom) + 24px);
+  }
 
   // Cruce hacia `WeatherApp` (App.tsx, stage `entering`): dos composiciones
   // visuales distintas conviene fundirlas, a diferencia del spinner del
@@ -51,21 +63,42 @@ $landing-fade-ms: 350ms;
   &__button {
     position: relative;
     z-index: 1;
-    padding: 1.6rem 4.8rem;
-    border: 4px solid vars.$color-near-black;
-    border-radius: 0.8rem;
+
+    // Relleno, borde y radio en `em`: la pastilla es una proporción del
+    // texto y nunca se queda en un sello diminuto con letra ilegible dentro.
+    // A 24px dan 16/48px de relleno, 4px de borde y 8px de radio.
+    padding: 0.667em 2em;
+    border: 0.167em solid vars.$color-near-black;
+    border-radius: 0.333em;
+
+    // Suelo de área táctil: 2.5.8 pide 24×24 y el objetivo de diseño de la
+    // 008 son 44×44. El botón mide ~160×54 en móvil y 226×76 en escritorio,
+    // así que este suelo no interviene; queda como garantía.
+    min-height: 48px;
     background: vars.$color-green;
     color: vars.$color-near-black;
     font-family: vars.$font-heading;
-    font-size: 2.4rem;
+
+    // De 17px en móvil a 24px desde ~920px de ancho: en una pantalla pequeña
+    // el botón acompaña a la ilustración en lugar de dominarla. En px, y el
+    // zoom del navegador lo agranda igual.
+    font-size: clamp(17px, 1.2vw + 13px, 24px);
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    animation: landing-button-invite 1.6s ease-in-out infinite;
 
+    // Tres rebotes y se queda quieto: 4,8 s, por debajo de los 5 s a partir
+    // de los cuales WCAG 2.2.2 exige un mecanismo para pararlo.
+    animation: landing-button-invite 1.6s ease-in-out 3;
+
+    // Foco de dos tonos, no sólo blanco: el aro claro se pierde sobre las
+    // zonas claras de la ilustración. El oscuro lo enmarca por
+    // dentro y por fuera, así que el indicador se ve sea cual sea el píxel
+    // que haya debajo.
     &:focus-visible {
       outline: 3px solid vars.$color-white;
       outline-offset: 3px;
+      box-shadow: 0 0 0 9px vars.$color-near-black;
     }
 
     &:disabled {

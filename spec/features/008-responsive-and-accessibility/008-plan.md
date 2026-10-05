@@ -1,61 +1,217 @@
 # 008 · Responsive, accesibilidad y cierre — Plan
 
-**Estado:** implementado ✅ (parcial — ver `008-spec.md` → "Fuera de alcance")
+**Estado:** cerrada.
 
 ## Enfoque
 
-Todo el proyecto ya usa `rem` como unidad por defecto (`tech-stack.md` → convenciones), con el reseteo base `html { font-size: 62.5% }` (1rem = 10px). Esa es la palanca: el tamaño de raíz es **fluido** — proporcional al más restrictivo de ancho y alto del viewport, con un tope fijo (`62.5%`) cuando ninguno de los dos aprieta. Como todo (fuentes, gaps, anchos de columna) está en `rem`, escalar solo la raíz escala la composición completa como una unidad, sin ninguna otra regla de tamaño por breakpoint. Es el equivalente en CSS a escalar una imagen manteniendo proporciones, en los dos ejes.
+Todo el proyecto mide en `rem` sobre una raíz fija, `html { font-size: 62.5% }`. Atar esa raíz al viewport escalaría la composición entera como una unidad: un `transform: scale()` global escrito como `font-size`, que arrastra la tipografía, las áreas táctiles y el zoom del navegador junto con el mapa.
 
-El grid de `App.scss` es siempre de dos columnas (cabecera arriba a todo el ancho, leyenda + mapa debajo) — nunca se apila en una sola columna, porque la imagen de referencia tampoco lo hace. Los 5 anchos de `AGENTS.md` (320/480/768/1200/1600px) son la verificación obligatoria de que la composición escala sin desbordar y sin reorganizarse.
+> El texto tiene tamaños absolutos legibles. **Lo único que se ajusta al hueco es la caja del mapa**, porque es el único elemento cuya proporción es rígida.
+
+Conviene ser preciso con eso de que "`1rem` son 10px": **lo es únicamente con la base de 16px que traen los navegadores por defecto**. `62.5%` es un porcentaje de esa base, no un tamaño absoluto, así que quien tenga configurado un tamaño de fuente mayor obtiene una raíz proporcionalmente mayor y toda la interfaz crece con él — que es exactamente lo que se quiere, y lo que una raíz atada al viewport anularía. Los "10px" son la referencia con la que se escriben los valores del proyecto, no una garantía de píxeles en pantalla.
+
+Lo que debe crecer con la pantalla usa `clamp()` sobre `rem` —px en Oak— y `vw`, y los altos van en `svh`: el método de `ProfessorOak`, aplicado a toda la interfaz.
+
+## Breakpoints
+
+Dos de ancho, ambos con una razón medida, y una `@container` que no depende del viewport.
+
+- **1200px — apilado → dos columnas.** Apilado, el mapa siempre es más ancho, así que las dos columnas son una decisión de *fidelidad a la composición original*, no de accesibilidad. Lo que fija el punto exacto es el objetivo de diseño de 44px por marcador: la composición de dos columnas entra en cuanto puede hacerlo sin bajar de ahí (880px de mapa + 260 de leyenda + márgenes ≈ 1160). Es `$breakpoint-desktop`.
+- **1600px — la composición deja de crecer** y queda centrada con `margin-inline: auto`. El tope va en px.
+- **`@container (min-width: 1150px)` sobre la caja del mapa** — aparición de las temperaturas sobre el sprite. No es un breakpoint de viewport a propósito: el mismo mapa mide 1039px en una tablet apaisada de 1180px, apilada, y 973px en un portátil de 1366px a dos columnas, y lo que decide es su ancho real. El token va en `px` y no en `rem` porque **mide la caja del mapa, no el texto**: es una cota geométrica sobre la que se proyecta un `viewBox` fijo, y expresarla en una unidad tipográfica sugeriría una relación con la escala del texto que no existe.
+
+No llevan breakpoint, deliberadamente: el número de columnas de leyenda y lista (`auto-fit` + `minmax`), el tamaño del mapa (`min()` de ancho y alto disponibles), la tipografía (`clamp()`), y la orientación — que el mapa se limite por alto *ya es* la respuesta a estar apaisado. Ninguna decisión de maquetación se toma en JS a partir del viewport, la orientación o el dispositivo: ni `window.innerWidth`, ni media queries de viewport desde JS, ni detección de dispositivo. `prefers-reduced-motion` sí se consulta desde JS, para movimiento, sonido y comportamiento: la máquina de escribir de Oak y el jingle de la portada.
 
 ## Implementación
 
-1. **`src/styles/abstracts/_reset.scss`** — `html { font-size }` con `min()` de tres términos: uno de ancho (`100vw`), uno de alto (`100vh`) y el tope fijo (`62.5%`).
-   ```scss
-   html {
-     font-size: min(calc(100vw / #{$fluid-root-divisor}), calc(100vh / #{$fluid-root-height-divisor}), 62.5%);
-   }
-   ```
-   `$fluid-root-divisor` (160) y `$fluid-root-height-divisor` (95.01) son el ancho y el alto reales de la composición a `$breakpoint-desktop-large` con la raíz a 10px, divididos entre 10 — el punto en el que cada fórmula da exactamente `10px`. El término de alto existe porque el mapa vive en una columna `1fr` del grid, ligada al ancho crudo del viewport y no a la raíz por sí sola: sin él, un viewport ancho pero bajo (un portátil típico) no encogía lo suficiente y Canarias quedaba por debajo del pliegue. Sin mínimo en ninguno de los dos términos: la composición nunca desborda ni fuerza scroll, se reduce.
+1. **`src/styles/abstracts/_reset.scss`**
+   - `html { font-size: 62.5% }` fijo.
+   - `:focus-visible` base con anillo de dos tonos (uno oscuro por fuera, uno claro por dentro), para que se vea sobre el mar, sobre tierra clara y sobre la ilustración de portada.
+   - `svh` en lugar de `100vh`, con `vh` de respaldo, con el mismo criterio que `OakPortrait.scss`.
+   - Fondo explícito en `body`, para que ningún hueco bajo la composición se lea como una banda en blanco.
 
-2. **`src/components/Header/Header.scss`** — título a un único tamaño (`4.8rem`, sin pasos por breakpoint: escala junto con la raíz fluida); línea de previsión a `2.4rem`, con un peso visual comparable al título, como en la imagen de referencia original.
+2. **`src/styles/abstracts/_breakpoints.scss`** — `$breakpoint-desktop` y `$breakpoint-desktop-large` como únicos puntos de corte. `$breakpoint-tablet` sólo decide el `<picture>` de la portada y su precarga: eso es dirección de arte, no maquetación. `$map-temperature-threshold: 1150px` dice lo que es y no se confunde con un breakpoint de viewport.
 
-3. **`src/App.scss`** — el grid `app__layout` es una única plantilla:
-   ```scss
-   grid-template-areas:
-     'header header'
-     'legend map';
-   grid-template-columns: minmax(22rem, 26rem) 1fr;
-   max-width: 160rem;
-   margin-inline: auto;
-   ```
-   El `max-width` + `margin-inline: auto` viven en el **contenedor**, no en el mapa por separado: así `1fr` nunca pide más ancho del que el mapa realmente ocupa (160rem − 26rem de columna de leyenda = 134rem) y no queda hueco en blanco a los lados cuando el viewport sobra en ancho o en alto.
+3. **`src/components/WeatherApp/WeatherApp.tsx` / `.scss`**
+   - Dos plantillas de grid sobre las mismas áreas nombradas: apilada (`header` / `map` / `legend` / `list`) y de dos columnas (`header header` / `legend map` / `list list`). La de dos columnas la define `.app` y `<main>` la adopta con `subgrid`, para que los créditos —fuera de `<main>`— puedan colocarse en el área del mapa, sobre el mar, con la lista debajo.
+   - `selectedLocationId` en un `useState`, repartido a `SpainMap` y `LocationList`. Es el único estado que añade la feature, y es estado de *interacción*, no de maquetación.
+   - `Credits` va fuera de `<main>`, para exponer el landmark `contentinfo`.
 
-4. **`src/components/SpainMap/SpainMap.scss`/`.tsx`**:
-   - Sin `max-width` propio en el mapa — el tope de ancho vive en el contenedor (punto 3).
-   - El contexto norteafricano (Marruecos + norte de Argelia) lleva el mismo trazo que el resto de territorios (`stroke: currentcolor; stroke-width: 1` sobre `__north-africa-context`) y `fill-opacity: $map-north-africa-opacity` — variable que ya existía en `_variables.scss` desde la 005 pero nunca se había aplicado.
-   - La caja del `<svg>` se recorta a la altura real con contenido (`seaBottom`, el punto más bajo de Canarias/el contexto norteafricano), no a `ROOT_VIEW_BOX.height` completo — por debajo de `seaBottom` el `viewBox` solo reserva aire (`BOTTOM_BAND`, 004-plan.md). El recorte usa `aspect-ratio: ROOT_VIEW_BOX.width / seaBottom` más `preserveAspectRatio="xMidYMin slice"` (un recorte de verdad, no un reencuadre que reduzca el mapa) — sin tocar `ROOT_VIEW_BOX` ni ninguna coordenada de `map-geometry.ts`. Es lo que permite que `align-items: stretch` (App.scss) iguale la leyenda a la altura *visible* del mapa, no a la de una caja con aire de más.
+4. **`src/components/SpainMap/`**
+   - `container-type: inline-size` en el envoltorio del mapa; la caja limitada por `min(100%, 80svh × relación de aspecto)`, con la relación expuesta por `SpainMap.tsx` (`--map-aspect`) a partir de la geometría real. Ni `ROOT_VIEW_BOX` ni ninguna coordenada cambian.
+   - `LocationMarker` es un elemento activable, con un `<rect>` transparente que garantiza el área de toque. Dentro de un SVG no existe `<button>`, así que aquí sí hacen falta `role="button"` y `tabindex` — es la única excepción a "HTML semántico antes que ARIA" en toda la feature. La alternativa (botones HTML superpuestos) obligaría a un segundo sistema de posicionamiento y a duplicar la proyección del recuadro de Canarias.
+   - El marcador seleccionado no dibuja nada propio: su estado va en `aria-pressed`, y lo muestran la tarjeta y la barra de su fila. El contorno del navegador se anula en `:focus`, y el anillo propio solo aparece con `:focus-visible`.
+   - Las temperaturas se pintan dos veces: detrás, un trazo grueso de `$color-near-black`; delante, el relleno y el trazo de su franja.
 
-5. **`src/components/Legend/Legend.scss`/`.tsx`**:
-   - Sprite (`6rem`), etiqueta (`2.2rem`) y encabezado (`3.2rem`) a juego con la escala real del mapa y del título — la leyenda es la referencia visual de cada Pokémon, no una lista discreta de iconos pequeños.
-   - `.legend` con `display: flex; flex-direction: column` y `max-height` fija (`$legend-max-height`, la altura real y visible del mapa a `$breakpoint-desktop-large`); `.legend__list` con `flex: 1; min-height: 0; overflow-y: auto`. `align-items: stretch` (App.scss) ya iguala la leyenda a la altura del mapa en el caso normal; el `max-height` es la salvaguarda para un día con más Pokémon visibles de los habituales — la lista desliza dentro de su propio hueco en vez de estirar la fila del grid (y con ella el mapa) por debajo.
+5. **`src/components/Header/`, `Legend/`, `Credits/`** — tamaños absolutos con `clamp()` donde deban crecer; `repeat(auto-fit, minmax(min(100%, 22rem), 1fr))` en la leyenda, con la etiqueta partible como último recurso. El título se pinta en `$ui-accent` y «Leyenda» en `$ui-ink`, sin trazo: son dos tokens de la paleta de interfaz (`tech-stack.md` → Estilo visual). La línea de previsión y las etiquetas llevan el relleno de mood con halo `-webkit-text-stroke` en `em` del tono oscuro de su mood (`$header-mood-*-border`). Todo ese texto tiene un suelo de 19px.
 
-6. **Solape de marcadores** — verificado con `forecast.json` real en los 5 anchos (bounding box de cada sprite, solape por pares): ningún `LocationMarker` de los 74 queda completamente tapado por otro. No hizo falta ninguna corrección puntual.
+6. **`src/components/LocationCard/`** — nombre, área administrativa, Pokémon, condición y mínima/máxima. Un solo componente con dos vías de llegada: un marcador o una fila de la lista. En dos columnas se ancla junto al marcador y en apilado aparece como hoja inferior, llegue por la vía que llegue: su forma la decide la composición, no la vía de entrada.
+
+7. **`src/components/LocationList/`** — los 74 lugares como `<ul>` real, cada fila un `<button>` de al menos 56px. Reutiliza `buildLocationViews` tal cual. Memoizada por fila y con `loading="lazy"` en sus sprites (`AGENTS.md` → definición de "hecho"). **No es una tabla de datos**: cada fila dispara la misma acción de selección que su marcador, de modo que la excepción «Equivalent» de 2.5.8 se sostiene de verdad.
+
+8. **`scripts/config/locations.manual.ts` + `npm run build:locations`** — campo `administrativeArea` en `LocationManualConfig` y en `Location`, rellenado a mano para los 74 y generado en `src/data/locations.ts`.
+
+9. **`src/components/Landing/`** — botón con `font-size: clamp(17px, 1.2vw + 13px, 24px)`, relleno y borde en `em`, `min-height: 48px`, y un rebote de invitación que se detiene a los 4,8 s. Anclaje inferior con `max(9svh, env(safe-area-inset-bottom) + 24px)`. `inert` al salir.
+
+10. **`src/components/ProfessorOak/`** — topes para pantallas grandes: `--oak-size: min(100%, 58svh, 720px)`, `max-width: clamp(880px, 62vw, 1100px)` y fuente hasta 28px; por debajo de ~1240px de alto manda `58svh`. La escena se desplaza en vertical cuando no cabe, en vez de recortarse, y el ▼ se detiene a los 4,8 s.
+
+11. **`spec/constitution/tech-stack.md`** — la raíz fija, las dos composiciones con sus puntos de corte, y dónde se admiten `em` (halos y rellenos de botón, que deben pesar lo mismo respecto al glifo) y `px` (suelos duros y la escena de Oak).
 
 ## Decisiones
 
-- **Escalar la raíz (`html { font-size }`) en vez de un `transform: scale()` en un contenedor** — más simple, no necesita un wrapper adicional ni gestionar el alto resultante a mano, y ya es coherente con que todo el proyecto usa `rem` (`tech-stack.md`).
-- **1600px (`$breakpoint-desktop-large`) como tamaño de referencia de la escala** — el punto en el que la composición alcanza su tamaño de diseño; por debajo, todo escala en proporción directa.
-- **Fórmula fluida con término de alto, no solo de ancho** — el mapa vive en una columna `1fr`, que solo responde al ancho crudo del viewport; sin un término de `100vh`, un viewport ancho pero bajo no encogía lo suficiente y Canarias quedaba por debajo del pliegue.
-- **Sin mínimo en la fórmula fluida** — a propósito: el objetivo es que nunca haya scroll, ni siquiera en anchos por debajo de 320px; el "aguantar" del usuario es hacer zoom, no encontrarse una barra de scroll.
-- **Tope de ancho en el contenedor del grid (`App.scss`), no en el mapa por separado** — un `max-width` solo en `.spain-map` deja su columna (`1fr`) más ancha que él una vez topado, y al centrarse dentro de ella deja un hueco en blanco a cada lado, sin el azul del mar.
-- **Trazo real sobre Marruecos/Argelia, no una línea sintética** — Marruecos y Argelia son dos polígonos de Natural Earth digitalizados por separado, pero su frontera compartida no deja una costura perceptible al trazarla de verdad (comprobado visualmente, coloreando cada polígono por separado para localizar esa frontera) — el mismo `stroke` que el resto de territorios basta y traza la silueta real, no un sustituto.
-- **La caja del `<svg>` del mapa se recorta a su contenido visible** — sin esto, `align-items: stretch` iguala la leyenda a una caja que incluye el `BOTTOM_BAND` (aire reservado bajo Canarias), y la leyenda, que sí rellena toda su caja de azul, se ve más larga que el mapa aunque ambas cajas midan lo mismo.
-- **Tamaño de leyenda y cabecera fijado a juego con la escala del mapa y con la imagen de referencia** — sprite, etiqueta y encabezado de la leyenda, y la línea de previsión de la cabecera, todos a un tamaño que guarda proporción con el resto de la composición.
-- **`max-height` en la leyenda como salvaguarda, con scroll interno** — `align-items: stretch` basta en el caso normal, pero un día con muchos más Pokémon visibles de los habituales podría estirar la fila del grid (y con ella el mapa) por encima de la altura real de este; un tope fijo en `rem`, con la lista desplazándose dentro de su propio hueco, evita ese caso sin depender de cuántos Pokémon aparezcan.
-- **El grid de `App.scss` no tiene una plantilla de una columna** — consecuencia directa del principio fijado en `mission.md`: la composición no se reorganiza en móvil, solo se reduce de tamaño.
+- **Raíz fija, no derivada del viewport.** Una raíz calculada con el viewport escala la interfaz entera —en un iPhone SE deja `1rem` en 2,34px y la interfaz al 23 %— y anula el zoom del navegador, porque el viewport CSS y la raíz se reducen a la vez.
+- **Ajuste local al mapa en vez de global a la tipografía.** El mapa es el único elemento con proporción rígida; todo lo demás puede reflowear.
+- **`administrativeArea` como dato real, no inferido de `name`.** Desambigua (Gijón, Jaca, Manzanares, Tarancón, Huéscar, Alcañiz) y deja la estructura lista para agrupar o filtrar más adelante. Varios de los 74 son regiones enteras o islas, así que `administrativeArea` guarda el área administrativa que contiene al lugar —provincia en España, distrito en Portugal, el propio país en Andorra— y la interfaz la omite cuando coincide con `name`.
+- **Tokens de mood intactos; el contraste del texto de mood lo da su tono oscuro.** Los rellenos dan 1,57–4,12:1 sobre el mar y ninguno llega a 4,5:1; los tonos oscuros, de halo, dan 4,07–9,48:1. La previsión y las etiquetas son texto grande —≥19px y bold—, así que el umbral aplicable es el 3:1 de WCAG 1.4.3, y los cinco tonos lo superan.
+- **Unown sin halo, en azul y tinta.** Un borde alrededor de los glifos Unown —trazo fino y un ojo en cada letra— los empasta y los hace difíciles de leer, así que el título y «Leyenda» van sin trazo. Se pintan en la paleta de interfaz y no en el mood: el título en `$ui-accent` (#1B53BA), que es la marca, y «Leyenda» en `$ui-ink` (#323232), la tinta de los controles que encabeza desde la 009. Dan 6,28:1 y 11,47:1 contra el mar en los cinco moods, por encima también del 4,5:1 del texto normal, así que conservan el suelo de 19px y su contraste no depende de si la negrita sintética de la 005, que se mantiene, cuenta como bold. Sustituye la decisión de la 005 de pintar el título en el color del mood: el mood queda en la previsión y las etiquetas.
+- **Halo en la previsión y las etiquetas.** En Pixelify Sans y Nunito Sans el tono oscuro va de halo alrededor del relleno de mood, con la regla de ≥19px bold. W3C contempla el halo o borde alrededor del texto como mecanismo válido de contraste; aun así se valida visualmente al tamaño mínimo real, porque lo que hay que comprobar es que el grosor elegido se perciba como contorno sin degradar el glifo.
+- **El marcador seleccionado no dibuja disco.** La tarjeta, anclada junto al Pokémon en dos columnas, y la barra de la fila ya dicen qué lugar está seleccionado; en la composición apilada, la hoja inferior lo nombra. Un círculo alrededor del sprite repetiría esas señales y competiría con el dibujo. El estado está expuesto con `aria-pressed`. El marcador anula el contorno del navegador en `:focus` y no solo en `:focus-visible`: tras un clic queda enfocado sin foco visible, y Chromium le pintaría su recuadro por defecto, que marcaría el lugar seleccionado. Su anillo propio aparece solo con el foco de teclado.
+- **Contorno exterior en las temperaturas del mapa, no halo engrosado.** Tres de las seis franjas llevan el trazo claro por estética pixel-art (`mild` 1,55–1,71:1, `pleasant` ≈1,1, `hot` 1,24–1,37) y `cool` no lleva ninguno (2,63–2,91). Engrosar lo que hay no aporta contraste; una tercera capa oscura por fuera sí, y no toca ningún color.
+- **Suelo de 12px para las temperaturas del mapa.** Deja fuera anchos de 1366px, y se acepta: bajarlo a 11px sería optimizar alrededor de una resolución concreta a costa de legibilidad. Cuando no se pintan, el dato está en la tarjeta y en la lista, a 14px o más.
+- **44 × 44 px como objetivo de diseño, no como requisito AA.** El mínimo AA son 24 × 24 (2.5.8) y se cruza a partir de 480px de mapa.
+- **«Equivalent» por elección, no por obligación.** Por debajo de 480px de mapa los marcadores no llegan al mínimo. W3C pone los pines de un mapa como ejemplo de posible excepción **«Essential»**, así que acogerse a ella sería defendible y no costaría nada. Se descarta: se toma la vía de **«Equivalent»** y la lista ofrece la misma función con filas de al menos 56px. Es más exigente que el mínimo, y en cualquier caso la alternativa textual del mapa ya es requisito propio de `mission.md` — la lista se construiría igual aunque 2.5.8 no existiera.
+- **La lista está en ambas composiciones**, cambiando sólo de número de columnas. No es una versión móvil de la aplicación ni una tabla de respaldo: es la segunda vía de selección y la alternativa textual del mapa que exige `mission.md`.
+- **`role="button"` en el marcador SVG** — única excepción a "HTML semántico antes que ARIA", por ausencia real de alternativa nativa dentro de un SVG.
+- **Activar el lugar ya seleccionado cierra la tarjeta.** Marcador y fila son botones con `aria-pressed`, y activar el que ya está pulsado lo suelta, como cualquier botón de alternancia. Es la misma semántica por las dos vías, que es lo que hace falta para que «Equivalent» se sostenga.
+- **Una región viva anuncia la selección sin mover el foco.** Al seleccionar, el foco se queda en el marcador, para poder seguir recorriendo el mapa, y una región `aria-live="polite"` —montada siempre, vacía sin selección— anuncia lo que muestra la tarjeta. Es la técnica elegida para que un lector de pantalla reciba ese cambio de estado sin que el foco se desplace, en la línea de WCAG 4.1.3. Llevar el foco a la tarjeta habría hecho perder el sitio en el mapa a quien lo recorre con teclado.
+- **2.4.11 se resuelve distinto en cada composición.** En la apilada, mientras la hoja inferior está abierta, el documento reserva su alto con `scroll-padding-block-end`, así que el navegador deja por encima de la hoja cualquier elemento al que el tabulador lleve el foco; al seleccionar con el foco encima, `scrollIntoView({ block: 'nearest' })` hace lo mismo, sin leer ninguna medida. En la de dos columnas, la tarjeta anclada se vuelve transparente mientras el foco de teclado está en otro marcador: con `opacity: 0` y no con `visibility: hidden`, que la sacaría del orden de tabulación y dejaría su botón de cerrar inalcanzable.
+- **El contenedor de consulta del mapa va en un envoltorio interior.** Un contenedor de consulta aplica contención de layout y pasa a ser el bloque contenedor de lo que lleve `position: fixed` dentro: en `.spain-map` habría encerrado la hoja inferior dentro del mapa. Por eso `container` va en `.spain-map__viewport`, que solo envuelve al SVG, y `.spain-map` queda como caja de referencia de la tarjeta anclada (`position: relative`), sin estirarse al alto de la fila en dos columnas, para que sus porcentajes midan el dibujo.
+- **En dos columnas, la lista ocupa una banda completa bajo la leyenda y el mapa.** La rejilla la define `.app`, y `<main>` adopta sus columnas mediante `subgrid` en vez de declarar las suyas: las columnas tienen una sola definición, y `Credits`, aun fuera de `<main>`, sigue alineado con el mapa.
+- **Al cerrar la tarjeta, el foco vuelve al control que originó la selección —marcador o fila— únicamente si estaba dentro de la tarjeta.** Es el caso en que, al desmontarse, caería al `<body>` y se perdería el sitio en el mapa o en la lista; si no se sabe quién la abrió, va a su marcador. Un cierre por toque que no trasladó el foco a la tarjeta no provoca un salto artificial.
+- **La columna mínima de la leyenda se calcula para la palabra más larga del catálogo, no para las del día.** 22rem son el sprite, el hueco y «torrenciales» a 22px, la palabra más larga de las 25 etiquetas posibles (`POKEMON_LABELS`); con menos, esa palabra invade la columna vecina. Un móvil vertical tiene así la leyenda en una sola columna. La etiqueta puede partir una palabra como último recurso —con el espaciado ampliado de 1.4.12 o mucho zoom—, antes que solaparse o salirse de la pantalla.
+- **Las animaciones automáticas se detienen antes de 5 s.** El rebote de EMPEZAR (3 × 1,6 s) y el ▼ de Oak (6 × 0,8 s) duran 4,8 s, por debajo del umbral a partir del cual 2.2.2 exige un mecanismo para pararlas. `prefers-reduced-motion` las quita del todo, pero no cuenta como ese mecanismo. El giro del loader queda fuera por las condiciones concretas del criterio, no por ser un loader (ver la auditoría, 2.2.2).
+- **La escena de Oak se desplaza cuando no cabe, en vez de recortarse.** El escenario se apoya abajo con un margen automático y no con `justify-content: flex-end`, que deja fuera del alcance del scroll lo que desborda por arriba. Donde cabe no cambia nada; donde no —el bocadillo más largo al 200 % de zoom en un móvil estrecho, o con el espaciado ampliado—, la escena empieza arriba y se recorre entera, también con las flechas.
+- **Sin scroll bidimensional hasta 320 CSS px, que es lo que mide 1.4.10.** Por debajo —un móvil de 320 o 390px al 200 %— el título, una sola palabra de al menos 36px, y las filas de la lista piden scroll horizontal. Que todo se reajustara ahí exigiría partir los nombres de lugar, y esa misma regla parte «Fuerteventura» en las cinco columnas de 1920px; se acepta ese scroll mientras no quede nada inalcanzable.
+- **El orden de foco de los marcadores es el del catálogo.** Agrupado por comunidad o región, estable —no cambia con la composición, el tamaño ni la selección— y el mismo que el de la lista, salvo Canarias, que en el mapa va al final porque su recuadro se dibuja después de la península. No se reordena por geometría: 74 puntos repartidos por un mapa no tienen un orden de lectura natural, y cualquier recorrido geométrico también da saltos.
+
+## Contrastes medidos
+
+Medidos sobre los tokens reales, no estimados. Fórmula WCAG 2.x de luminancia relativa.
+
+**Texto en color de mood sobre `$map-sea` #B9FFFD**: la previsión y las etiquetas de la leyenda. Umbral aplicable 3:1, por texto grande: ≥19px y bold en los ocho rangos verificados.
+
+| mood | relleno | halo, tono oscuro |
+| --- | --- | --- |
+| gelid | 4,12:1 | **9,48:1** |
+| cold | 1,77:1 ✗ | **4,07:1** |
+| neutral | 1,57:1 ✗ | **6,35:1** |
+| heat | 2,77:1 ✗ | **5,99:1** |
+| sweltering | 3,60:1 | **7,93:1** |
+
+Tres de los cinco rellenos no llegan al 3:1 por sí solos; los cinco tonos oscuros lo superan, y por eso la previsión y las etiquetas los llevan de halo.
+
+**Título y «Leyenda»**, sin halo, sobre el mar e iguales en los cinco moods: `$ui-accent` #1B53BA a 6,28:1 y `$ui-ink` #323232 a 11,47:1.
+
+**Contorno exterior de las temperaturas del mapa**, `$color-near-black` #111 contra los cuatro fondos: mar 16,89:1 · España/Canarias 16,60:1 · Portugal 18,37:1 · Andorra 16,81:1 · contexto norteafricano 16,62:1.
+
+Hace falta porque los rellenos y trazos de franja, por sí solos, van de 1,03:1 a 7,09:1 contra el peor de esos fondos: `freezing` y `mild` (relleno blanco) se quedan en 1,03:1 sobre Portugal, y los trazos claros de `mild`, `pleasant` y `hot` entre 1,03 y 1,55:1. Ninguno cambia; el contorno se añade por fuera.
+
+**Créditos**, #111 sobre la pastilla blanca al 80%: 18,41–18,77:1 según lo que haya debajo. No lleva color de mood, así que no le aplica la regla de ≥19px y bold.
+
+**Resto del texto**, #111: 18,88:1 sobre blanco (tarjeta y Oak) y 10,73:1 sobre el verde de EMPEZAR. La lista y los controles de exploración van en la paleta de interfaz: sus contrastes están en `009-plan.md` → Contrastes medidos.
+
+**Indicadores de foco** (1.4.11), #111: anillo de foco contra mar y blanco 16,89 / 18,88:1, con su núcleo blanco a 18,88:1 contra el #111. La barra de la fila seleccionada, en `$ui-accent`, está en `009-plan.md` → Contrastes medidos: el fondo azul claro de la fila no es el indicador, lo es la barra.
+
+**Grosor del halo y del contorno**, elegidos por comparación visual al tamaño mínimo real y no por cálculo:
+
+- `$mood-text-halo: 0.055em` para la previsión y las etiquetas. En `em` para que pese igual respecto al glifo a 19px que a 24px.
+- **Los suelos son duros, no en `rem`.** La previsión y las etiquetas se escriben `max(19px, clamp(…rem…))`. El `clamp()` en `rem` conserva que el texto siga la preferencia de tamaño base del navegador; el `max()` impide que esa misma preferencia, si baja de 16px, saque al texto de mood del texto grande y le devuelva el umbral de 4,5:1, que el tono de `cold` (4,07:1) no alcanzaría. Con base 12px se quedan en 19px en vez de caer a 14,25 y 16,5. El título y «Leyenda» llevan el mismo suelo, aunque su contraste no lo necesita. Los tamaños en px no anulan el zoom —lo anula una raíz que se recalcula con el viewport—; lo único que no siguen es esa preferencia de base.
+- `stroke-width: 2` unidades de `viewBox` para el contorno de las temperaturas. Comparadas 1,6 / 2 / 2,4 / 2,8 sobre las seis franjas con los dígitos de ojo cerrado (8, 0, 4 y el símbolo de grado) al tamaño del umbral: a partir de 2,4 el trazo empieza a cerrarlos en `hot` y `scorching`; por debajo de 1,6 deja de leerse como contorno.
+
+## Verificación
+
+Sobre el build de producción (`vite preview`), en Chromium con Playwright, con la previsión real del día. La escena de Oak, con un `oak-today.json` del contrato actual y el bocadillo más largo que admite: 160 caracteres.
+
+| Rango | Viewport | Composición | Mapa | Columnas leyenda / lista | Texto mínimo | Marcador |
+| --- | --- | --- | --- | --- | --- | --- |
+| móvil pequeño vertical | 320×568 | apilada | 320×202 | 1 / 1 | 12px | 16px |
+| móvil vertical | 390×844 | apilada | 390×246 | 1 / 1 | 12,2px | 19,5px |
+| móvil horizontal | 667×375 | apilada | 475×300 | 2 / 2 | 12,9px | 23,8px |
+| tablet vertical | 768×1024 | apilada | 768×485 | 3 / 2 | 13,1px | 38,4px |
+| tablet horizontal | 1180×820 | apilada | 1039×656 | 4 / 3 | 14px | 51,9px |
+| portátil | 1366×768 | dos columnas | 973×614 | 1 / 4 | 14px | 48,6px |
+| escritorio | 1920×1080 | dos columnas | 1340×846 | 1 / 5 | 14px; cifras del mapa 14,05px | 67px |
+| ultrawide | 2560×1440 | dos columnas | 1340×846 | 1 / 5 | 14px; cifras del mapa 14,05px | 67px |
+
+- **En los ocho rangos**, y también a 480, 1200 y 1600px (`AGENTS.md`) y a 3440×1440: sin scroll horizontal y sin franja vacía bajo el contenido (los 8px de la composición apilada son el margen de los créditos). Filas de al menos 62px, botón de cerrar de 44×44, EMPEZAR entre 149×52 y 226×76. El tabulador recorre 148 paradas en el orden del DOM, todas con indicador visible.
+- **Zoom al 200 %** en los ocho rangos: el contenido crece, y todo sigue alcanzable y operable. El texto en `rem` dobla su tamaño visual; el que lleva `vw` crece menos que el zoom y llega al doble antes del tope del navegador: cabecera, créditos y EMPEZAR hacia el 250 %, el texto de Oak entre el 200 % (móvil) y el 400 % (1920px). Solo hay scroll horizontal por debajo de 320 CSS px —el móvil de 320px al 200 % queda en 160, el de 390 en 195—; ahí la escena de Oak se desplaza y el bocadillo se lee entero.
+- **1.4.10, a 1280×1024 al 400 %** (320×256 CSS px): una sola columna, sin scroll horizontal en portada, mapa ni Oak. La hoja inferior mide 128px y su contenido 172px: se desplaza por dentro, también con las flechas desde su botón de cerrar, y la fila seleccionada queda por encima de ella. La escena de Oak se desplaza hasta el final del bocadillo, también con las flechas.
+- **1.4.12**: con los cuatro valores del criterio no hay recortes, solapes ni scroll horizontal en 320–1920px ni en Oak, comprobado con las 25 etiquetas posibles de la leyenda y no solo con las del día.
+- **2.4.11**: con la tarjeta abierta desde el primer marcador, el tabulador recorre los 73 restantes, el botón de cerrar y las 74 filas sin que ninguna parada quede tapada, en las dos composiciones y al 100 % y al 200 %.
+- **Selección desde la lista con el mapa fuera de la vista**, en dos columnas (1280×720, 1366×768 y 1920×1080), por teclado, por toque y por un toque que no enfoca, como en Safari (emulado en Chromium): la fila queda pulsada y marcada, la región viva anuncia el lugar, el marcador queda pulsado sin nada dibujado alrededor, la página no se desplaza y el foco se queda donde estaba.
+- **Título y «Leyenda»**, a 320×568, 390×844, 1366×768 y 1920×1080 y en los cinco moods: #1B53BA y #323232 sin trazo, a 6,28:1 y 11,47:1 contra el fondo que calcula el navegador; la previsión y las etiquetas conservan su halo de 0,055em, a 4,07–9,48:1. Los glifos Unown se leen limpios desde 24px, el tamaño de «Leyenda» a 320px.
+- **Marcador seleccionado**, por clic a 390×844 y 1920×1080: `aria-pressed="true"`, los mismos nodos que en reposo y ningún contorno; con el tabulador, el marcador siguiente muestra su anillo de dos tonos.
+- **2.2.2**: el rebote de EMPEZAR dura 1,6 s × 3 y el ▼ 0,8 s × 6, 4,8 s en los dos casos; a los 5,2 s ya no hay ninguna animación en marcha. El bocadillo de 160 caracteres se escribe en 4,8 s. Con movimiento reducido no hay ninguna de las tres.
+- **Landmarks** en el árbol de accesibilidad de Chromium: `main`, `contentinfo`, y las regiones «Leyenda» y «Todos los lugares».
+
+## Auditoría WCAG 2.2 A y AA
+
+Los 55 criterios de nivel A y AA de WCAG 2.2, uno a uno, al día con la 009 (`009-plan.md` → Verificación y Contrastes medidos): 33 se cumplen y 22 no aplican. 4.1.1 (Procesamiento) es obsoleto y está retirado en WCAG 2.2, así que no cuenta entre los 55.
+
+| Criterio | Nivel | Resultado | Cómo se cumple, o por qué no aplica |
+| --- | --- | --- | --- |
+| 1.1.1 Contenido no textual | A | Cumple | Sprites de leyenda, lista, tarjeta y filtros activos con `alt=""`: la condición va siempre en texto al lado, y la tarjeta nombra además al Pokémon. La Poké Ball de la lista y la silueta de Castform del estado vacío son decorativas. Portada y retrato de Oak son decorativos (`alt=""`), y la escena se nombra «Profesor Oak». Cada marcador operable se nombra con su lugar y sus temperaturas; los que están en sombra salen del árbol de accesibilidad, y la lista, que muestra exactamente los lugares operables, es la alternativa textual completa del mapa. El jingle y el blip son efectos decorativos. |
+| 1.2.1 Sólo audio y sólo vídeo (grabado) | A | No aplica | No hay contenido de audio ni de vídeo: el jingle y el blip son efectos sonoros que no transmiten información. |
+| 1.2.2 Subtítulos (grabados) | A | No aplica | No hay contenido multimedia sincronizado. |
+| 1.2.3 Audiodescripción o medio alternativo (grabado) | A | No aplica | No hay vídeo. |
+| 1.2.4 Subtítulos (en directo) | AA | No aplica | No hay contenido en directo. |
+| 1.2.5 Audiodescripción (grabada) | AA | No aplica | No hay vídeo. |
+| 1.3.1 Información y relaciones | A | Cumple | `<h1>` en el título, `<h2>` en leyenda, lista y tarjeta, y `<h3>` en cada grupo de lugares, con su número de lugares; listas reales (`<ul>`) en leyenda, filtros activos y cada grupo de lugares; «Ordenar» es un `fieldset` con `legend`, y buscar y zona tienen su `<label>`; landmarks `main` y `contentinfo`, y regiones con nombre para leyenda y lista; la tarjeta es una `section` nombrada por su encabezado; el lugar seleccionado y las entradas pulsadas de la leyenda van en `aria-pressed`; el mapa es un `group` con nombre. |
+| 1.3.2 Secuencia significativa | A | Cumple | El DOM sigue enlace de salto → cabecera → leyenda → mapa y su tarjeta → lista, con su barra antes de los grupos → créditos, un orden con sentido leído en lineal. La composición apilada pinta el mapa antes que la leyenda, y ese orden visual no cambia el significado. |
+| 1.3.3 Características sensoriales | A | Cumple | Las únicas instrucciones («Intro, Espacio o un toque para continuar») no dependen de forma, tamaño, posición ni sonido. |
+| 1.3.4 Orientación | AA | Cumple | Ninguna orientación está bloqueada; el apaisado se verifica en móvil (667×375) y en tablet (1180×820). |
+| 1.3.5 Identificar el propósito de la entrada | AA | No aplica | Buscar y zona no piden datos del usuario: filtran la lista. |
+| 1.4.1 Uso del color | A | Cumple | Cada condición se distingue por su Pokémon y por texto; la selección, por la barra de la fila y por la tarjeta que nombra el lugar; la entrada pulsada de la leyenda, por su caja blanca y el ✓; el orden elegido, por el ▸; un filtro activo, por su ✕; un marcador en sombra, por ser una silueta sin cifras; el foco, por un anillo. El color de mood de cabecera y leyenda es ambientación: resume las máximas del día, que están en texto en la lista y en la tarjeta. |
+| 1.4.2 Control del audio | A | Cumple | Ningún sonido suena al cargar la página. El jingle suena al pulsar EMPEZAR y se apaga con la portada; el blip acompaña a la escritura —4,8 s como máximo— y se corta al instante con la tecla o el toque que completa el texto. Con movimiento reducido no suena. |
+| 1.4.3 Contraste (mínimo) | AA | Cumple | Título en azul y «Leyenda» en tinta, a 6,28 y 11,47:1; previsión y etiquetas ≥19px y bold con halo del tono oscuro de su mood, a 4,07–9,48:1 sobre el mar y 4,55–10,60:1 sobre la caja blanca de una entrada pulsada, sobre el umbral de 3:1 del texto grande; cifras del mapa con contorno de 16,6–18,4:1; lista y controles de exploración, de 5,81:1 (marcador de posición del buscador) a 12,82:1; resto del texto #111 a 10,73–18,88:1; créditos a 18,41–18,77:1 (ver «Contrastes medidos» y `009-plan.md` → Contrastes medidos). |
+| 1.4.4 Cambio de tamaño del texto | AA | Cumple | Al 200 % el contenido crece de verdad en los ocho rangos, sin perder información ni funcionalidad; lo que no cabe se desplaza, la escena de Oak incluida. El texto en `rem` crece con el zoom y con la preferencia de tamaño de letra; el que lleva `vw` crece menos que el zoom pero llega al doble antes del tope del navegador (ver «Verificación»). El texto de Oak, en px, no sigue la preferencia de tamaño de letra, pero sí el zoom. |
+| 1.4.5 Imágenes de texto | AA | Cumple | Todo el texto es texto real, incluido el título en su tipografía propia; la ilustración de portada no contiene texto. |
+| 1.4.10 Reajuste del texto | AA | Cumple | A 1280×1024 al 400 % (320×256 CSS px), una sola columna y sin scroll horizontal en portada, mapa y Oak, y en la lista con filtros, sin resultados y en cualquier orden; la hoja inferior y la escena de Oak se desplazan por dentro, también con teclado. Por debajo de 320 CSS px el título, una sola palabra, y las filas piden scroll horizontal —a 160 CSS px, también las caras de «Ordenar»—, fuera de lo que mide el criterio; nada queda inalcanzable. |
+| 1.4.11 Contraste no textual | AA | Cumple | Barra de la fila seleccionada en `$ui-accent`, a 7,02:1 contra la lista y 5,83:1 contra su fondo; bordes de los controles de exploración, de 6,28:1 (entrada pulsada de la leyenda contra el mar) a 12,82:1; anillos de foco #111 y blanco, a 16,89–18,88:1, y 17,32:1 contra la zona de controles; botón EMPEZAR con borde #111 y relleno verde sobre la ilustración; contorno de las cifras del mapa a 16,6–18,4:1. |
+| 1.4.12 Espaciado del texto | AA | Cumple | Con los cuatro valores del criterio no hay recortes, solapes ni scroll horizontal en ninguna composición ni en Oak, comprobado con las 25 etiquetas posibles de la leyenda, la barra de la lista, sus filtros activos, los títulos de grupo y el estado vacío; el selector de zona muestra entera su opción más larga, y la hoja inferior y la escena de Oak se desplazan si no caben. |
+| 1.4.13 Contenido con hover o foco | AA | No aplica | No aparece contenido adicional al pasar el puntero o al enfocar. El enlace «Saltar al buscador» se hace visible al recibir el foco, pero es el propio control enfocado, no contenido que dispare; el tooltip nativo del `<title>` de los marcadores lo controla el navegador y el criterio lo excluye; la tarjeta se abre al activar. |
+| 2.1.1 Teclado | A | Cumple | EMPEZAR; la escena de Oak, con Intro y Espacio; el enlace de salto; las entradas de la leyenda; los marcadores operables, con Intro y Espacio, y Escape para cerrar la tarjeta; su botón de cerrar; buscar, donde Escape vacía la búsqueda; zona; «Ordenar», con las flechas; los filtros activos y «Limpiar filtros»; las filas. |
+| 2.1.2 Sin trampas para el foco del teclado | A | Cumple | El tabulador recorre cada escena y sale de ella. En Oak, el foco puede salir de la escena e Intro sigue avanzando. |
+| 2.1.4 Atajos del teclado con un único carácter | A | No aplica | No hay atajos de letra, número, puntuación ni símbolo. Intro y Espacio, que no son teclas de carácter, solo actúan en la escena de Oak. |
+| 2.2.1 Tiempo ajustable | A | No aplica | No hay límites de tiempo: Oak espera al usuario en cada bocadillo, y los fundidos entre escenas no son plazos para actuar. |
+| 2.2.2 Poner en pausa, detener, ocultar | A | Cumple | El rebote de EMPEZAR y el ▼ de Oak se detienen a los 4,8 s; la escritura de Oak dura como mucho 4,8 s y se completa con Intro, Espacio o un toque; con movimiento reducido no hay ninguno de los tres. El giro del loader no reúne las condiciones del criterio: la pantalla de carga es lo único que hay a la vista, así que no se presenta en paralelo con otro contenido. Si una conexión lenta la alargase más de 5 s, sigue sin haber nada más en pantalla, y es la animación de una fase de precarga en la que no cabe interacción y sin la que la pantalla parecería colgada, el caso que W3C considera esencial. Con movimiento reducido no gira. |
+| 2.3.1 Umbral de tres destellos o menos | A | Cumple | Nada destella: solo hay desplazamientos cortos, un giro y fundidos. |
+| 2.4.1 Evitar bloques | A | No aplica | Página única, sin bloques repetidos en varias páginas. Aun así, el enlace «Saltar al buscador» salta la leyenda y los marcadores, y landmarks y encabezados permiten saltar a cada sección. |
+| 2.4.2 Titulado de páginas | A | Cumple | `<title>Poketiempo</title>`, el nombre del sitio. |
+| 2.4.3 Orden del foco | A | Cumple | EMPEZAR; en Oak, la escena; después, el enlace de salto, las entradas de la leyenda, los marcadores operables en el orden del catálogo —por comunidad o región, con Canarias al final porque su recuadro se dibuja después de la península—, el botón de cerrar de la tarjeta, buscar, zona, «Ordenar», los filtros activos, «Limpiar filtros» y las filas. Es el orden del DOM y no cambia con la composición ni con la tarjeta abierta; con filtros, los marcadores en sombra salen del recorrido. |
+| 2.4.4 Propósito de los enlaces (en contexto) | A | Cumple | El único enlace, «Saltar al buscador», dice adónde lleva. |
+| 2.4.5 Múltiples vías | AA | No aplica | Página única: no forma parte de un conjunto de páginas. |
+| 2.4.6 Encabezados y etiquetas | AA | Cumple | «POKETIEMPO», «Leyenda», «Todos los lugares», el título de cada grupo y el nombre del lugar en la tarjeta describen su sección; «Buscar», «Zona» y «Ordenar» dicen qué controlan; los botones se nombran por lo que hacen, por su lugar o por su condición. |
+| 2.4.7 Foco visible | AA | Cumple | Anillo de dos tonos en todos los controles —el de `_reset.scss`; uno propio en marcadores y EMPEZAR; en «Ordenar», sobre la cara del radio—, verificado en las 160 paradas de cada rango, 161 con la tarjeta abierta, y con filtros. En una fila seleccionada va por dentro de la barra, y se ven las dos señales. La escena de Oak recibe el foco por programa, para el lector de pantalla, y no dibuja anillo: ocupa toda la pantalla, es lo único operable mientras está (el resto es `inert`), e Intro y Espacio funcionan tenga el foco donde lo tenga; el ▼ indica que se puede seguir. |
+| 2.4.11 Foco no oculto (mínimo) | AA | Cumple | Con la tarjeta abierta, en las dos composiciones y al 100 % y al 200 %, ningún elemento con el foco queda tapado, con o sin filtros: la hoja inferior reserva su alto con `scroll-padding`, y la tarjeta anclada se vuelve transparente mientras el foco está en otro marcador. El foco que se mueve por programa —al quitar un filtro activo o limpiarlos— queda también a la vista, y el enlace de salto deja el buscador con su etiqueta encima. |
+| 2.5.1 Gestos del puntero | A | No aplica | Ninguna función usa gestos multipunto ni de trayectoria. |
+| 2.5.2 Cancelación del puntero | A | Cumple | Todo se activa con `click`, al soltar; no hay manejadores de pulsación hacia abajo. |
+| 2.5.3 Etiqueta en el nombre | A | Cumple | EMPEZAR, las filas, las entradas de la leyenda y los controles de la lista se nombran con su propio texto, y el nombre de cada filtro activo empieza por su texto visible («Zona: Andalucía, quitar filtro»). El ✕ de cerrar es un símbolo, no una etiqueta de texto —W3C lo excluye—, y se nombra «Cerrar». El marcador no tiene etiqueta visible: el nombre del lugar no se pinta y las cifras son el dato, aunque su nombre las incluye. |
+| 2.5.4 Activación mediante movimiento | A | No aplica | Nada se activa moviendo el dispositivo. |
+| 2.5.7 Movimientos de arrastre | AA | No aplica | Ninguna función requiere arrastrar. |
+| 2.5.8 Tamaño del objetivo (mínimo) | AA | Cumple | EMPEZAR mide al menos 149×52, cerrar 44×44, las filas 62px de alto y la escena de Oak toda la pantalla; los controles de la leyenda y de la lista, al menos 44×44. Los marcadores cruzan los 24px a partir de 480px de mapa; por debajo se aplica «Equivalent»: su fila hace lo mismo con un objetivo que cumple, y con filtros la lista muestra exactamente los marcadores operables. El ✕ nativo del buscador lo dibuja el navegador, que el criterio excluye, y Escape hace lo mismo. |
+| 3.1.1 Idioma de la página | A | Cumple | `<html lang="es">`. |
+| 3.1.2 Idioma de las partes | AA | Cumple | Todo el texto está en español; los nombres de Pokémon, de lugares y de fuentes son nombres propios, que el criterio excluye. |
+| 3.2.1 Al recibir el foco | A | Cumple | Enfocar no cambia el contexto. Que la tarjeta anclada se vuelva transparente mientras el foco está en otro marcador es un cambio de presentación. |
+| 3.2.2 Al recibir entradas | A | Cumple | Activar un marcador o una fila cambia su estado (`aria-pressed`) y abre la tarjeta en la misma página sin mover el foco: un cambio de contenido, no de contexto. Filtrar y ordenar cambian qué lugares se ven y en qué orden, sin cambiar de contexto; el foco solo se mueve cuando desaparece el control que lo tenía —un filtro activo que se quita, «Limpiar filtros»—. |
+| 3.2.3 Navegación coherente | AA | No aplica | Página única, sin navegación repetida entre páginas. |
+| 3.2.4 Identificación coherente | AA | No aplica | Página única: no hay un conjunto de páginas en el que comparar componentes. |
+| 3.2.6 Ayuda coherente | A | No aplica | No hay mecanismos de ayuda, y es una página única. |
+| 3.3.1 Identificación de errores | A | No aplica | Buscar admite cualquier texto, y zona y «Ordenar», solo opciones válidas: no hay errores de entrada que detectar. Que ningún lugar coincida es un resultado, y el estado vacío lo explica. |
+| 3.3.2 Etiquetas o instrucciones | A | Cumple | Buscar, zona y «Ordenar» tienen etiqueta visible, y el buscador un ejemplo de lo que admite («Lugar, provincia o Pokémon»). |
+| 3.3.3 Sugerencias ante errores | AA | No aplica | Sin errores de entrada (3.3.1), no hay correcciones que sugerir. |
+| 3.3.4 Prevención de errores (legales, financieros, datos) | AA | No aplica | No hay compromisos legales, transacciones ni datos del usuario. |
+| 3.3.7 Entrada redundante | A | No aplica | No hay procesos que pidan datos. |
+| 3.3.8 Autenticación accesible (mínimo) | AA | No aplica | No hay autenticación. |
+| 4.1.2 Nombre, función, valor | A | Cumple | Botones nativos en EMPEZAR, cerrar, las filas, la leyenda (con `aria-pressed`) y los filtros activos; buscar, zona y «Ordenar», controles nativos con etiqueta; el marcador SVG operable con `role="button"`, `tabindex`, nombre único y `aria-pressed`, y el que está en sombra, fuera del árbol (`aria-hidden`, sin rol ni foco); la escena de Oak es un `dialog` con nombre y descripción; la portada que sale y el mapa bajo Oak, `inert`. |
+| 4.1.3 Mensajes de estado | AA | Cumple | La selección se anuncia en una región viva educada sin mover el foco; el recuento de lugares, en otra, medio segundo después del último cambio; los bocadillos de Oak, enteros, en otra; el loader es `role="status"`. |
 
 ## Riesgos
 
-- **Legibilidad a tamaños muy reducidos** — al no haber suelo en la escala, a anchos muy estrechos el texto puede volverse difícil de leer sin zoom. Es el comportamiento pedido explícitamente (equivalente a ver una imagen pequeña reducida); se verifica que sigue siendo legible *con* zoom, no a simple vista.
-- **`$fluid-root-height-divisor` y `$legend-max-height` son valores medidos, no derivados de un token** — ambos dependen de la altura real y visible del mapa (`seaBottom`) y de la cabecera a `$breakpoint-desktop-large`. Si alguno de los dos cambia de forma sustancial (una cabecera multilínea, una silueta de mapa con otra proporción), hay que remedir ambas constantes con Playwright.
+- **La suite no mide layout.** jsdom no calcula geometría: plantillas, desbordamientos, zoom y foco tapado se verifican en navegador, sobre el build de producción, y no en los tests.
+- **`administrativeArea` se mantiene a mano.** El test garantiza que no falte en ninguno de los 74, no que sea correcto: un lugar nuevo exige rellenarlo y revisarlo.
+- **Halo y contorno validados a ojo.** Si cambian la tipografía o el tamaño mínimo, hay que volver a mirarlos al tamaño real: un trazo demasiado grueso cierra el ojo de los glifos. Por eso Unown no lleva ninguno.
+- **Etiquetas nuevas en la leyenda.** La columna mínima está calculada para «torrenciales»; una etiqueta con una palabra más larga se partiría en vez de desbordar, y habría que revisar el mínimo.
+- **Oak con zoom alto.** Cuando la escena no cabe, empieza por arriba —la cara de Oak y el principio del texto— y el final del bocadillo queda por debajo hasta desplazar. No se pierde nada, pero hay que desplazar para ver el ▼.
+- **`@container` sobre la caja del mapa.** Soporte amplio hoy, pero si fallara, el fallback natural es que las temperaturas no se pinten — degradación aceptable, porque el dato sigue en la tarjeta y en la lista.
+- **Bundle por encima del umbral de aviso de Vite (no bloqueante).** El JS de producción mide 502,8 kB (171,0 kB con gzip), y Vite avisa de que supera los 500 kB. Es un aviso, no un error: el build termina. Unos 9 kB son de esta feature: el campo `administrativeArea`, la tarjeta, el marcador activable y la lista. La configuración de Vite no se toca en esta feature.

@@ -120,7 +120,9 @@ describe('App', () => {
 
     expect(screen.getByRole('dialog', { name: 'Profesor Oak' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'EMPEZAR', hidden: true })).not.toBeInTheDocument()
-    expect(container.querySelector('main')).toHaveAttribute('inert')
+    // `inert` vive en el contenedor de la escena, no en `<main>`: cubre
+    // también los créditos, que son hermanos suyos y no descendientes.
+    expect(container.querySelector('.app')).toHaveAttribute('inert')
   })
 
   it('Oak dice los textos de oak-today.json, en orden', () => {

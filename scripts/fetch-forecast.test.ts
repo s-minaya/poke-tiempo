@@ -20,6 +20,8 @@ function aemetLocation(overrides: Partial<Location> = {}): Location {
   return {
     id: 'madrid',
     name: 'Madrid',
+    administrativeArea: 'Madrid',
+    zone: 'Comunidad de Madrid',
     country: 'ES',
     latitude: 40.4084,
     longitude: -3.6876,

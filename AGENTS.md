@@ -123,7 +123,11 @@ Concepto: **pixel art / interfaz de Game Boy**. La referencia es la Pokédex y l
 - **Tipografía del título:** la tipografía de símbolos de Pokémon (pendiente de fijar el archivo concreto y su licencia — ver `tech-stack.md`).
 - **Sprites:** pixel art, coherentes entre sí (una sola generación/estilo, no mezclados).
 - **Composición fijada por el usuario:** título "Poketiempo" arriba a la izquierda; "Previsión (día y mes)" arriba a la derecha; leyenda en columna bajo el título, con un Pokémon por condición y su descripción; el mapa de España ocupa el cuerpo de la página.
-- El resto de la identidad (paleta, texturas, tratamiento del mapa) **está sin definir**. Un agente no la inventa: la propone como opciones y espera decisión.
+- **Paleta: dos sistemas de color, con papeles que no se mezclan.** Detalle, hex y contrastes en `tech-stack.md` → Estilo visual; todos los tokens viven en `src/styles/abstracts/_variables.scss`.
+  - **Información meteorológica** — colores de mood (`$header-mood-*`, con su halo `$header-mood-*-border`) y franjas de temperatura del mapa (`$marker-temp-*`). Solo dicen algo del tiempo: el mood de la previsión y de las etiquetas de la leyenda, y la franja de cada cifra del mapa. Ningún control los usa.
+  - **Identidad y estado de interacción** — colores de la paleta de pokemon.com: `$ui-ink` (#323232), la tinta de texto y bordes de los controles y de «Leyenda», y `$ui-accent` (#1B53BA), lo elegido y el hover de los controles y el título POKETIEMPO. `$ui-surface` (#F5F5F5), la superficie de la zona de controles y de los encabezados de grupo de la lista. Ninguno repite un color que ya significa algo del tiempo o de un aviso.
+  - Estados de un control: reposo, blanco con borde `$ui-ink`; hover, borde `$ui-accent`; elegido, `$ui-accent` más una señal que no es color; foco, el anillo de dos tonos de `_reset.scss`, nunca azul.
+- El resto de la identidad (texturas, tratamiento del mapa) **está sin definir**. Un agente no la inventa: la propone como opciones y espera decisión. Tampoco añade un color a la paleta sin decisión del usuario.
 
 ## Testing
 

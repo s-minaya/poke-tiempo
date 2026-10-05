@@ -1,16 +1,100 @@
+@use 'sass:map';
+@use '../../../styles/abstracts/breakpoints' as bp;
 @use '../../../styles/abstracts/variables' as vars;
 
 .location-marker {
+  cursor: pointer;
+
+  // El aro propio (`__focus-ring`) sustituye al contorno genérico de
+  // `_reset.scss`: sobre un elemento SVG ese contorno rodea la caja entera
+  // del grupo —temperaturas incluidas— y no todos los navegadores lo pintan.
+  // En `:focus` y no solo en `:focus-visible`: tras un clic el marcador
+  // queda enfocado sin foco visible, y Chromium le pondría su contorno por
+  // defecto, un recuadro que marcaría el lugar seleccionado.
+  &:focus {
+    outline: none;
+  }
+
+  // En sombra no hay nada que pulsar: el puntero la atraviesa, y un clic
+  // sobre ella llega a lo que haya debajo, como si no estuviera.
+  &--dimmed {
+    cursor: default;
+    pointer-events: none;
+  }
+
   &__sprite {
-    // Sin interacción propia todavía (004): solo evita que un arrastre
-    // cerca de un sprite dispare la selección de texto del navegador.
+    // Evita que un arrastre cerca de un sprite dispare la selección de
+    // texto del navegador.
     user-select: none;
+  }
+
+  // Transparente pero pintado (no `none`): así recibe el puntero en todo
+  // el cuadrado del sprite.
+  &__hit {
+    fill: transparent;
+  }
+
+  &__focus-ring {
+    visibility: hidden;
+    fill: none;
+    vector-effect: non-scaling-stroke;
+  }
+
+  &:focus-visible &__focus-ring {
+    visibility: visible;
+  }
+
+  &__focus-edge {
+    stroke: vars.$color-near-black;
+    stroke-width: 6px;
+    vector-effect: non-scaling-stroke;
+  }
+
+  &__focus-core {
+    stroke: vars.$color-white;
+    stroke-width: 2px;
+    vector-effect: non-scaling-stroke;
   }
 
   &__temperature {
     font-family: vars.$font-body;
     font-weight: 700;
     user-select: none;
+
+    // Las cifras miden 13 unidades de `viewBox` sobre un ancho de 1240, así
+    // que su tamaño real depende de lo que mida la caja del mapa: 12px
+    // justos cuando llega a $map-temperature-threshold, y entre 3,9 y 10,7px
+    // por debajo. Ahí no se pintan: 12px es el suelo de legibilidad de la
+    // 008 y agrandarlas en unidades de `viewBox` las haría más anchas que la
+    // separación entre lugares vecinos (61u). El dato no se pierde — sigue
+    // en el `aria-label` del marcador.
+    // Consulta de contenedor y no de viewport a propósito: el mismo mapa
+    // mide distinto en la composición apilada y en la de dos columnas, y lo
+    // que decide es su ancho real (`SpainMap.scss` declara el contenedor).
+    display: none;
+
+    @container map (min-width: #{bp.$map-temperature-threshold}) {
+      display: inline;
+    }
+  }
+
+  // Capa de contorno: la copia de debajo, con el único trazo oscuro que
+  // separa las cifras de los cuatro fondos del mapa (16,6–18,4:1). Hace
+  // falta una capa propia porque SVG no admite dos trazos en un elemento y
+  // los trazos de franja se conservan: tres de los seis son claros (blanco,
+  // verde, amarillo) y engrosarlos no aporta contraste (008-spec.md).
+  // 2 unidades, elegidas por comparación visual al tamaño mínimo real: por
+  // encima, el trazo empieza a cerrar el ojo de los dígitos (8, 0, 4 y el
+  // símbolo de grado) en las franjas oscuras; por debajo, deja de leerse
+  // como contorno. Como va centrado sobre el perfil del glifo y la copia de
+  // encima lo tapa por dentro, lo que queda a la vista es solo la mitad
+  // exterior.
+  &__temperature--contour {
+    fill: none;
+    stroke: vars.$color-near-black;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    paint-order: stroke;
   }
 
   // Custom properties por franja — cada `tspan` se colorea de forma
@@ -26,38 +110,15 @@
     stroke-width: var(--temp-stroke-width, 0);
     paint-order: stroke fill;
 
-    &--freezing {
-      --temp-fill: #{vars.$color-white};
-      --temp-stroke: #{vars.$marker-temp-freezing-stroke};
-      --temp-stroke-width: 0.8;
-    }
+    @each $band, $colors in vars.$marker-temp-bands {
+      &--#{$band} {
+        --temp-fill: #{map.get($colors, fill)};
 
-    &--cool {
-      --temp-fill: #{vars.$marker-temp-cool};
-    }
-
-    &--mild {
-      --temp-fill: #{vars.$color-white};
-      --temp-stroke: #{vars.$color-green};
-      --temp-stroke-width: 0.8;
-    }
-
-    &--pleasant {
-      --temp-fill: #{vars.$color-green};
-      --temp-stroke: #{vars.$color-white};
-      --temp-stroke-width: 0.8;
-    }
-
-    &--hot {
-      --temp-fill: #{vars.$marker-temp-hot};
-      --temp-stroke: #{vars.$marker-temp-hot-stroke};
-      --temp-stroke-width: 0.8;
-    }
-
-    &--scorching {
-      --temp-fill: #{vars.$marker-temp-scorching};
-      --temp-stroke: #{vars.$marker-temp-scorching-stroke};
-      --temp-stroke-width: 0.8;
+        @if map.get($colors, stroke) {
+          --temp-stroke: #{map.get($colors, stroke)};
+          --temp-stroke-width: 0.8;
+        }
+      }
     }
   }
 }

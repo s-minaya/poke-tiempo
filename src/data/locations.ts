@@ -7,6 +7,8 @@ export const locations: Location[] = [
   {
     "id": "a-coruna",
     "name": "A Coruña",
+    "administrativeArea": "A Coruña",
+    "zone": "Galicia",
     "country": "ES",
     "latitude": 43.3701,
     "longitude": -8.3911,
@@ -30,6 +32,8 @@ export const locations: Location[] = [
   {
     "id": "lugo",
     "name": "Lugo",
+    "administrativeArea": "Lugo",
+    "zone": "Galicia",
     "country": "ES",
     "latitude": 43.0091,
     "longitude": -7.5582,
@@ -48,6 +52,8 @@ export const locations: Location[] = [
   {
     "id": "ourense",
     "name": "Ourense",
+    "administrativeArea": "Ourense",
+    "zone": "Galicia",
     "country": "ES",
     "latitude": 42.3365,
     "longitude": -7.8637,
@@ -66,6 +72,8 @@ export const locations: Location[] = [
   {
     "id": "pontevedra",
     "name": "Pontevedra",
+    "administrativeArea": "Pontevedra",
+    "zone": "Galicia",
     "country": "ES",
     "latitude": 42.4338,
     "longitude": -8.648,
@@ -89,6 +97,8 @@ export const locations: Location[] = [
   {
     "id": "oviedo",
     "name": "Oviedo",
+    "administrativeArea": "Asturias",
+    "zone": "Asturias",
     "country": "ES",
     "latitude": 43.3623,
     "longitude": -5.8437,
@@ -107,6 +117,8 @@ export const locations: Location[] = [
   {
     "id": "gijon",
     "name": "Gijón",
+    "administrativeArea": "Asturias",
+    "zone": "Asturias",
     "country": "ES",
     "latitude": 43.5392,
     "longitude": -5.6595,
@@ -130,6 +142,8 @@ export const locations: Location[] = [
   {
     "id": "cantabria",
     "name": "Cantabria",
+    "administrativeArea": "Cantabria",
+    "zone": "Cantabria",
     "country": "ES",
     "latitude": 43.463,
     "longitude": -3.8047,
@@ -153,6 +167,8 @@ export const locations: Location[] = [
   {
     "id": "la-rioja",
     "name": "La Rioja",
+    "administrativeArea": "La Rioja",
+    "zone": "La Rioja",
     "country": "ES",
     "latitude": 42.4664,
     "longitude": -2.4457,
@@ -171,6 +187,8 @@ export const locations: Location[] = [
   {
     "id": "pais-vasco",
     "name": "País Vasco",
+    "administrativeArea": "País Vasco",
+    "zone": "País Vasco",
     "country": "ES",
     "latitude": 43.2572,
     "longitude": -2.9239,
@@ -195,6 +213,8 @@ export const locations: Location[] = [
   {
     "id": "navarra",
     "name": "Navarra",
+    "administrativeArea": "Navarra",
+    "zone": "Navarra",
     "country": "ES",
     "latitude": 42.8141,
     "longitude": -1.6452,
@@ -213,6 +233,8 @@ export const locations: Location[] = [
   {
     "id": "huesca",
     "name": "Huesca",
+    "administrativeArea": "Huesca",
+    "zone": "Aragón",
     "country": "ES",
     "latitude": 42.1406,
     "longitude": -0.4084,
@@ -231,6 +253,8 @@ export const locations: Location[] = [
   {
     "id": "jaca",
     "name": "Jaca",
+    "administrativeArea": "Huesca",
+    "zone": "Aragón",
     "country": "ES",
     "latitude": 42.5707,
     "longitude": -0.5496,
@@ -249,6 +273,8 @@ export const locations: Location[] = [
   {
     "id": "benasque",
     "name": "Benasque",
+    "administrativeArea": "Huesca",
+    "zone": "Aragón",
     "country": "ES",
     "latitude": 42.605,
     "longitude": 0.5238,
@@ -267,6 +293,8 @@ export const locations: Location[] = [
   {
     "id": "teruel",
     "name": "Teruel",
+    "administrativeArea": "Teruel",
+    "zone": "Aragón",
     "country": "ES",
     "latitude": 40.3441,
     "longitude": -1.1093,
@@ -285,6 +313,8 @@ export const locations: Location[] = [
   {
     "id": "alcaniz",
     "name": "Alcañiz",
+    "administrativeArea": "Teruel",
+    "zone": "Aragón",
     "country": "ES",
     "latitude": 41.0513,
     "longitude": -0.1328,
@@ -303,6 +333,8 @@ export const locations: Location[] = [
   {
     "id": "zaragoza",
     "name": "Zaragoza",
+    "administrativeArea": "Zaragoza",
+    "zone": "Aragón",
     "country": "ES",
     "latitude": 41.6565,
     "longitude": -0.8793,
@@ -321,6 +353,8 @@ export const locations: Location[] = [
   {
     "id": "barcelona",
     "name": "Barcelona",
+    "administrativeArea": "Barcelona",
+    "zone": "Cataluña",
     "country": "ES",
     "latitude": 41.3842,
     "longitude": 2.1763,
@@ -344,6 +378,8 @@ export const locations: Location[] = [
   {
     "id": "lleida",
     "name": "Lleida",
+    "administrativeArea": "Lleida",
+    "zone": "Cataluña",
     "country": "ES",
     "latitude": 41.6153,
     "longitude": 0.6206,
@@ -362,6 +398,8 @@ export const locations: Location[] = [
   {
     "id": "girona",
     "name": "Girona",
+    "administrativeArea": "Girona",
+    "zone": "Cataluña",
     "country": "ES",
     "latitude": 41.9819,
     "longitude": 2.8241,
@@ -380,6 +418,8 @@ export const locations: Location[] = [
   {
     "id": "tarragona",
     "name": "Tarragona",
+    "administrativeArea": "Tarragona",
+    "zone": "Cataluña",
     "country": "ES",
     "latitude": 41.1191,
     "longitude": 1.2584,
@@ -403,6 +443,8 @@ export const locations: Location[] = [
   {
     "id": "castellon",
     "name": "Castellón",
+    "administrativeArea": "Castellón",
+    "zone": "Comunidad Valenciana",
     "country": "ES",
     "latitude": 39.9864,
     "longitude": -0.0369,
@@ -426,6 +468,8 @@ export const locations: Location[] = [
   {
     "id": "valencia",
     "name": "Valencia",
+    "administrativeArea": "Valencia",
+    "zone": "Comunidad Valenciana",
     "country": "ES",
     "latitude": 39.4753,
     "longitude": -0.3757,
@@ -449,6 +493,8 @@ export const locations: Location[] = [
   {
     "id": "alicante",
     "name": "Alicante",
+    "administrativeArea": "Alicante",
+    "zone": "Comunidad Valenciana",
     "country": "ES",
     "latitude": 38.3455,
     "longitude": -0.4832,
@@ -472,6 +518,8 @@ export const locations: Location[] = [
   {
     "id": "murcia",
     "name": "Murcia",
+    "administrativeArea": "Murcia",
+    "zone": "Región de Murcia",
     "country": "ES",
     "latitude": 37.9844,
     "longitude": -1.1285,
@@ -490,6 +538,8 @@ export const locations: Location[] = [
   {
     "id": "leon",
     "name": "León",
+    "administrativeArea": "León",
+    "zone": "Castilla y León",
     "country": "ES",
     "latitude": 42.5991,
     "longitude": -5.5671,
@@ -508,6 +558,8 @@ export const locations: Location[] = [
   {
     "id": "palencia",
     "name": "Palencia",
+    "administrativeArea": "Palencia",
+    "zone": "Castilla y León",
     "country": "ES",
     "latitude": 42.0078,
     "longitude": -4.5346,
@@ -526,6 +578,8 @@ export const locations: Location[] = [
   {
     "id": "burgos",
     "name": "Burgos",
+    "administrativeArea": "Burgos",
+    "zone": "Castilla y León",
     "country": "ES",
     "latitude": 42.3411,
     "longitude": -3.7042,
@@ -544,6 +598,8 @@ export const locations: Location[] = [
   {
     "id": "zamora",
     "name": "Zamora",
+    "administrativeArea": "Zamora",
+    "zone": "Castilla y León",
     "country": "ES",
     "latitude": 41.4991,
     "longitude": -5.7549,
@@ -562,6 +618,8 @@ export const locations: Location[] = [
   {
     "id": "salamanca",
     "name": "Salamanca",
+    "administrativeArea": "Salamanca",
+    "zone": "Castilla y León",
     "country": "ES",
     "latitude": 40.9674,
     "longitude": -5.6654,
@@ -580,6 +638,8 @@ export const locations: Location[] = [
   {
     "id": "avila",
     "name": "Ávila",
+    "administrativeArea": "Ávila",
+    "zone": "Castilla y León",
     "country": "ES",
     "latitude": 40.6559,
     "longitude": -4.6977,
@@ -598,6 +658,8 @@ export const locations: Location[] = [
   {
     "id": "segovia",
     "name": "Segovia",
+    "administrativeArea": "Segovia",
+    "zone": "Castilla y León",
     "country": "ES",
     "latitude": 40.9499,
     "longitude": -4.1252,
@@ -616,6 +678,8 @@ export const locations: Location[] = [
   {
     "id": "soria",
     "name": "Soria",
+    "administrativeArea": "Soria",
+    "zone": "Castilla y León",
     "country": "ES",
     "latitude": 41.7633,
     "longitude": -2.4662,
@@ -634,6 +698,8 @@ export const locations: Location[] = [
   {
     "id": "valladolid",
     "name": "Valladolid",
+    "administrativeArea": "Valladolid",
+    "zone": "Castilla y León",
     "country": "ES",
     "latitude": 41.6523,
     "longitude": -4.7233,
@@ -652,6 +718,8 @@ export const locations: Location[] = [
   {
     "id": "guadalajara",
     "name": "Guadalajara",
+    "administrativeArea": "Guadalajara",
+    "zone": "Castilla-La Mancha",
     "country": "ES",
     "latitude": 40.6344,
     "longitude": -3.1621,
@@ -670,6 +738,8 @@ export const locations: Location[] = [
   {
     "id": "cuenca",
     "name": "Cuenca",
+    "administrativeArea": "Cuenca",
+    "zone": "Castilla-La Mancha",
     "country": "ES",
     "latitude": 40.0765,
     "longitude": -2.1315,
@@ -688,6 +758,8 @@ export const locations: Location[] = [
   {
     "id": "tarancon",
     "name": "Tarancón",
+    "administrativeArea": "Cuenca",
+    "zone": "Castilla-La Mancha",
     "country": "ES",
     "latitude": 40.011,
     "longitude": -3.003,
@@ -706,6 +778,8 @@ export const locations: Location[] = [
   {
     "id": "albacete",
     "name": "Albacete",
+    "administrativeArea": "Albacete",
+    "zone": "Castilla-La Mancha",
     "country": "ES",
     "latitude": 38.9959,
     "longitude": -1.8557,
@@ -724,6 +798,8 @@ export const locations: Location[] = [
   {
     "id": "toledo",
     "name": "Toledo",
+    "administrativeArea": "Toledo",
+    "zone": "Castilla-La Mancha",
     "country": "ES",
     "latitude": 39.8572,
     "longitude": -4.0243,
@@ -742,6 +818,8 @@ export const locations: Location[] = [
   {
     "id": "ciudad-real",
     "name": "Ciudad Real",
+    "administrativeArea": "Ciudad Real",
+    "zone": "Castilla-La Mancha",
     "country": "ES",
     "latitude": 38.9865,
     "longitude": -3.9313,
@@ -760,6 +838,8 @@ export const locations: Location[] = [
   {
     "id": "manzanares",
     "name": "Manzanares",
+    "administrativeArea": "Ciudad Real",
+    "zone": "Castilla-La Mancha",
     "country": "ES",
     "latitude": 38.9982,
     "longitude": -3.3702,
@@ -778,6 +858,8 @@ export const locations: Location[] = [
   {
     "id": "madrid",
     "name": "Madrid",
+    "administrativeArea": "Madrid",
+    "zone": "Comunidad de Madrid",
     "country": "ES",
     "latitude": 40.4084,
     "longitude": -3.6876,
@@ -796,6 +878,8 @@ export const locations: Location[] = [
   {
     "id": "caceres",
     "name": "Cáceres",
+    "administrativeArea": "Cáceres",
+    "zone": "Extremadura",
     "country": "ES",
     "latitude": 39.4732,
     "longitude": -6.3712,
@@ -814,6 +898,8 @@ export const locations: Location[] = [
   {
     "id": "plasencia",
     "name": "Plasencia",
+    "administrativeArea": "Cáceres",
+    "zone": "Extremadura",
     "country": "ES",
     "latitude": 40.0294,
     "longitude": -6.0927,
@@ -832,6 +918,8 @@ export const locations: Location[] = [
   {
     "id": "badajoz",
     "name": "Badajoz",
+    "administrativeArea": "Badajoz",
+    "zone": "Extremadura",
     "country": "ES",
     "latitude": 38.8787,
     "longitude": -6.971,
@@ -850,6 +938,8 @@ export const locations: Location[] = [
   {
     "id": "merida",
     "name": "Mérida",
+    "administrativeArea": "Badajoz",
+    "zone": "Extremadura",
     "country": "ES",
     "latitude": 38.9174,
     "longitude": -6.3442,
@@ -868,6 +958,8 @@ export const locations: Location[] = [
   {
     "id": "huelva",
     "name": "Huelva",
+    "administrativeArea": "Huelva",
+    "zone": "Andalucía",
     "country": "ES",
     "latitude": 37.26,
     "longitude": -6.9504,
@@ -891,6 +983,8 @@ export const locations: Location[] = [
   {
     "id": "sevilla",
     "name": "Sevilla",
+    "administrativeArea": "Sevilla",
+    "zone": "Andalucía",
     "country": "ES",
     "latitude": 37.3862,
     "longitude": -5.9925,
@@ -909,6 +1003,8 @@ export const locations: Location[] = [
   {
     "id": "cadiz",
     "name": "Cádiz",
+    "administrativeArea": "Cádiz",
+    "zone": "Andalucía",
     "country": "ES",
     "latitude": 36.5217,
     "longitude": -6.2841,
@@ -932,6 +1028,8 @@ export const locations: Location[] = [
   {
     "id": "cordoba",
     "name": "Córdoba",
+    "administrativeArea": "Córdoba",
+    "zone": "Andalucía",
     "country": "ES",
     "latitude": 37.8795,
     "longitude": -4.7803,
@@ -950,6 +1048,8 @@ export const locations: Location[] = [
   {
     "id": "jaen",
     "name": "Jaén",
+    "administrativeArea": "Jaén",
+    "zone": "Andalucía",
     "country": "ES",
     "latitude": 37.7652,
     "longitude": -3.7904,
@@ -968,6 +1068,8 @@ export const locations: Location[] = [
   {
     "id": "huescar",
     "name": "Huéscar",
+    "administrativeArea": "Granada",
+    "zone": "Andalucía",
     "country": "ES",
     "latitude": 37.8098,
     "longitude": -2.5401,
@@ -986,6 +1088,8 @@ export const locations: Location[] = [
   {
     "id": "malaga",
     "name": "Málaga",
+    "administrativeArea": "Málaga",
+    "zone": "Andalucía",
     "country": "ES",
     "latitude": 36.7203,
     "longitude": -4.42,
@@ -1009,6 +1113,8 @@ export const locations: Location[] = [
   {
     "id": "granada",
     "name": "Granada",
+    "administrativeArea": "Granada",
+    "zone": "Andalucía",
     "country": "ES",
     "latitude": 37.1764,
     "longitude": -3.6,
@@ -1027,6 +1133,8 @@ export const locations: Location[] = [
   {
     "id": "almeria",
     "name": "Almería",
+    "administrativeArea": "Almería",
+    "zone": "Andalucía",
     "country": "ES",
     "latitude": 36.8389,
     "longitude": -2.4641,
@@ -1050,6 +1158,8 @@ export const locations: Location[] = [
   {
     "id": "ceuta",
     "name": "Ceuta",
+    "administrativeArea": "Ceuta",
+    "zone": "Ceuta",
     "country": "ES",
     "latitude": 35.8881,
     "longitude": -5.3068,
@@ -1073,6 +1183,8 @@ export const locations: Location[] = [
   {
     "id": "melilla",
     "name": "Melilla",
+    "administrativeArea": "Melilla",
+    "zone": "Melilla",
     "country": "ES",
     "latitude": 35.2907,
     "longitude": -2.9472,
@@ -1096,6 +1208,8 @@ export const locations: Location[] = [
   {
     "id": "ibiza",
     "name": "Ibiza",
+    "administrativeArea": "Baleares",
+    "zone": "Baleares",
     "country": "ES",
     "latitude": 38.9067,
     "longitude": 1.4362,
@@ -1119,6 +1233,8 @@ export const locations: Location[] = [
   {
     "id": "mallorca",
     "name": "Mallorca",
+    "administrativeArea": "Baleares",
+    "zone": "Baleares",
     "country": "ES",
     "latitude": 39.5711,
     "longitude": 2.6518,
@@ -1142,6 +1258,8 @@ export const locations: Location[] = [
   {
     "id": "menorca",
     "name": "Menorca",
+    "administrativeArea": "Baleares",
+    "zone": "Baleares",
     "country": "ES",
     "latitude": 39.8875,
     "longitude": 4.2655,
@@ -1165,6 +1283,8 @@ export const locations: Location[] = [
   {
     "id": "la-palma",
     "name": "La Palma",
+    "administrativeArea": "Santa Cruz de Tenerife",
+    "zone": "Canarias",
     "country": "ES",
     "latitude": 28.6819,
     "longitude": -17.7631,
@@ -1188,6 +1308,8 @@ export const locations: Location[] = [
   {
     "id": "la-gomera",
     "name": "La Gomera",
+    "administrativeArea": "Santa Cruz de Tenerife",
+    "zone": "Canarias",
     "country": "ES",
     "latitude": 28.0899,
     "longitude": -17.1093,
@@ -1211,6 +1333,8 @@ export const locations: Location[] = [
   {
     "id": "tenerife",
     "name": "Tenerife",
+    "administrativeArea": "Santa Cruz de Tenerife",
+    "zone": "Canarias",
     "country": "ES",
     "latitude": 28.4629,
     "longitude": -16.2472,
@@ -1234,6 +1358,8 @@ export const locations: Location[] = [
   {
     "id": "gran-canaria",
     "name": "Gran Canaria",
+    "administrativeArea": "Las Palmas",
+    "zone": "Canarias",
     "country": "ES",
     "latitude": 28.0994,
     "longitude": -15.4134,
@@ -1257,6 +1383,8 @@ export const locations: Location[] = [
   {
     "id": "fuerteventura",
     "name": "Fuerteventura",
+    "administrativeArea": "Las Palmas",
+    "zone": "Canarias",
     "country": "ES",
     "latitude": 28.4976,
     "longitude": -13.8592,
@@ -1280,6 +1408,8 @@ export const locations: Location[] = [
   {
     "id": "lanzarote",
     "name": "Lanzarote",
+    "administrativeArea": "Las Palmas",
+    "zone": "Canarias",
     "country": "ES",
     "latitude": 28.9602,
     "longitude": -13.5515,
@@ -1303,6 +1433,8 @@ export const locations: Location[] = [
   {
     "id": "porto",
     "name": "Porto",
+    "administrativeArea": "Porto",
+    "zone": "Portugal",
     "country": "PT",
     "latitude": 41.158,
     "longitude": -8.6294,
@@ -1325,6 +1457,8 @@ export const locations: Location[] = [
   {
     "id": "vila-real",
     "name": "Vila Real",
+    "administrativeArea": "Vila Real",
+    "zone": "Portugal",
     "country": "PT",
     "latitude": 41.3053,
     "longitude": -7.744,
@@ -1343,6 +1477,8 @@ export const locations: Location[] = [
   {
     "id": "leiria",
     "name": "Leiria",
+    "administrativeArea": "Leiria",
+    "zone": "Portugal",
     "country": "PT",
     "latitude": 39.7473,
     "longitude": -8.8069,
@@ -1361,6 +1497,8 @@ export const locations: Location[] = [
   {
     "id": "guarda",
     "name": "Guarda",
+    "administrativeArea": "Guarda",
+    "zone": "Portugal",
     "country": "PT",
     "latitude": 40.5379,
     "longitude": -7.2647,
@@ -1379,6 +1517,8 @@ export const locations: Location[] = [
   {
     "id": "lisboa",
     "name": "Lisboa",
+    "administrativeArea": "Lisboa",
+    "zone": "Portugal",
     "country": "PT",
     "latitude": 38.766,
     "longitude": -9.1286,
@@ -1401,6 +1541,8 @@ export const locations: Location[] = [
   {
     "id": "evora",
     "name": "Évora",
+    "administrativeArea": "Évora",
+    "zone": "Portugal",
     "country": "PT",
     "latitude": 38.5701,
     "longitude": -7.9104,
@@ -1419,6 +1561,8 @@ export const locations: Location[] = [
   {
     "id": "beja",
     "name": "Beja",
+    "administrativeArea": "Beja",
+    "zone": "Portugal",
     "country": "PT",
     "latitude": 38.02,
     "longitude": -7.87,
@@ -1437,6 +1581,8 @@ export const locations: Location[] = [
   {
     "id": "faro",
     "name": "Faro",
+    "administrativeArea": "Faro",
+    "zone": "Portugal",
     "country": "PT",
     "latitude": 37.0146,
     "longitude": -7.9331,
@@ -1459,6 +1605,8 @@ export const locations: Location[] = [
   {
     "id": "andorra-la-vella",
     "name": "Andorra la Vella",
+    "administrativeArea": "Andorra",
+    "zone": "Andorra",
     "country": "AD",
     "latitude": 42.5063,
     "longitude": 1.5218,

@@ -1,0 +1,16 @@
+// Mixins de accesibilidad. Un parcial sin salida CSS, como `_breakpoints.scss`:
+// `_reset.scss` no puede alojarlos, porque cada componente que lo usara
+// volvería a emitir el reseteo.
+
+// Fuera de la vista pero en el árbol de accesibilidad: regiones vivas y
+// textos que solo necesita un lector de pantalla. No `display: none` ni
+// `visibility: hidden`, que también lo sacarían del árbol.
+@mixin visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

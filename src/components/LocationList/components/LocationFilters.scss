@@ -1,0 +1,227 @@
+@use 'sass:color';
+@use '../../../styles/abstracts/variables' as vars;
+
+// Buscar, zona y ordenar. Comparten fila mientras caben y se reparten en
+// varias cuando no, sin punto de corte: lo deciden sus `flex-basis`.
+.location-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1.2rem 1.6rem;
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    // El buscador se lleva el sitio que sobre; zona y orden, lo justo.
+    &--search {
+      flex: 999 1 28rem;
+    }
+
+    // Lo justo para que el selector cerrado muestre entera su opción más
+    // larga, «Comunidad Valenciana», también con el espaciado de WCAG
+    // 1.4.12: 20,5rem de texto más 5,8rem de relleno y bordes.
+    &--zone {
+      flex: 1 1 26.4rem;
+    }
+
+    &--order {
+      flex: 1 1 40rem;
+    }
+  }
+
+  &__label {
+    padding: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: vars.$ui-ink;
+  }
+
+  // Hover: el campo toma el azul sin rellenarse, borde e icono. El texto que
+  // se escribe sigue en tinta.
+  &__control {
+    position: relative;
+    color: vars.$ui-ink;
+
+    &:hover {
+      color: vars.$ui-accent;
+    }
+  }
+
+  &__input {
+    inline-size: 100%;
+    min-block-size: max(48px, 4.8rem);
+    border: 0.2rem solid vars.$ui-ink;
+    border-radius: 0.8rem;
+    background: vars.$color-white;
+    font: inherit;
+    font-size: 1.6rem;
+    color: vars.$ui-ink;
+
+    &--search {
+      padding: 0 1.4rem 0 4.4rem;
+
+      // «Saltar al buscador» lo sube al borde de la pantalla. Este margen
+      // deja a la vista, por encima, su etiqueta y el anillo de foco: el
+      // relleno de la zona de controles (1,6rem), la etiqueta (2,1rem) y su
+      // hueco (0,6rem).
+      scroll-margin-block-start: 4.3rem;
+
+      // 5,81:1 sobre el blanco del campo.
+      &::placeholder {
+        color: color.change(vars.$ui-ink, $alpha: 0.75);
+      }
+    }
+
+    &--select {
+      padding: 0 4rem 0 1.4rem;
+      appearance: none;
+      cursor: pointer;
+    }
+  }
+
+  &__control:hover &__input {
+    border-color: vars.$ui-accent;
+  }
+
+  &__icon {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 1.4rem;
+    inline-size: 2rem;
+    block-size: 2rem;
+    translate: 0 -50%;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+
+    &--chevron {
+      inset-inline: auto 1.4rem;
+      inline-size: 1.6rem;
+      block-size: 1.6rem;
+      stroke-width: 2.6;
+    }
+  }
+
+  // Ordenar: cuatro botones segmentados sobre fondo de tinta, que asoma
+  // entre ellos como separador. Dos por fila en un hueco estrecho y los
+  // cuatro en fila, cada uno a la medida de su texto, donde caben; nunca
+  // tres y uno. Lo decide el ancho del propio control (consulta de
+  // contenedor), no el del viewport. Los cuatro en fila piden unos 30rem;
+  // 38rem deja sitio al espaciado de texto ampliado de WCAG 1.4.12.
+  &__field--order {
+    container: order / inline-size;
+  }
+
+  &__segments {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.2rem;
+    border: 0.2rem solid vars.$ui-ink;
+    border-radius: 0.8rem;
+    background: vars.$ui-ink;
+
+    @container order (min-width: 38rem) {
+      grid-template-columns: repeat(4, auto);
+    }
+  }
+
+  &__segment {
+    position: relative;
+    display: grid;
+    cursor: pointer;
+  }
+
+  // El radio sigue siendo el control —foco, flechas, lector de pantalla—,
+  // pero invisible y sin ocupar sitio: lo que se ve es su cara.
+  &__radio {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &__segment-face {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-block-size: max(44px, 4.4rem);
+    padding: 0 1.2rem;
+    border-radius: 0.6rem;
+    background: vars.$color-white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: vars.$ui-ink;
+    white-space: nowrap;
+  }
+
+  // Esquinas: solo las de fuera siguen el borde redondeado del grupo.
+  &__segment:nth-child(1) &__segment-face {
+    border-radius: 0.6rem 0 0;
+  }
+
+  &__segment:nth-child(2) &__segment-face {
+    border-radius: 0 0.6rem 0 0;
+  }
+
+  &__segment:nth-child(3) &__segment-face {
+    border-radius: 0 0 0 0.6rem;
+  }
+
+  &__segment:nth-child(4) &__segment-face {
+    border-radius: 0 0 0.6rem;
+  }
+
+  @container order (min-width: 38rem) {
+    &__segment:nth-child(1) &__segment-face {
+      border-radius: 0.6rem 0 0 0.6rem;
+    }
+
+    &__segment:nth-child(2) &__segment-face,
+    &__segment:nth-child(3) &__segment-face {
+      border-radius: 0;
+    }
+
+    &__segment:nth-child(4) &__segment-face {
+      border-radius: 0 0.6rem 0.6rem 0;
+    }
+  }
+
+  // Hover: el azul sin rellenarse.
+  &__segment:hover &__radio:not(:checked) + &__segment-face {
+    color: vars.$ui-accent;
+    box-shadow: inset 0 0 0 0.2rem vars.$ui-accent;
+  }
+
+  // Elegido: relleno azul, texto blanco (7,02:1) y el ▸, que es la señal que
+  // no es color.
+  &__radio:checked + &__segment-face {
+    background: vars.$ui-accent;
+    color: vars.$color-white;
+  }
+
+  // El anillo de foco de `_reset.scss`, en la cara: el radio es invisible.
+  &__radio:focus-visible + &__segment-face {
+    position: relative;
+    z-index: 1;
+    outline: 3px solid vars.$color-near-black;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 3px vars.$color-white;
+  }
+
+  &__cursor {
+    inline-size: 0.9rem;
+    block-size: 1.1rem;
+    fill: currentcolor;
+  }
+}

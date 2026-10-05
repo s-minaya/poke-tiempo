@@ -27,6 +27,13 @@ interface TerritoryInsetProps {
    * en los mapas políticos de España).
    */
   frame?: boolean
+  /** Selección de lugar: se pasa tal cual a cada marcador (`SpainMap.tsx`). */
+  selectedLocationId?: string | null
+  /** Los lugares que cumplen los filtros, o `null` sin filtros (`SpainMap.tsx`). */
+  matchingIds?: ReadonlySet<string> | null
+  onActivateLocation?: (id: string) => void
+  onDismissLocation?: () => void
+  registerMarker?: (id: string, element: SVGGElement | null) => void
 }
 
 /**
@@ -42,7 +49,21 @@ interface TerritoryInsetProps {
  * tecnología de asistencia como elementos propios — aquí cada
  * `LocationMarker` de dentro necesita seguir exponiendo su propio nombre.
  */
-function TerritoryInset({ x, y, width, height, path, label, locations, frame = false }: TerritoryInsetProps) {
+function TerritoryInset({
+  x,
+  y,
+  width,
+  height,
+  path,
+  label,
+  locations,
+  frame = false,
+  selectedLocationId = null,
+  matchingIds = null,
+  onActivateLocation,
+  onDismissLocation,
+  registerMarker,
+}: TerritoryInsetProps) {
   return (
     <svg
       className="territory-inset"
@@ -62,12 +83,18 @@ function TerritoryInset({ x, y, width, height, path, label, locations, frame = f
       {locations.map((location) => (
         <LocationMarker
           key={location.id}
+          id={location.id}
           x={location.x}
           y={location.y}
           name={location.name}
           pokemonId={location.pokemonId}
           minC={location.minC}
           maxC={location.maxC}
+          selected={location.id === selectedLocationId}
+          dimmed={matchingIds !== null && !matchingIds.has(location.id)}
+          onActivate={onActivateLocation}
+          onDismiss={onDismissLocation}
+          register={registerMarker}
         />
       ))}
     </svg>

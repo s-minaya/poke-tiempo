@@ -8,9 +8,8 @@ $oak-exit-ms: 300ms;
 
 // La escena entera: el mapa oscurecido detrás, Oak de pie y la caja abajo.
 // No es un modal: no hay tarjeta centrada ni botón de cerrar, hay un
-// personaje delante del mapa hablando en su cuadro de texto. Tamaños en px y
-// `vw` con `clamp()`, no en `rem` — la explicación está en
-// `OakDialogueBox.scss`.
+// personaje delante del mapa hablando en su cuadro de texto. Tamaños con
+// `clamp()` sobre px y `vw` — ver `OakDialogueBox.scss`.
 .professor-oak {
   --oak-gutter: clamp(12px, 3vw, 32px);
 
@@ -20,14 +19,20 @@ $oak-exit-ms: 300ms;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
   padding: var(--oak-gutter);
   padding-bottom: max(var(--oak-gutter), env(safe-area-inset-bottom));
-  overflow: hidden;
+
+  // Si la escena no cabe —el bocadillo más largo al 200 % de zoom en un
+  // móvil estrecho—, se desplaza en vertical en vez de recortarse. Por eso el
+  // escenario se apoya abajo con un margen automático (`__stage`) y no con
+  // `justify-content: flex-end`: con este, lo que desborda sale por arriba,
+  // fuera del alcance del scroll, y se perderían las primeras líneas. Con el
+  // margen, donde cabe queda igual de abajo, y donde no, empieza arriba y se
+  // recorre entero, también con las flechas, porque el foco ya está aquí.
+  overflow: hidden auto;
 
   // Más oscuro abajo, donde está Oak: el mapa sigue asomando arriba y la
-  // parte baja se lee como el suelo de la escena, no como página vacía — en
-  // móvil la réplica del mapa deja media pantalla sin nada detrás.
+  // parte baja se lee como el suelo de la escena.
   background: linear-gradient(
     to bottom,
     color.change(vars.$color-near-black, $alpha: 0.45),
@@ -49,7 +54,12 @@ $oak-exit-ms: 300ms;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    max-width: 880px;
+    margin-block-start: auto;
+
+    // El suelo es el ancho de diseño de la caja; por encima crece con la
+    // pantalla hasta un tope, para que en un monitor muy ancho la escena no
+    // sea una tira estrecha en mitad del vacío.
+    max-width: clamp(880px, 62vw, 1100px);
   }
 
   // Durante el cruce desde la portada solo está el fondo: Oak y su caja

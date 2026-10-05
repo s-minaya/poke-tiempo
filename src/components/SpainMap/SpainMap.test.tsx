@@ -1,8 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 
 import type { Forecast, LocationForecast } from '../../domain/types.ts'
 import SpainMap from './SpainMap.tsx'
+
+import { locations } from '../../data/locations.ts'
+import { canaryBox, mapPoints, ROOT_VIEW_BOX } from '../../data/map-geometry.ts'
+import forecastData from '../../data/forecast.json'
 
 function locationForecast(overrides: Partial<LocationForecast> = {}): LocationForecast {
   return {
@@ -54,7 +58,7 @@ describe('SpainMap', () => {
     // Si algún contenedor ancestro llevara `role="img"`, estos 74 quedarían
     // colapsados en un único nombre accesible — la razón del cambio a
     // `role="group"` en el SVG raíz y en cada recuadro de territorio.
-    expect(screen.getAllByRole('img')).toHaveLength(74)
+    expect(screen.getAllByRole('button')).toHaveLength(74)
   })
 
   it('un lugar con forecast pinta su único sprite; el resto sigue sin ninguno', () => {
@@ -63,7 +67,7 @@ describe('SpainMap', () => {
     )
 
     expect(container.querySelectorAll('image')).toHaveLength(1)
-    expect(screen.getByRole('img', { name: 'A Coruña, mínima 10 grados, máxima 20 grados' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'A Coruña, mínima 10 grados, máxima 20 grados' })).toBeInTheDocument()
   })
 
   it('Canarias se renderiza en su propio recuadro, como grupo accesible', () => {
@@ -82,8 +86,8 @@ describe('SpainMap', () => {
       />,
     )
 
-    expect(screen.getByRole('img', { name: 'Ceuta, mínima 10 grados, máxima 20 grados' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Melilla, mínima 10 grados, máxima 20 grados' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ceuta, mínima 10 grados, máxima 20 grados' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Melilla, mínima 10 grados, máxima 20 grados' })).toBeInTheDocument()
     expect(screen.queryByRole('group', { name: 'Ceuta' })).not.toBeInTheDocument()
     expect(screen.queryByRole('group', { name: 'Melilla' })).not.toBeInTheDocument()
   })
@@ -92,10 +96,271 @@ describe('SpainMap', () => {
     const { container } = render(<SpainMap forecast={forecast([])} />)
 
     expect(container.querySelectorAll('.spain-map__north-africa-context')).toHaveLength(2)
-    expect(screen.queryByRole('img', { name: /Marruecos|Argelia/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Marruecos|Argelia/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('group', { name: /Marruecos|Argelia/ })).not.toBeInTheDocument()
     // Ningún lugar nuevo: los 74 de siempre, ninguno de más por la
     // geometría decorativa.
     expect(container.querySelectorAll('.location-marker')).toHaveLength(74)
+  })
+})
+
+describe('SpainMap — selección de un lugar', () => {
+  it('los 74 marcadores tienen nombre accesible y no se repite ninguno (WCAG 4.1.2)', () => {
+    render(<SpainMap forecast={forecast([])} />)
+
+    const names = screen.getAllByRole('button').map((marker) => marker.getAttribute('aria-label') ?? '')
+    expect(names).toHaveLength(74)
+    expect(names.filter((name) => name.trim() === '')).toEqual([])
+    expect(new Set(names).size).toBe(74)
+  })
+
+  it('activar un marcador pide seleccionar su lugar', () => {
+    const onToggleLocation = vi.fn()
+    render(<SpainMap forecast={forecast([])} onToggleLocation={onToggleLocation} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Gijón' }))
+
+    expect(onToggleLocation).toHaveBeenCalledWith('gijon')
+  })
+
+  it('solo el lugar seleccionado se anuncia como pulsado', () => {
+    render(<SpainMap forecast={forecast([])} selectedLocationId="gijon" />)
+
+    expect(screen.getByRole('button', { name: 'Gijón' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getAllByRole('button', { pressed: true })).toHaveLength(1)
+  })
+
+  it('sin selección no hay tarjeta', () => {
+    render(<SpainMap forecast={forecast([])} />)
+
+    expect(screen.queryByRole('region')).not.toBeInTheDocument()
+  })
+
+  it('la tarjeta nombra el lugar y su área administrativa', () => {
+    render(
+      <SpainMap
+        forecast={forecast([locationForecast({ locationId: 'gijon', temperature: { minC: 16.6, maxC: 25.2 } })])}
+        selectedLocationId="gijon"
+      />,
+    )
+
+    const card = screen.getByRole('region', { name: 'Gijón' })
+    expect(within(card).getByText('Asturias')).toBeInTheDocument()
+    expect(card).toHaveTextContent('Mínima 17° · Máxima 25°')
+  })
+
+  it('la tarjeta omite el área cuando coincide con el nombre', () => {
+    const { container } = render(<SpainMap forecast={forecast([])} selectedLocationId="madrid" />)
+
+    expect(screen.getByRole('region', { name: 'Madrid' })).toBeInTheDocument()
+    expect(container.querySelector('.location-card__area')).not.toBeInTheDocument()
+  })
+
+  it('anuncia el lugar seleccionado en una región viva que existe desde antes', () => {
+    const { container, rerender } = render(<SpainMap forecast={forecast([])} />)
+
+    const live = container.querySelector('[aria-live="polite"]')
+    expect(live).toHaveTextContent('')
+
+    rerender(<SpainMap forecast={forecast([])} selectedLocationId="jaca" />)
+
+    expect(container.querySelector('[aria-live="polite"]')).toBe(live)
+    expect(live).toHaveTextContent('Jaca, Huesca. Sin previsión para hoy.')
+  })
+
+  it('cerrar la tarjeta con el foco dentro lo devuelve al marcador si no se sabe quién la abrió', () => {
+    const onClearLocation = vi.fn()
+    render(<SpainMap forecast={forecast([])} selectedLocationId="gijon" onClearLocation={onClearLocation} />)
+
+    const close = screen.getByRole('button', { name: 'Cerrar' })
+    close.focus()
+    fireEvent.click(close)
+
+    expect(onClearLocation).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Gijón' })).toHaveFocus()
+  })
+
+  it('cerrar con un toque que no enfoca el botón no mueve el foco', () => {
+    const onClearLocation = vi.fn()
+    render(<SpainMap forecast={forecast([])} selectedLocationId="gijon" onClearLocation={onClearLocation} />)
+
+    // Así se comportan Safari y los navegadores táctiles: el botón recibe
+    // el clic pero no el foco. Mover el foco al marcador haría saltar la
+    // página hasta el mapa.
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
+
+    expect(onClearLocation).toHaveBeenCalledTimes(1)
+    expect(document.body).toHaveFocus()
+  })
+
+  it('la tarjeta se abre hacia el lado del mapa con más espacio libre', () => {
+    const { container, rerender } = render(<SpainMap forecast={forecast([])} selectedLocationId="a-coruna" />)
+    expect(container.querySelector('.location-card')).toHaveClass('location-card--east')
+
+    rerender(<SpainMap forecast={forecast([])} selectedLocationId="menorca" />)
+    expect(container.querySelector('.location-card')).toHaveClass('location-card--west')
+  })
+
+  it('los lugares de Canarias anclan la tarjeta dentro de su recuadro, no en su posición local', () => {
+    const { container } = render(<SpainMap forecast={forecast([])} selectedLocationId="tenerife" />)
+
+    const card = container.querySelector<HTMLElement>('.location-card')!
+    const tenerife = mapPoints.tenerife
+    const seaBottom = canaryBox.y + canaryBox.height
+    expect(Number(card.style.getPropertyValue('--anchor-x'))).toBeCloseTo((canaryBox.x + tenerife.x - ROOT_VIEW_BOX.x) / ROOT_VIEW_BOX.width)
+    expect(Number(card.style.getPropertyValue('--anchor-y'))).toBeCloseTo((canaryBox.y + tenerife.y - ROOT_VIEW_BOX.y) / seaBottom)
+  })
+})
+
+describe('SpainMap — filtros', () => {
+  // La previsión real: los 74 con sprite y cifras, que es lo que la sombra
+  // tiene que quitar y devolver.
+  const today = forecastData as Forecast
+
+  // Cada marcador en el orden del DOM, con todo lo que distingue un botón de
+  // una sombra.
+  function markers(container: HTMLElement) {
+    return [...container.querySelectorAll<SVGGElement>('.location-marker')].map((marker) => ({
+      transform: marker.getAttribute('transform'),
+      sprite: marker.querySelector('image') && ['x', 'y', 'width', 'height', 'href'].map((attribute) => marker.querySelector('image')!.getAttribute(attribute)).join(' '),
+      role: marker.getAttribute('role'),
+      tabindex: marker.getAttribute('tabindex'),
+      label: marker.getAttribute('aria-label'),
+      pressed: marker.getAttribute('aria-pressed'),
+      hidden: marker.getAttribute('aria-hidden'),
+      title: marker.querySelector('title')?.textContent ?? null,
+      temperatures: marker.querySelector('.location-marker__temperature:not(.location-marker__temperature--contour)')?.textContent ?? null,
+      focusRing: marker.querySelector('.location-marker__focus-ring') !== null,
+      dimmed: marker.classList.contains('location-marker--dimmed'),
+    }))
+  }
+
+  const ALL = locations.map((location) => location.id)
+
+  it('matchingIds null: exactamente el mapa de la 008, los 74 botones y ninguna sombra', () => {
+    const { container: without } = render(<SpainMap forecast={today} />)
+    const { container: explicit } = render(<SpainMap forecast={today} matchingIds={null} />)
+
+    expect(explicit.innerHTML).toBe(without.innerHTML)
+    expect(within(explicit).getAllByRole('button')).toHaveLength(74)
+    expect(explicit.querySelectorAll('.location-marker--dimmed')).toHaveLength(0)
+  })
+
+  it('un conjunto con los 74: igual que sin filtros', () => {
+    const { container: without } = render(<SpainMap forecast={today} />)
+    const { container: all } = render(<SpainMap forecast={today} matchingIds={new Set(ALL)} />)
+
+    expect(markers(all)).toEqual(markers(without))
+  })
+
+  it('un conjunto vacío: 74 sombras y ningún marcador operable', () => {
+    const { container } = render(<SpainMap forecast={today} matchingIds={new Set()} />)
+
+    expect(within(container).queryAllByRole('button')).toHaveLength(0)
+    expect(container.querySelectorAll('.location-marker--dimmed')).toHaveLength(74)
+    expect(container.querySelectorAll('[tabindex]')).toHaveLength(0)
+  })
+
+  it.each([
+    ['del mapa principal', 'madrid', /^Madrid,/],
+    ['de Canarias', 'tenerife', /^Tenerife,/],
+  ])('un conjunto de un lugar %s: exactamente 1 operable y 73 sombras', (_, id, name) => {
+    const { container } = render(<SpainMap forecast={today} matchingIds={new Set([id])} />)
+
+    const operable = within(container).getAllByRole('button')
+    expect(operable).toHaveLength(1)
+    expect(operable[0]).toHaveAccessibleName(name)
+    expect(container.querySelectorAll('.location-marker--dimmed')).toHaveLength(73)
+  })
+
+  it.each([
+    ['sin filtros', null],
+    ['vacío', new Set<string>()],
+    ['un lugar', new Set(['madrid'])],
+    ['medio mapa', new Set(ALL.filter((_, index) => index % 2 === 0))],
+  ])('%s: ningún marcador es a la vez sombra oculta y botón', (_, matchingIds) => {
+    const { container } = render(<SpainMap forecast={today} matchingIds={matchingIds} />)
+
+    const all = markers(container)
+    const hidden = all.filter((marker) => marker.hidden === 'true')
+    const shown = all.filter((marker) => marker.hidden !== 'true')
+    expect(hidden.length + shown.length).toBe(74)
+
+    // Todo lo oculto es sombra y nada más: ni botón, ni foco, ni nombre.
+    expect(hidden.map(({ dimmed, role, tabindex, label, pressed, title, temperatures, focusRing }) => ({ dimmed, role, tabindex, label, pressed, title, temperatures, focusRing }))).toEqual(
+      hidden.map(() => ({ dimmed: true, role: null, tabindex: null, label: null, pressed: null, title: null, temperatures: null, focusRing: false })),
+    )
+    // Todo lo visible es un botón completo, con su nombre.
+    expect(shown.filter((marker) => marker.dimmed || marker.role !== 'button' || marker.tabindex !== '0' || !marker.label)).toEqual([])
+  })
+
+  it('en sombra no responde a clic ni a teclado', () => {
+    const onToggleLocation = vi.fn()
+    const onClearLocation = vi.fn()
+    const { container } = render(<SpainMap forecast={today} matchingIds={new Set()} onToggleLocation={onToggleLocation} onClearLocation={onClearLocation} />)
+
+    for (const marker of container.querySelectorAll('.location-marker')) {
+      fireEvent.click(marker)
+      fireEvent.keyDown(marker, { key: 'Enter' })
+      fireEvent.keyDown(marker, { key: ' ' })
+      fireEvent.keyDown(marker, { key: 'Escape' })
+    }
+
+    expect(onToggleLocation).not.toHaveBeenCalled()
+    expect(onClearLocation).not.toHaveBeenCalled()
+  })
+
+  it('la sombra no cambia coordenadas, tamaños, sprites ni orden del DOM, ni la caja del mapa', () => {
+    const { container: without } = render(<SpainMap forecast={today} />)
+    const { container: empty } = render(<SpainMap forecast={today} matchingIds={new Set()} />)
+    const { container: half } = render(<SpainMap forecast={today} matchingIds={new Set(ALL.slice(0, 37))} />)
+
+    const geometry = (container: HTMLElement) => markers(container).map(({ transform, sprite }) => ({ transform, sprite }))
+    expect(geometry(empty)).toEqual(geometry(without))
+    expect(geometry(half)).toEqual(geometry(without))
+
+    const box = (container: HTMLElement) => {
+      const svg = container.querySelector('.spain-map__canvas')!
+      return [svg.getAttribute('viewBox'), svg.getAttribute('style'), svg.getAttribute('preserveAspectRatio')]
+    }
+    expect(box(empty)).toEqual(box(without))
+    expect(box(half)).toEqual(box(without))
+  })
+
+  it('la sombra es la silueta del sprite: un único filtro en el mapa, al que apuntan todas, también las de Canarias', () => {
+    const { container } = render(<SpainMap forecast={today} matchingIds={new Set()} />)
+
+    const filters = container.querySelectorAll('defs filter')
+    expect(filters).toHaveLength(1)
+    const reference = `url(#${filters[0].id})`
+    expect(container.querySelectorAll('.location-marker--dimmed')).toHaveLength(74)
+    const sprites = [...container.querySelectorAll('.location-marker--dimmed image')]
+    expect(sprites.length).toBeGreaterThan(0)
+    expect(sprites.every((sprite) => sprite.getAttribute('filter') === reference)).toBe(true)
+    expect(container.querySelectorAll('.territory-inset .location-marker--dimmed')).toHaveLength(6)
+  })
+
+  it('las cifras desaparecen en sombra y vuelven, las mismas, al volver a coincidir', () => {
+    const { container, rerender } = render(<SpainMap forecast={today} />)
+    const before = markers(container)
+    expect(before.every((marker) => marker.temperatures !== null)).toBe(true)
+
+    rerender(<SpainMap forecast={today} matchingIds={new Set(['madrid'])} />)
+    const filtered = markers(container)
+    expect(filtered.filter((marker) => marker.temperatures !== null).map((marker) => marker.label)).toEqual([before.find((marker) => marker.label?.startsWith('Madrid,'))!.label])
+    expect(container.querySelectorAll('.location-marker--dimmed text')).toHaveLength(0)
+
+    rerender(<SpainMap forecast={today} matchingIds={new Set(ALL)} />)
+    expect(markers(container)).toEqual(before)
+
+    rerender(<SpainMap forecast={today} matchingIds={null} />)
+    expect(markers(container)).toEqual(before)
+  })
+
+  it('el lugar seleccionado que sigue coincidiendo conserva su tarjeta y su estado pulsado', () => {
+    const { container } = render(<SpainMap forecast={today} selectedLocationId="madrid" matchingIds={new Set(['madrid', 'toledo'])} />)
+
+    expect(within(container).getByRole('button', { name: /^Madrid,/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('region', { name: 'Madrid' })).toBeInTheDocument()
   })
 })

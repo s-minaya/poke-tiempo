@@ -1,38 +1,15 @@
 @use '../../styles/abstracts/variables' as vars;
 
-// Altura real y VISIBLE del mapa a `$breakpoint-desktop-large` (134rem de
-// ancho × la relación de aspecto recortada a `seaBottom`, ver
-// `SpainMap.tsx` — mismo par de cifras que informa
-// `$fluid-root-height-divisor` en `_reset.scss`; no la relación de aspecto
-// sin recortar del `<svg>`, que reserva aire por debajo de Canarias). Es
-// el tope de la leyenda de más abajo: `align-items: stretch` (App.scss)
-// por sí solo NO basta para evitar que un día con muchos más Pokémon
-// visibles de los habituales estire la fila del grid (y con ella el mapa)
-// por encima de esto — un `max-height` en `rem` sí acota el aporte de la
-// leyenda al cálculo de la fila, sea cual sea su contenido.
-$legend-max-height: 84.61rem;
-
 .legend {
   grid-area: legend;
   padding: 2rem;
   font-family: vars.$font-body;
 
-  // La caja de la leyenda ya queda a la altura del mapa por `align-items:
-  // stretch` (App.scss) en el caso normal — nunca más alta gracias al
-  // `max-height` de arriba. `display: flex` en columna, con `__list` como
-  // único hijo que crece (`flex: 1`, ver más abajo) y con su propio
-  // `overflow-y: auto`, hace que un día con más Pokémon visibles de los
-  // habituales deslice la lista dentro de su propio hueco en vez de
-  // empujar la caja (y con ella el mapa y la página) hacia abajo.
-  display: flex;
-  flex-direction: column;
-  max-height: $legend-max-height;
-
   // Mismo azul que la cabecera y el mapa (`Header.scss`, `SpainMap.scss`).
   background: vars.$map-sea;
 
-  // Mismo mood térmico y misma paleta que el título (Header.scss →
-  // Decisiones) — mismos dos tokens por mood, relleno y borde.
+  // Mismo mood térmico que la línea de previsión (`Header.scss`): los mismos
+  // dos tokens por mood, relleno y halo, que leen las etiquetas.
   --mood-fill: #{vars.$color-green};
   --mood-border: #{vars.$header-mood-neutral-border};
 
@@ -64,38 +41,81 @@ $legend-max-height: 84.61rem;
   &__heading {
     margin: 0 0 1.6rem;
     font-family: vars.$font-title;
-    font-size: 3.2rem;
+
+    // Encoge en la misma proporción que el título (`Header.scss`), con el
+    // que comparte familia, y alcanza el techo en el mismo punto.
+    font-size: max(19px, clamp(2.4rem, 0.91vw + 2.11rem, 3.2rem));
     letter-spacing: 0.05em;
-    color: var(--mood-fill);
+
+    // Sin trazo, como el título, y en la tinta de la paleta de interfaz, no
+    // en el mood: 11,47:1 contra el mar en los cinco moods.
+    color: vars.$ui-ink;
 
     // Negrita sintética (Poketiempo Unown solo tiene un peso propio, ver
-    // Header.scss → Decisiones) — mismo criterio que el título.
+    // `Header.scss`) — mismo criterio que el título.
     font-weight: 700;
   }
 
-  &__list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.6rem;
+  &__hint {
+    margin: -0.8rem 0 1.2rem;
+    font-size: 1.5rem;
+    font-weight: 600;
 
-    // Único hijo que crece dentro de `.legend` (`flex: 1`) y el único al
-    // que de verdad le hace falta encoger para que `overflow-y` tenga
-    // algo que hacer: sin `min-height: 0` un hijo flex nunca se encoge
-    // por debajo de la altura de su propio contenido.
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
+    // Tinta de la interfaz, no mood: es una instrucción, no información
+    // meteorológica. 11,47:1 contra el mar.
+    color: vars.$ui-ink;
   }
 
-  &__item {
-    display: flex;
+  // Cuántas columnas caben lo decide el hueco, no un punto de corte: una
+  // sola en la columna de escritorio y en un móvil vertical, varias en la
+  // banda bajo el mapa a partir de ahí. 26,8rem es lo que ocupa una entrada
+  // con la palabra más larga de las 25 etiquetas posibles (`POKEMON_LABELS`:
+  // «torrenciales», 12rem a 22px), no solo de las que salen hoy: el borde
+  // (0,6rem), el relleno (0,8rem), el sprite (6rem), los dos huecos
+  // (2,4rem), la columna de estado (1,6rem) y 15,4rem de etiqueta, en los
+  // que «torrenciales» cabe entera también con el espaciado de letra
+  // ampliado de WCAG 1.4.12 (15,2rem). Con menos, esa palabra invade la
+  // columna vecina o se parte. `min(100%, …)`: en una pantalla más
+  // estrecha que eso, la columna se estrecha con ella en vez de desbordar.
+  &__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 26.8rem), 1fr));
+    gap: 1.2rem;
+  }
+
+  // Tres columnas: sprite, etiqueta y estado. El borde y la columna de
+  // estado existen también en reposo —transparente y vacía—, así que pulsar
+  // o soltar no mueve ni ensancha nada.
+  &__entry {
+    display: grid;
+    grid-template-columns: 6rem minmax(0, 1fr) 1.6rem;
     align-items: center;
-    gap: 1.6rem;
+    column-gap: 1.2rem;
+    inline-size: 100%;
+    min-block-size: 6.4rem;
+    padding: 0.2rem 0.4rem;
+    border: 0.3rem solid transparent;
+    border-radius: 1rem;
+    text-align: start;
+
+    // El color del ✓ (`currentcolor` en `__check`); la etiqueta lleva el
+    // suyo propio, de mood.
+    color: vars.$ui-accent;
+
+    // Hover: el borde azul, sin la caja blanca, que es de lo pulsado.
+    &:hover {
+      border-color: vars.$ui-accent;
+    }
+
+    // Pulsada: borde azul, caja blanca y el ✓. El ✓ es la señal que no es
+    // color (WCAG 1.4.1); el borde contra el mar da 6,28:1 (1.4.11).
+    &[aria-pressed='true'] {
+      border-color: vars.$ui-accent;
+      background: vars.$color-white;
+    }
   }
 
   &__sprite {
-    flex: none;
-
     // A juego con el tamaño real del sprite en el mapa (`SPRITE_SIZE` en
     // `LocationMarker.tsx`), en vez de una miniatura — la leyenda es la
     // referencia visual de cada Pokémon, no un icono discreto (008-plan.md).
@@ -106,18 +126,50 @@ $legend-max-height: 84.61rem;
     // MÁXIMO, tech-stack.md) — sin esto, forzar el mismo ancho y alto los
     // deforma. `contain` los encaja en el cuadro sin estirarlos.
     object-fit: contain;
+
+    // Con otra entrada pulsada, silueta: la misma sombra que en el mapa. La
+    // etiqueta no cambia, y la entrada sigue pudiéndose pulsar.
+    &--dimmed {
+      filter: brightness(0);
+      opacity: 0.3;
+    }
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    block-size: 1.6rem;
+  }
+
+  // 8 × 5 celdas de 0,2rem: el ✓ ocupa el ancho de su columna.
+  &__check {
+    inline-size: 1.6rem;
+    block-size: 1rem;
+    fill: currentcolor;
   }
 
   &__label {
+    // Puede estrecharse por debajo de su palabra más larga y partirla. Solo
+    // pasa cuando ni la columna de 26,8rem basta —el espaciado de texto
+    // ampliado de WCAG 1.4.12, o mucho zoom en un móvil estrecho—, y es
+    // preferible a invadir la columna vecina o salirse de la pantalla.
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     color: var(--mood-fill);
-    font-size: 2.2rem;
+
+    // Sin `clamp()`: 2,2rem ya está por encima del suelo de la regla de mood,
+    // y es el tamaño con el que se calcula la columna mínima de `__list`. El
+    // `max()` es el mismo suelo duro de 19px que el resto del texto de mood:
+    // en `rem` solo se cumple mientras la base del navegador no baje de 16px.
+    font-size: max(19px, 2.2rem);
 
     // Nunito Sans sí trae 700 real (index.html) — negrita de verdad, no
     // sintética.
     font-weight: 700;
     line-height: 1.3;
 
-    // Mismo matiz de borde que `__heading`, sin tocar.
-    -webkit-text-stroke: 1px var(--mood-border);
+    // Mismo halo que el resto del texto de mood, en `em`.
+    -webkit-text-stroke: vars.$mood-text-halo var(--mood-border);
   }
 }

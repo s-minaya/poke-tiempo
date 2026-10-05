@@ -1,11 +1,64 @@
+@use "../../styles/abstracts/accessibility" as a11y;
+@use "../../styles/abstracts/breakpoints" as bp;
 @use "../../styles/abstracts/variables" as vars;
 
 .spain-map {
+  // Tope de alto del mapa. No sale de restarle a la pantalla lo que ocupan
+  // la cabecera, la leyenda o los créditos: la página puede seguir hacia
+  // abajo todo lo que haga falta. Solo evita que en un viewport bajo el mapa
+  // se vuelva tan alto que no se abarque de un vistazo, dejando además ver
+  // que el contenido continúa.
+  --map-max-block: 80vh;
+
   grid-area: map;
-  display: block;
-  width: 100%;
-  height: auto;
+
+  // Caja de referencia de la tarjeta anclada (`LocationCard.scss`), que se
+  // coloca en porcentajes de este ancho y este alto.
+  position: relative;
+
+  // Lo único de la composición que se ajusta al hueco disponible, porque es
+  // lo único con una proporción rígida: el menor entre el ancho que le dan y
+  // el que le corresponde a su alto máximo. `--map-aspect` lo pone
+  // `SpainMap.tsx` a partir de la geometría real, sin repetir aquí ninguna
+  // cifra de `map-geometry.ts`.
+  inline-size: min(100%, calc(var(--map-max-block) * var(--map-aspect)));
   margin-inline: auto;
+
+  @supports (height: 1svh) {
+    // `svh` es el alto que siempre está disponible en móvil; `vh` cuenta con
+    // la barra del navegador escondida.
+    --map-max-block: 80svh;
+  }
+
+  // En dos columnas, sin estirarse hasta el alto de la fila cuando la
+  // leyenda es más alta que el mapa: la tarjeta se ancla en fracciones del
+  // alto, y ese alto tiene que ser el del dibujo. Por debajo sigue el mismo
+  // azul del `body`, así que no cambia nada a la vista.
+  @include bp.respond-from(bp.$breakpoint-desktop) {
+    align-self: start;
+  }
+
+  // Contenedor de consulta del propio mapa: sus temperaturas por marcador
+  // dependen de lo que mida el mapa, no la ventana — el mismo mapa mide
+  // distinto en la composición apilada y en la de dos columnas. En este
+  // envoltorio y no en `.spain-map`, porque un contenedor de consulta es
+  // también contenedor de lo que lleve `position: fixed` dentro, y la
+  // tarjeta tiene que poder ser hoja inferior de la pantalla.
+  &__viewport {
+    container: map / inline-size;
+  }
+
+  // Región viva de la selección (`SpainMap.tsx`): solo para lectores de
+  // pantalla; a la vista ya está la tarjeta.
+  &__announcement {
+    @include a11y.visually-hidden;
+  }
+
+  &__canvas {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+  }
 
   // Fondo completo del mapa — primer elemento, detrás de toda la tierra.
   &__sea {

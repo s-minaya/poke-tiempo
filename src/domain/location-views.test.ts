@@ -7,6 +7,8 @@ function location(overrides: Partial<Location> = {}): Location {
   return {
     id: 'a-coruna',
     name: 'A Coruña',
+    administrativeArea: 'A Coruña',
+    zone: 'Galicia',
     country: 'ES',
     latitude: 43.3701,
     longitude: -8.3911,

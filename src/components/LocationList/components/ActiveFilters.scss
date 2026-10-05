@@ -1,0 +1,102 @@
+@use '../../../styles/abstracts/accessibility' as a11y;
+@use '../../../styles/abstracts/variables' as vars;
+
+// Recuento, filtros activos y «Limpiar filtros», en una fila que se reparte
+// en varias cuando no cabe.
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem 1rem;
+
+  &__count {
+    margin: 0 0.6rem 0 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: vars.$ui-ink;
+  }
+
+  &__announcement {
+    @include a11y.visually-hidden;
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // Elegido: pastilla azul con texto blanco (7,02:1) y el ✕, la señal que no
+  // es color. En hover pasa a blanco con borde y texto azules: adelanta cómo
+  // queda sin ella.
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-block-size: max(44px, 4.4rem);
+    padding: 0 1.2rem 0 1.4rem;
+    border: 0.2rem solid vars.$ui-accent;
+    border-radius: 999px;
+    background: vars.$ui-accent;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: vars.$color-white;
+
+    &:hover {
+      background: vars.$color-white;
+      color: vars.$ui-accent;
+    }
+
+    &--pokemon {
+      padding-inline-start: 0.3rem;
+    }
+  }
+
+  &__disc {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    inline-size: 3.4rem;
+    block-size: 3.4rem;
+    border-radius: 50%;
+    background: vars.$color-white;
+  }
+
+  &__sprite {
+    inline-size: 2.8rem;
+    block-size: 2.8rem;
+    object-fit: contain;
+  }
+
+  &__remove {
+    flex: none;
+    inline-size: 1.4rem;
+    block-size: 1.4rem;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+
+  // Botón secundario: blanco con borde de tinta; en hover, el azul.
+  &__clear {
+    min-block-size: max(44px, 4.4rem);
+    margin-inline-start: auto;
+    padding: 0 1.6rem;
+    border: 0.2rem solid vars.$ui-ink;
+    border-radius: 0.8rem;
+    background: vars.$color-white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: vars.$ui-ink;
+
+    &:hover {
+      border-color: vars.$ui-accent;
+      color: vars.$ui-accent;
+    }
+  }
+}

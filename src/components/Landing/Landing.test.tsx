@@ -59,11 +59,17 @@ describe('Landing', () => {
     expect(onStart).toHaveBeenCalledTimes(1)
   })
 
-  it('con leaving, el botón deja de ser interactivo y sale del árbol de accesibilidad', () => {
-    render(<Landing onStart={() => {}} leaving />)
+  it('con leaving, el botón deja de ser interactivo y la portada queda inerte', () => {
+    const { container } = render(<Landing onStart={() => {}} leaving />)
 
     expect(screen.getByRole('button', { name: 'EMPEZAR', hidden: true })).toBeDisabled()
-    expect(screen.queryByRole('button', { name: 'EMPEZAR' })).not.toBeInTheDocument()
+
+    // `inert` hace las dos cosas que hacen falta al salir:
+    // saca el subárbol del árbol de accesibilidad y además impide que el
+    // tabulador entre en él. Se comprueba el atributo y no la ausencia del
+    // rol porque jsdom no implementa el efecto de `inert` sobre el árbol de
+    // accesibilidad — mismo criterio que la escena de `App.test.tsx`.
+    expect(container.querySelector('.landing')).toHaveAttribute('inert')
   })
 })
 

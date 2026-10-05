@@ -1,7 +1,23 @@
-$breakpoint-mobile: 480px;
+// Puntos de corte del viewport. Sólo existen dos, y cada uno marca dónde el
+// contenido deja de caber bien — no un catálogo de dispositivos.
+// `$breakpoint-tablet` no es uno de ellos: no decide maquetación, sólo qué
+// ilustración de portada se sirve (`<picture>` en `Landing`, precarga en
+// `Loader`). Eso es dirección de arte.
 $breakpoint-tablet: 768px;
+
+// Apilado (una columna) por debajo; composición de dos columnas por encima.
 $breakpoint-desktop: 1200px;
+
+// La composición deja de crecer y queda centrada.
 $breakpoint-desktop-large: 1600px;
+
+// Ancho de la caja del mapa a partir del cual sus temperaturas por marcador
+// son legibles: 13 unidades de `viewBox` sobre 1240 llegan a 12px justo aquí.
+// No es un punto de corte del viewport y no se usa con `respond-from`, sino
+// con `@container` sobre el propio mapa — el mismo mapa mide distinto en la
+// composición apilada y en la de dos columnas, y lo que decide es su ancho
+// real. Va en `px` porque mide una caja, no texto.
+$map-temperature-threshold: 1150px;
 
 @mixin respond-from($breakpoint) {
   @media (min-width: $breakpoint) {

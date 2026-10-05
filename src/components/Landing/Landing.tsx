@@ -39,7 +39,10 @@ function stop(audio: HTMLAudioElement): void {
  * Portada fullscreen (006-plan.md): cuando se monta, la imagen ya está en
  * caché del navegador (la precargó `Loader`), así que no necesita ninguna
  * lógica de carga propia. `leaving` la deja de fondo durante el cruce hacia
- * la escena siguiente — ya no interactiva, fuera del árbol de accesibilidad.
+ * la escena siguiente: `inert` y no `aria-hidden`, porque `aria-hidden` la
+ * saca del árbol de accesibilidad pero deja que el tabulador siga entrando
+ * en ella — foco invisible dentro de algo que para el lector de pantalla ya
+ * no existe. `inert` hace las dos cosas a la vez.
  */
 function Landing({ onStart, leaving = false }: LandingProps) {
   // El jingle vive en un ref, no en estado: es una instancia mutable del
@@ -98,7 +101,7 @@ function Landing({ onStart, leaving = false }: LandingProps) {
   }, [leaving])
 
   return (
-    <div className={`landing${leaving ? ' landing--leaving' : ''}`} aria-hidden={leaving}>
+    <div className={`landing${leaving ? ' landing--leaving' : ''}`} inert={leaving}>
       <picture className="landing__picture">
         {/* 767px debe coincidir con $breakpoint-tablet (_breakpoints.scss) */}
         <source media="(max-width: 767px)" srcSet={backgroundMobile} />

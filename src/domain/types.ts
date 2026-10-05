@@ -2,6 +2,8 @@
 // dominio: features/002-weather-data-pipeline/002-plan.md — cualquier cambio
 // de forma pasa primero por ese documento, no por este archivo.
 
+import type { LocationZone } from './location-zones.ts'
+
 export type SourceId = 'aemet' | 'ipma' | 'open-meteo'
 
 // Solo nubosidad. Lluvia, tormenta, calima, niebla y nieve son ejes propios,
@@ -97,6 +99,13 @@ export interface Provenance {
 export interface Location {
   id: string // slug estable: 'a-coruna', 'lisboa', 'andorra-la-vella'
   name: string
+  // Provincia, distrito o país que contiene al lugar; coincide con `name`
+  // cuando el lugar ya es una región o provincia entera (008-spec.md).
+  administrativeArea: string
+  // Comunidad o ciudad autónoma en España, y el país en Portugal y Andorra:
+  // la agrupación de la lista y el filtro de zona (009-plan.md). Dato
+  // descriptivo; nada que ver con las zonas de aviso (`alertZoneIds`).
+  zone: LocationZone
   country: 'ES' | 'PT' | 'AD'
   latitude: number
   longitude: number
