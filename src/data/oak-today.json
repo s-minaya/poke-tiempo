@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-06",
-  "generatedAt": "2026-10-05T12:59:32.737Z",
+  "date": "2026-10-07",
+  "generatedAt": "2026-10-06T12:28:04.846Z",
   "source": "ai",
   "dayMode": "alerta",
   "serious": true,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Hoy hay 33 lugares bajo aviso y 69 con lluvia."
+      "text": "Hoy hay 22 lugares del mapa bajo algún aviso y 52 con lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Aviso naranja por lluvia en Jaca y Benasque; en Jaca se esperan 14,3 mm con 100 % de probabilidad. Precaución."
+      "text": "En Barcelona hay aviso oficial naranja por lluvia; se esperan 1,4 mm con 100 % de probabilidad."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Zapdos se observa en 26 lugares del mapa; Ourense, Oviedo y Gijón son ejemplos."
+      "text": "Zapdos aparece en 14 lugares del mapa; Navarra, Huesca y Benasque son algunos ejemplos."
     }
   ]
 }
