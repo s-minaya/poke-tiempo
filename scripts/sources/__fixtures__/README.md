@@ -4,8 +4,9 @@
 
 - `aemet-diaria-madrid.json` / `aemet-horaria-madrid.json` — respuesta real
   capturada de AEMET OpenData para Madrid (municipio `28079`), decodificada
-  de ISO-8859-1 a UTF-8 y recortada a `prediccion.dia[0]` (el resto de días
-  no se usa en la normalización). Día soleado sin lluvia/nieve/tormenta.
+  de ISO-8859-1 a UTF-8 y recortada a un solo día para esta fixture.
+  Los normalizadores seleccionan explícitamente `targetDate`; el recorte no
+  implica que el contrato seleccione siempre la primera posición. Día soleado sin lluvia/nieve/tormenta.
 - `aemet-horaria-edge-cases.json` — construida a mano a partir de esa misma
   forma real para ejercitar ramas que un día cualquiera no produce: niebla
   (81), bruma (82), nieve (34 + campo `nieve` > 0), tormenta (52) y calima

@@ -120,14 +120,14 @@ Los commits automáticos del workflow diario usan `chore(datos):` y los firma el
 
 Concepto: **pixel art / interfaz de Game Boy**. La referencia es la Pokédex y los menús de los juegos de primera generación, no una app del tiempo moderna.
 
-- **Tipografía del título:** la tipografía de símbolos de Pokémon (pendiente de fijar el archivo concreto y su licencia — ver `tech-stack.md`).
+- **Tipografía del título:** Poketiempo Unown, fuente propia; archivo, origen y condiciones documentados en `spec/constitution/tech-stack.md`.
 - **Sprites:** pixel art, coherentes entre sí (una sola generación/estilo, no mezclados).
 - **Composición fijada por el usuario:** título "Poketiempo" arriba a la izquierda; "Previsión (día y mes)" arriba a la derecha; leyenda en columna bajo el título, con un Pokémon por condición y su descripción; el mapa de España ocupa el cuerpo de la página.
 - **Paleta: dos sistemas de color, con papeles que no se mezclan.** Detalle, hex y contrastes en `tech-stack.md` → Estilo visual; todos los tokens viven en `src/styles/abstracts/_variables.scss`.
   - **Información meteorológica** — colores de mood (`$header-mood-*`, con su halo `$header-mood-*-border`) y franjas de temperatura del mapa (`$marker-temp-*`). Solo dicen algo del tiempo: el mood de la previsión y de las etiquetas de la leyenda, y la franja de cada cifra del mapa. Ningún control los usa.
   - **Identidad y estado de interacción** — colores de la paleta de pokemon.com: `$ui-ink` (#323232), la tinta de texto y bordes de los controles y de «Leyenda», y `$ui-accent` (#1B53BA), lo elegido y el hover de los controles y el título POKETIEMPO. `$ui-surface` (#F5F5F5), la superficie de la zona de controles y de los encabezados de grupo de la lista. Ninguno repite un color que ya significa algo del tiempo o de un aviso.
   - Estados de un control: reposo, blanco con borde `$ui-ink`; hover, borde `$ui-accent`; elegido, `$ui-accent` más una señal que no es color; foco, el anillo de dos tonos de `_reset.scss`, nunca azul.
-- El resto de la identidad (texturas, tratamiento del mapa) **está sin definir**. Un agente no la inventa: la propone como opciones y espera decisión. Tampoco añade un color a la paleta sin decisión del usuario.
+- La identidad y el tratamiento del mapa vigentes se describen en `spec/constitution/tech-stack.md`. Cualquier aspecto nuevo sin definir, incluidas nuevas texturas, se propone como opciones y espera decisión del usuario. Tampoco añade un color a la paleta sin decisión del usuario.
 
 ## Testing
 
@@ -161,12 +161,12 @@ Concepto: **pixel art / interfaz de Game Boy**. La referencia es la Pokédex y l
 
 ## Definición de "hecho" (además de los criterios de la spec)
 
-- [ ] Funciona en los 5 breakpoints (320 / 480 / 768 / 1200 / 1600px).
+- [ ] Funciona en las 5 anchuras de verificación (320 / 480 / 768 / 1200 / 1600px). Los puntos de corte efectivos se definen en `tech-stack.md` → Composición y puntos de corte.
 - [ ] La información del mapa está disponible también en forma textual accesible.
 - [ ] Ningún valor de espaciado/color nuevo se escribe como literal si ya existe un token para ese valor.
 - [ ] Grep de variables SCSS tocadas en esta feature: 0 quedan sin uso.
 - [ ] Ninguna lista con interacción por fila queda sin memoizar.
-- [ ] Los sprites de la lista de respaldo en móvil llevan `loading="lazy"`; los del mapa **no** (están por encima del pliegue).
+- [ ] Los sprites de la lista de lugares, en ambas composiciones, llevan `loading="lazy"`; los del mapa **no** (están por encima del pliegue).
 - [ ] Ningún dato nuevo se pide a AEMET en runtime.
 
 ## Despliegue

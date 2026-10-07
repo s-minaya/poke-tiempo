@@ -26,7 +26,7 @@ De la 002 (`src/domain/types.ts`), sin redeclarar nada: `Forecast`, `LocationFor
 
 De la 003: `PokedexId` (`src/domain/pokedex.ts`) y `assignPokemon` (`assign-pokemon.ts`).
 
-De la 004/005: `MAP_PRIORITY` y `pickMapPokemon` (`pick-map-pokemon.ts`), `buildLocationViews` (`location-views.ts`) y la tabla de etiquetas hoy llamada `LEGEND_METADATA`.
+De la 004/005: `MAP_PRIORITY` y `pickMapPokemon` (ahora `src/domain/map-priority.ts`), `buildLocationViews` (`src/domain/location-views.ts`) y las etiquetas `POKEMON_LABELS` (`src/domain/pokemon-labels.ts`).
 
 ### Qué se mueve a `src/domain/` y qué no
 

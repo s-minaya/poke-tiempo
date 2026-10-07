@@ -35,7 +35,7 @@ La leyenda necesita que `assignPokemon()` cubra `'despejado'` (castform-sun por 
 - [x] "POKETIEMPO" usa la fuente propia Poketiempo Unown (`src/assets/fonts/poketiempo-unown.woff2`); la línea de previsión usa Pixelify Sans (Google Fonts); leyenda, créditos y las temperaturas mínima/máxima del mapa usan Nunito Sans (Google Fonts). Ninguna de las dos fuentes de Google Fonts se añade como dependencia JS — solo `<link>` en `index.html`.
 - [x] El color de relleno de "POKETIEMPO" y de la línea de previsión cambia igual entre los dos, según la categoría térmica que predomina entre los 74 `temperature.maxC` del forecast: gelid (`< 0`), cold (`0–<10`), neutral (`10–<26`), heat (`26–<35`), sweltering (`>= 35`). Empate en el recuento se resuelve con la categoría en la que cae la mediana de las 74 máximas — determinista, no depende del orden del array.
 - [x] "POKETIEMPO" lleva borde negro fijo en las cinco categorías (`$color-near-black`) con `font-weight: 700` (negrita sintética), stroke CSS real (`-webkit-text-stroke`), nunca una pila de `text-shadow`. La línea de previsión, mucho más pequeña, lleva su propio borde de mood (`--mood-border`, un matiz del relleno, no negro) y su propio grosor, más fino que el del título.
-- [x] La composición es una réplica fija que escala como una sola unidad a cualquier tamaño de pantalla, sin reorganizarse por breakpoint — resuelto en la 008 (`mission.md` → "Réplica fija, no una app adaptativa"); no queda pendiente aquí.
+- [x] La composición de esta etapa era una réplica fija que escalaba como una sola unidad. La 008 cerrada la sustituye por la composición responsive descrita en su spec; no es el comportamiento actual.
 
 **Mapa — paleta y territorios**
 

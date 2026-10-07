@@ -62,7 +62,7 @@ _Checklist derivada de `009-plan.md`, agrupada en bloques. Se implementa un bloq
 
 ## Bloque 7 — Cierre y verificación
 
-- [x] Los 5 breakpoints (320 / 480 / 768 / 1200 / 1600px) y los ocho rangos de la 008: sin overflow, zoom al 200 % funcional, teclado completo y áreas táctiles, en reposo, con filtros, sin resultados y con la tarjeta abierta.
+- [x] Las 5 anchuras de verificación (320 / 480 / 768 / 1200 / 1600px) y los ocho rangos de la 008: sin overflow, zoom al 200 % funcional, teclado completo y áreas táctiles, en reposo, con filtros, sin resultados y con la tarjeta abierta.
 - [x] **1.4.10** a 320 CSS px, **1.4.12** con los cuatro valores y **2.4.11** con la tarjeta abierta, en las dos composiciones.
 - [x] Los tres estados de `matchingIds` en navegador, encabezados, foco y selección a la vez, y ninguna maquetación en JS.
 - [x] `LocationFilters.scss` — el campo de zona, a la medida de su opción más larga con el espaciado de 1.4.12 (26,4rem); margen de desplazamiento del buscador para el enlace de salto; borde azul en hover en buscar y zona.

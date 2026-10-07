@@ -74,7 +74,7 @@ La distinción de a qué lugar corresponde cada Pokémon en zonas densas se resu
 
 Un único `viewBox` fijo con el SVG a `width: 100%; height: auto` — el aspecto no cambia nunca. El `viewBox` raíz lleva las dos extensiones del punto 3 (origen en `x = -130`, ancho total `960 + 130 + 150`, alto `932`), como un único valor fijo, sin recálculo en JS.
 
-**Sin `max-width` propio del mapa** — el tope de ancho de toda la composición vive en el contenedor (`app__layout`, `005-plan.md` → punto 7), no en `SpainMap.scss`: desde la 008, la página entera es una réplica fija de escala fluida (`mission.md`), no un mapa que cambia de tamaño por su cuenta en distintos breakpoints.
+**Sin `max-width` propio del mapa** — el tope de ancho de toda la composición vive en el contenedor (`app__layout`, `005-plan.md` → punto 7), no en `SpainMap.scss`: esta descripción corresponde a la composición anterior a la 008 cerrada. La composición responsive vigente y sus límites se describen en `008-plan.md` y `spec/constitution/tech-stack.md`.
 
 ## Sprites — resolución de archivo
 

@@ -74,7 +74,7 @@ Sin dependencias nuevas: 74 lugares se filtran en cada tecla sin librer√≠a de b√
 
 ## Zonas
 
-Derivadas de la provincia o el distrito de cada lugar (`administrativeArea`):
+Asignadas manualmente en `locations.manual.ts`, tomando como referencia la provincia o el distrito de cada lugar (`administrativeArea`); no se infieren en runtime:
 
 | Zona | Lugares | | Zona | Lugares |
 | --- | --- | --- | --- | --- |

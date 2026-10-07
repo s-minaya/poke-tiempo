@@ -71,7 +71,7 @@ Fuera:
 - [x] Un aviso solo cuenta si está activo en `forecast.date` — mismo criterio de solape que ya aplica la 003, sin reimplementarlo.
 - [x] La API key del proveedor de IA vive solo en GitHub Secrets: nunca en el bundle, nunca en `VITE_*`, nunca en el JSON público. El proveedor/modelo es configurable y permanece exclusivamente en capa gratuita — coste operativo obligatorio: **0 €**.
 - [x] Una sola llamada a la IA **por generación** para los 3 diálogos, nunca tres. El `schedule` hace una al día; un rerun manual hace otra, y eso es esperado.
-- [x] Cualquier error, timeout, `429`, indisponibilidad o JSON inválido activa el fallback local y el run **continúa**.
+- [x] Cualquier error del proveedor, timeout, `429`, indisponibilidad o respuesta de IA inválida activa el fallback local y el run **continúa**. Los fallos de lógica o validación propia se rigen por el criterio siguiente.
 - [x] Un fallo de nuestra propia lógica o validación que impida producir 3 diálogos válidos falla de forma ruidosa y **no** escribe `oak-today.json`.
 - [x] `src/data/oak-today.json` se importa en build-time, igual que `forecast.json` — sin `fetch` en runtime.
 - [x] `oak-today.json` solo se genera sobre un `forecast.json` cuya `date` coincide con el `targetDate` de esa misma ejecución.

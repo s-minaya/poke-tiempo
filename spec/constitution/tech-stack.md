@@ -47,7 +47,7 @@ cron diario (GitHub Actions)
 
 Motivos, para que nadie los reabra por costumbre:
 
-- **La API key de AEMET no puede llegar al cliente.** Está asociada a un correo, tiene caducidad y es la única credencial del proyecto.
+- **La API key de AEMET no puede llegar al cliente.** Está asociada a un correo, tiene caducidad y es una credencial del proveedor meteorológico.
 - **AEMET usa doble llamada:** la primera petición devuelve una URL temporal en el campo `datos` y hay que hacer una segunda a esa URL. Son 2 peticiones por ciudad.
 - **El rate limit de AEMET es de 50 peticiones por minuto y API key**, compartido entre todos los visitantes si se llamara desde el navegador.
 - **La respuesta de AEMET viene en ISO-8859-1**, no en UTF-8. Hay que decodificarla explícitamente o las tildes se rompen.
@@ -56,7 +56,7 @@ Motivos, para que nadie los reabra por costumbre:
 
 **Regla derivada:** si una feature futura necesita datos que no están en `forecast.json`, se amplía el script de descarga y el esquema del JSON — nunca se añade una llamada de red desde `src/`.
 
-**Tolerancia a fallos:** un lugar que falla se registra y se continúa, sea cual sea su fuente. Si falla más de un umbral del total, el script sale con error y el workflow **no despliega**, dejando en línea la previsión anterior. Un mapa de ayer es preferible a un mapa roto.
+**Tolerancia a fallos:** el contrato de la [002](../features/002-weather-data-pipeline/002-spec.md) exige los 74 lugares completos y con algún Pokémon asignable tras el fallback meteorológico. Los errores de autenticación/configuración no se enmascaran con ese fallback. El fallo sistémico de una fuente complementaria (>50% de sus lugares dependientes) es una condición de aborto independiente. Si no se cumplen estas condiciones, no se sobrescribe la previsión ni se despliega una nueva.
 
 ## Archivos / módulos clave
 
@@ -75,15 +75,15 @@ Motivos, para que nadie los reabra por costumbre:
 - `npm run test` — tests una vez. `npm run test:watch` para modo watch. `npm run test:coverage` — la suite con informe de cobertura (V8) en `coverage/`.
 - `npm run lint` — ESLint (TS/TSX, flat config) + Stylelint (Sass).
 - `npm run build` — compila para producción (`dist/`). `npm run preview` para previsualizar.
-- `npm run fetch:forecast` — descarga la previsión del día de las tres fuentes (AEMET, IPMA, Open-Meteo) y reescribe `src/data/forecast.json`. Necesita `AEMET_API_KEY`.
+- `npm run fetch:forecast` — descarga la previsión de D+1 (`targetDate`, respecto a `Europe/Madrid`) de las tres fuentes (AEMET, IPMA, Open-Meteo) y reescribe `src/data/forecast.json`. Necesita `AEMET_API_KEY`.
 - `npm run generate:oak` — regenera `src/data/oak-today.json` y `src/data/oak-history.json` a partir del `forecast.json` actual. Sin `GROQ_API_KEY` funciona igual y publica el fallback local: es el camino normal en desarrollo.
 - `npm run build:locations` — regenera `src/data/locations.ts` a partir de la lista fija de 74 lugares (no del maestro completo de municipios de AEMET, que solo cubriría España). Solo hace falta al cambiar la lista de lugares.
 
 ## Modelo de datos / dominio
 
-El contrato de datos completo (tipos, ejes meteorológicos simultáneos, provenance por fuente principal + complementaria, semántica `null` vs `false`/`0`, avisos oficiales) vive en `features/002-weather-data-pipeline/002-plan.md` — es donde se mantiene, no aquí, para no tener dos versiones que puedan desincronizarse. Resumen de alto nivel, siempre en inglés como nombres estructurales (`Location`, `LocationForecast`, `SkyCondition`, `Temperature`, `Precipitation`, `Snow`, `Wind`, `Marine`, `OfficialAlert`...) y con los valores literales del vocabulario meteorológico en español cuando vienen tal cual de una fuente (`'poco_nuboso'`, `'despejado'`) — ver la excepción en "Convenciones":
+El contrato meteorológico (ejes simultáneos, provenance por fuente principal + complementaria, semántica `null` vs `false`/`0`, avisos oficiales) vive en [002-plan.md](../features/002-weather-data-pipeline/002-plan.md). El modelo de lugares incorpora además `administrativeArea` en la [008](../features/008-responsive-and-accessibility/008-plan.md) y `zone` en la [009](../features/009-location-explorer/009-plan.md); los tipos implementados están en `src/domain/types.ts`. Cada ampliación se documenta en su feature, sin duplicar aquí el esquema completo. Resumen de alto nivel, siempre en inglés como nombres estructurales (`Location`, `LocationForecast`, `SkyCondition`, `Temperature`, `Precipitation`, `Snow`, `Wind`, `Marine`, `OfficialAlert`...) y con los valores literales del vocabulario meteorológico en español cuando vienen tal cual de una fuente (`'poco_nuboso'`, `'despejado'`) — ver la excepción en "Convenciones":
 
-- **`Location`** — identidad del lugar (id, nombre, país, coordenadas, huso horario, fuente principal, si es costero). No lleva datos meteorológicos.
+- **`Location`** — identidad del lugar (id, nombre, país, área administrativa, zona de exploración, coordenadas, huso horario, fuente principal, si es costero). No lleva datos meteorológicos.
 - **`LocationForecast`** — un lugar + un día, con cada eje meteorológico (temperatura, cielo, precipitación, nieve, viento, tormenta, calima, niebla, mar, avisos) como campo independiente y nullable — nunca un único valor que los colapse todos. Se llama `LocationForecast`, no `CityForecast`, porque varios de los 74 lugares son regiones (Cantabria, La Rioja, País Vasco), no ciudades.
 - **`PokedexEntry`** — el Pokémon asignado a una condición: identificador, nombre, etiqueta corta (la que sale en la leyenda) y descripción.
 - **`Forecast`** — el JSON completo: fecha de previsión, momento de generación, lista de `LocationForecast` y metadata de cobertura (lugares totales/con éxito/fallidos).
@@ -201,13 +201,17 @@ _Identidad: pixel art, interfaz de Game Boy, Pokédex de primera generación. No
 **GitHub Pages**, publicado desde GitHub Actions (Settings → Pages en modo "GitHub Actions", no en modo rama).
 
 - `vite.config.ts` necesita `base: '/poke-tiempo/'` para que las rutas de los assets resuelvan bajo el subdirectorio del repositorio (nombre real: `github.com/s-minaya/poke-tiempo`).
-- Workflow diario: cron a las 06:00 UTC (la pasada de las 00 UTC de AEMET ya está publicada), más `workflow_dispatch` para poder lanzarlo a mano.
+- Workflow diario: cron configurado `0 6 * * *` (06:00 UTC; 07:00 en invierno y 08:00 en verano en `Europe/Madrid`), más `workflow_dispatch` manual. Es la hora programada, no una garantía de inicio o publicación: [GitHub Actions puede retrasar o descartar ejecuciones programadas bajo carga](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule). La hora efectiva se consulta en cada run. El workflow también se dispara por push a `main`; en ese caso construye y despliega los datos versionados, sin ejecutar la generación diaria.
 - `AEMET_API_KEY` y `GROQ_API_KEY` viven en los secrets del repositorio. En local, en un `.env` ignorado por git. Nunca como `VITE_*`: eso las metería en el bundle. La de Groq, además, puede faltar sin consecuencias — el paso se ejecuta igual y publica el fallback local.
 
 **Dos mantenimientos conocidos, para que no sorprendan:**
 
 1. **GitHub desactiva los workflows programados tras ~60 días sin actividad en el repositorio.** Si el mapa aparece congelado, mirar aquí primero.
 2. **La API key de AEMET caduca** y hay que volver a solicitarla. El script falla de forma ruidosa ante un 401/403 precisamente para que llegue el aviso de workflow fallido por correo en vez de descubrirlo tarde.
+
+## Baseline de compilación y navegadores
+
+Con Vite 8.2.2 y sin `build.target` personalizado, el target por defecto es `baseline-widely-available`: Chrome 111, Edge 111, Firefox 114 y Safari/iOS 16.4. Es un objetivo de transformación del build, no una matriz de soporte de Poketiempo ni una provisión automática de polyfills ([guía de Vite](https://vite.dev/guide/build.html)). La compatibilidad de las APIs y del CSS usados, incluidos `inert`, `subgrid` y las consultas de contenedor, requiere verificación en los navegadores que se decida soportar. Las comprobaciones manuales registradas en 008/009 no fijan por sí solas esa política de soporte.
 
 ## Límites duros
 

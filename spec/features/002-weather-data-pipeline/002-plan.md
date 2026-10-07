@@ -24,9 +24,9 @@ Arquitectura de fuentes: **principal + complementarias**, nunca `source: 'x'` a 
 
 ## `targetDate` — una fecha, calculada una vez, seleccionada explícitamente en cada fuente
 
-**Cambio de producto:** PokéTiempo muestra la previsión de **mañana**, no la de hoy. El pipeline corre a las 06:00 UTC y genera el día siguiente.
+**Cambio de producto:** PokéTiempo muestra la previsión de **mañana**, no la de hoy. El cron está configurado a las 06:00 UTC; la hora efectiva depende de la ejecución de GitHub Actions. El pipeline genera el día siguiente al día de ejecución en `Europe/Madrid`.
 
-**"Mañana" se calcula respecto a `Europe/Madrid`, no a UTC** — a las 06:00 UTC son las 07:00/08:00 en Madrid (según horario de verano/invierno), así que en el cron de producción da el mismo resultado que calcularlo en UTC; la diferencia importa para una ejecución manual cerca de medianoche, donde UTC y Madrid pueden discrepar en qué día es "hoy" — y por tanto en qué día es "mañana". Sin añadir una librería de fechas: `Intl.DateTimeFormat` (parte del runtime de Node, sin dependencia nueva) da los componentes año/mes/día de "ahora" en esa zona horaria; sumar un día es aritmética de calendario simple una vez que ya se tienen esos tres números, sin tocar offsets horarios reales (evita el típico bug de DST de sumar 24h en milisegundos):
+**"Mañana" se calcula respecto a `Europe/Madrid`, no a UTC** — a las 06:00 UTC son las 07:00/08:00 en Madrid (según horario de invierno/verano), así que en el cron de producción da el mismo resultado que calcularlo en UTC; la diferencia importa para una ejecución manual cerca de medianoche, donde UTC y Madrid pueden discrepar en qué día es "hoy" — y por tanto en qué día es "mañana". Sin añadir una librería de fechas: `Intl.DateTimeFormat` (parte del runtime de Node, sin dependencia nueva) da los componentes año/mes/día de "ahora" en esa zona horaria; sumar un día es aritmética de calendario simple una vez que ya se tienen esos tres números, sin tocar offsets horarios reales (evita el típico bug de DST de sumar 24h en milisegundos):
 
 ```ts
 // src/domain/target-date.ts (nuevo, puro, testeable con `now` inyectado)
@@ -52,7 +52,7 @@ export function computeTargetDate(now: Date): string {
 }
 ```
 
-`fetch-forecast.ts` calcula `targetDate = computeTargetDate(new Date())` **una sola vez**, al principio de `run()`, y lo pasa a todo lo demás — es la única fecha calendario de referencia para los 74 lugares de los tres países, no una por zona horaria de cada lugar (Canarias, Ceuta/Melilla y la península no comparten huso, pero el pipeline no calcula un `targetDate` distinto para cada uno). `Forecast.date` y cada `LocationForecast.date` se escriben como ese mismo `targetDate`, no como el `date`/`fecha`/`forecastDate`/`time` que devuelva cada fuente (esos se usan para *encontrar* el bloque correcto, nunca para *decidir* qué fecha lleva el forecast final).
+`fetch-forecast.ts` calcula `targetDate = computeTargetDate(new Date())` **una sola vez**, al principio de `run()`, y lo pasa a todo lo demás — es la única fecha calendario de referencia para los 74 lugares de los tres países, no una por zona horaria de cada lugar (Canarias tiene un huso distinto de la península y Ceuta/Melilla, que comparten `Europe/Madrid`, pero el pipeline no calcula un `targetDate` distinto para cada uno). `Forecast.date` y cada `LocationForecast.date` se escriben como ese mismo `targetDate`, no como el `date`/`fecha`/`forecastDate`/`time` que devuelva cada fuente (esos se usan para *encontrar* el bloque correcto, nunca para *decidir* qué fecha lleva el forecast final).
 
 **Ninguna fuente selecciona por posición.** Las cuatro fuentes con datos multi-día seleccionan el bloque cuya fecha coincide con `targetDate`, nunca `[0]`/`[1]` a ciegas:
 
@@ -61,8 +61,8 @@ export function computeTargetDate(now: Date): string {
 | AEMET diaria | `prediccion.dia.find(d => d.fecha.slice(0,10) === targetDate)` |
 | AEMET horaria | `prediccion.dia.find(d => d.fecha.slice(0,10) === targetDate)` — sus franjas ya pertenecen solo a ese día por construcción de AEMET, no hace falta filtrar franja a franja |
 | IPMA diaria | `data.find(d => d.forecastDate === targetDate)` |
-| Open-Meteo (weather) | `start_date=targetDate&end_date=targetDate` en la petición **y** verificación de que `daily.time[0] === targetDate` en la respuesta (defensa en profundidad: no basta con haberlo pedido, se comprueba que la fuente devolvió lo pedido) |
-| Open-Meteo Marine | Mismo patrón que Open-Meteo weather — `start_date`/`end_date` + verificación por `daily.time[0]` |
+| Open-Meteo (weather) | `start_date=targetDate&end_date=targetDate` en la petición **y** búsqueda del índice de `targetDate` en `daily.time` y lectura de las métricas de ese índice en la respuesta (defensa en profundidad: no basta con haberlo pedido, se comprueba que la fuente devolvió lo pedido) |
+| Open-Meteo Marine | Mismo patrón que Open-Meteo weather — `start_date`/`end_date` + selección del índice de `targetDate` en `daily.time` |
 
 **Si el día buscado no aparece en la ventana que devuelve la fuente** (AEMET/IPMA no llegaran a cubrir mañana, o Open-Meteo respondiera con una fecha distinta a la pedida) → se trata como **fallo de esa fuente para ese lugar**, con el mismo camino que cualquier otro fallo: dispara el fallback de Open-Meteo si era la principal, o degrada la métrica si era un complemento.
 
@@ -136,7 +136,7 @@ interface Degradation {
 }
 ```
 
-`degradations` solo lista métricas para las que **existía un complemento configurado y se intentó** pero falló en esta ejecución — no aparece nada para `calima` en Portugal/Andorra (ahí nunca hay complemento configurado, no es una degradación puntual, es que esa métrica no se persigue con esa fuente, punto). Si `degradations` está vacío o ausente, todos los `null` del resto del forecast son "no aplica/sin capacidad", no "falló algo en esta ejecución".
+`degradations` solo lista métricas para las que **existía un complemento configurado y se intentó** pero falló en esta ejecución — no aparece nada para `calima` en Portugal/Andorra (ahí nunca hay complemento configurado, no es una degradación puntual, es que esa métrica no se persigue con esa fuente, punto). Que `degradations` esté vacío o ausente solo indica que no hay degradaciones registradas de complementos intentados; no permite deducir la causa de cada `null`. También puede faltar un dato en una respuesta válida.
 
 ```ts
 interface Marine {
