@@ -138,7 +138,7 @@ _Frontera: verificar, documentar lo verificado y publicar. Ningún comportamient
 - [x] Ampliar el smoke test de producción, que vive fuera del repo, con el titular nuevo, la etiqueta relativa, la hora de generación y el halo de EMPEZAR.
 - [x] Barrer la narración del proceso de comentarios, `010-spec.md`, `010-plan.md` y este archivo (`AGENTS.md`, paso 7).
 - [x] Validar contra los criterios de aceptación de `010-spec.md`.
-- [ ] Tras el push autorizado:
+- [x] Tras el push autorizado:
   - CI y deploy en verde;
   - Pages sirve el bundle nuevo;
   - smoke test en producción.

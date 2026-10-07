@@ -260,7 +260,8 @@ Sobre la build de producción (`vite preview`), en Chromium con Playwright y el 
 - **Sin red**: la página hace cero peticiones fetch o XHR, también al recorrer los cinco estados.
 - **Suite**: verde en varias ejecuciones seguidas, también con el proceso en `Pacific/Kiritimati` (UTC+14) y `America/Los_Angeles`.
 - **Bundle**: el JS pasa de 536,65 kB (176,05 kB gzip) a 543,35 kB (177,84 kB gzip), +6,70 kB (+1,79 kB gzip). La leyenda y el mapa de escritorio suman 0,02 kB de JS y 0,55 kB de CSS (de 26,01 a 26,56 kB).
-- **Smoke test** de 008/009, ampliado con el titular, la etiqueta relativa coherente con la fecha de Madrid, la hora de generación, la región viva, EMPEZAR —relleno, texto, borde y halo— y ninguna petición fetch o XHR: 39 de 39 sobre la build local.
+- **Smoke test** de 008/009, ampliado con el titular, la etiqueta relativa coherente con la fecha de Madrid, la hora de generación, la región viva, EMPEZAR —relleno, texto, borde y halo— y ninguna petición fetch o XHR: 39 de 39 sobre la build local y en producción.
+- **Producción**: el workflow del push, `build` y `deploy`, en verde. Pages sirve el mismo bundle que la build local y los dos favicons, sin `favicon.svg`. A 1600×900 y 1920×1080, el mapa mide 1223 y 1292px, las cifras se pintan a 14 unidades, los Pokémon de la leyenda miden 44px y la leyenda no pisa la lista; a 390px, sin scroll horizontal.
 
 ## Riesgos
 
