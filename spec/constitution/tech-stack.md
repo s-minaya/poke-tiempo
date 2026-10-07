@@ -58,6 +58,8 @@ Motivos, para que nadie los reabra por costumbre:
 
 **Tolerancia a fallos:** el contrato de la [002](../features/002-weather-data-pipeline/002-spec.md) exige los 74 lugares completos y con algún Pokémon asignable tras el fallback meteorológico. Los errores de autenticación/configuración no se enmascaran con ese fallback. El fallo sistémico de una fuente complementaria (>50% de sus lugares dependientes) es una condición de aborto independiente. Si no se cumplen estas condiciones, no se sobrescribe la previsión ni se despliega una nueva.
 
+**Referencia temporal:** `Europe/Madrid` es la referencia temporal canónica. El pipeline fija `forecast.date` como el día siguiente al de la ejecución en Madrid (D+1); la página decide con ese mismo calendario si la previsión está al día, y muestra la hora de generación en hora peninsular. Los días se cuentan como días de calendario (`src/domain/madrid-calendar.ts`), nunca dividiendo milisegundos, para que los días de 23 y 25 horas del cambio de hora no alteren el resultado.
+
 ## Archivos / módulos clave
 
 - `src/components/` — componentes reutilizables. Un componente por carpeta, con su `.tsx`, `.scss` y `.test.tsx` del mismo nombre. El `.tsx` importa siempre su propio `.scss`.
@@ -182,6 +184,7 @@ _Identidad: pixel art, interfaz de Game Boy, Pokédex de primera generación. No
   | Interfaz: texto, bordes de campos y controles, banda de la lista, insignias de recuento y «Leyenda» | `#323232` | `$ui-ink` |
   | Interfaz: superficie de la zona de controles y de los encabezados de grupo | `#F5F5F5` | `$ui-surface` |
   | Interfaz: lo elegido y el hover de los controles, y el título POKETIEMPO | `#1B53BA` | `$ui-accent` |
+  | Portada: relleno de EMPEZAR, con texto blanco (12,56:1). Color de identidad decidido por el usuario, ni del tiempo ni de estado | `#0F3A32` | `$landing-button-fill` |
 
   Los tonos de borde de mood son el mismo matiz que su relleno, un 25% más oscuro (HSL, mismo h/s, `-0.25` de lightness), y son el halo de la previsión y de las etiquetas de la leyenda. El título y «Leyenda» no llevan color de mood: van sin halo en `$ui-accent` y `$ui-ink` (008).
 

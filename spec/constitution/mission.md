@@ -4,18 +4,18 @@ _Define la razón de ser del proyecto. Es la referencia que decide si una featur
 
 ## Qué construimos
 
-**Poketiempo**: la versión web de la cuenta de Instagram del mismo nombre, hecha con permiso de su propietario. Un mapa de la península ibérica que muestra la previsión meteorológica del día asignando un Pokémon a cada condición, en vez de los iconos habituales de sol y nube.
+**Poketiempo**: la versión web de la cuenta de Instagram del mismo nombre, hecha con permiso de su propietario. Un mapa de la península ibérica que muestra la previsión meteorológica publicada asignando un Pokémon a cada condición, en vez de los iconos habituales de sol y nube. Cada día se publica la previsión del día siguiente (D+1), y la página dice siempre para qué fecha es.
 
 La pantalla es una sola y tiene cuatro piezas:
 
 1. **Título** — "Poketiempo", arriba a la izquierda, con el alfabeto Unown como tipografía (ver `tech-stack.md` → Identidad visual).
 2. **Fecha de previsión** — "Previsión (día y mes)", arriba a la derecha.
-3. **Leyenda** — bajo el título, en columna: cada Pokémon que aparece hoy en el mapa, con la condición que representa (caluroso, nuboso, lluvia…).
+3. **Leyenda** — bajo el título, en columna: cada Pokémon que aparece en el mapa para la fecha de la previsión, con la condición que representa (caluroso, nuboso, lluvia…).
 4. **Mapa** — España (con Baleares, Canarias, Ceuta y Melilla), Portugal y Andorra, dividido por ciudades/islas, con el Pokémon correspondiente sobre cada una según su previsión.
 
 ## Para quién
 
-- **Quien mira el tiempo por gusto** — quiere ver de un vistazo qué Pokémon le ha tocado hoy a su ciudad. La gracia está en el chiste visual, no en la precisión meteorológica.
+- **Quien mira el tiempo por gusto** — quiere ver de un vistazo qué Pokémon le ha tocado a su ciudad en la previsión publicada. La gracia está en el chiste visual, no en la precisión meteorológica.
 - **Quien revisa el portfolio** — reclutadores y perfiles técnicos que van a mirar el código, el repositorio y las decisiones de arquitectura tanto como el resultado.
 - **La cuenta original de Instagram** — la web debe respetar la idea que ya funciona ahí, no reinterpretarla.
 
