@@ -210,6 +210,33 @@ describe('SpainMap — selección de un lugar', () => {
     expect(Number(card.style.getPropertyValue('--anchor-x'))).toBeCloseTo((canaryBox.x + tenerife.x - ROOT_VIEW_BOX.x) / ROOT_VIEW_BOX.width)
     expect(Number(card.style.getPropertyValue('--anchor-y'))).toBeCloseTo((canaryBox.y + tenerife.y - ROOT_VIEW_BOX.y) / seaBottom)
   })
+
+  it('cita las fuentes de los datos bajo el mapa, con los enlaces de Open-Meteo y de su licencia', () => {
+    const { container } = render(<SpainMap forecast={forecast([])} />)
+
+    const attribution = container.querySelector('.spain-map__attribution')
+    expect(attribution?.textContent).toBe('Datos meteorológicos: AEMET · IPMA · Open-Meteo.com (CC BY 4.0), adaptados para el mapa.')
+
+    const links = within(container).getAllByRole('link')
+    expect(links).toHaveLength(2)
+    expect(screen.getByRole('link', { name: 'Open-Meteo.com' })).toHaveAttribute('href', 'https://open-meteo.com/')
+    expect(screen.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/4.0/')
+    for (const link of links) {
+      expect(attribution).toContainElement(link)
+      expect(link).not.toHaveAttribute('target')
+    }
+  })
+
+  it('la atribución va justo detrás del dibujo, fuera de la caja en la que se ancla la tarjeta', () => {
+    const { container } = render(<SpainMap forecast={forecast([])} selectedLocationId="madrid" />)
+
+    const drawing = container.querySelector('.spain-map__drawing')
+    const attribution = container.querySelector('.spain-map__attribution')
+    expect(drawing?.nextElementSibling).toBe(attribution)
+    expect(drawing).toContainElement(screen.getByRole('group', { name: /Mapa de España/ }))
+    expect(drawing).toContainElement(container.querySelector<HTMLElement>('.location-card'))
+    expect(drawing).not.toContainElement(attribution as HTMLElement)
+  })
 })
 
 describe('SpainMap — filtros', () => {

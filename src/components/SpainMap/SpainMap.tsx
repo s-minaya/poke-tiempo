@@ -137,115 +137,134 @@ function SpainMap({ forecast, selectedLocationId = null, matchingIds = null, onT
   // cifras de `map-geometry.ts`.
   return (
     <div className="spain-map" style={{ '--map-aspect': ROOT_VIEW_BOX.width / seaBottom } as CSSProperties}>
-      {/* El contenedor de consulta va aquí y no en `.spain-map`: un
-          contenedor de consulta es también contenedor de los elementos
-          `position: fixed` de dentro, y la tarjeta necesita escapar de él
-          para ser hoja inferior en la composición apilada. */}
-      <div className="spain-map__viewport">
-        <svg
-          className="spain-map__canvas"
-          viewBox={`${ROOT_VIEW_BOX.x} ${ROOT_VIEW_BOX.y} ${ROOT_VIEW_BOX.width} ${ROOT_VIEW_BOX.height}`}
-          // La caja del `<svg>` se recorta a la altura real con contenido
-          // (`seaBottom`), no a `ROOT_VIEW_BOX.height` completo: por debajo de
-          // `seaBottom` el `viewBox` solo reserva aire (`BOTTOM_BAND`,
-          // 004-plan.md). Sin el recorte, la caja del mapa sería más alta que
-          // el dibujo: alargaría la fila de la leyenda en dos columnas, y la
-          // tarjeta anclada, que se coloca en fracciones de ese alto, dejaría
-          // de medir el dibujo. `preserveAspectRatio="… slice"` hace que sea
-          // un recorte de verdad, al mismo ancho y escala, no un reencuadre
-          // que reduzca el mapa para caber en una caja más baja; no se toca
-          // `ROOT_VIEW_BOX` ni ninguna coordenada de `map-geometry.ts`.
-          style={{ aspectRatio: `${ROOT_VIEW_BOX.width} / ${seaBottom}` }}
-          preserveAspectRatio="xMidYMin slice"
-          role="group"
-          aria-label="Mapa de España, Portugal y Andorra con el Pokémon del tiempo de cada lugar"
-        >
-          <defs>
-            <clipPath id="north-africa-context-clip">
-              <rect x={northAfricaContext.clip.x} y={northAfricaContext.clip.y} width={northAfricaContext.clip.width} height={northAfricaContext.clip.height} />
-            </clipPath>
-            {/* La sombra de los marcadores que no cumplen los filtros. Filtro
-                SVG y no `filter` de CSS, que no se aplica igual a los
-                elementos SVG en todos los navegadores. */}
-            <filter id={MARKER_SILHOUETTE_FILTER_ID}>
-              <feColorMatrix type="matrix" values={MARKER_SILHOUETTE_MATRIX} />
-            </filter>
-          </defs>
-          {/* El mar cubre el fondo de todo el contenido real del mapa — primer
-              elemento, detrás de toda la geometría de tierra (005-plan.md →
-              punto 3) — pero se detiene donde termina Canarias/el contexto
-              norteafricano (`seaBottom`), no en el borde inferior del
-              `viewBox`: por debajo de ese punto el `viewBox` solo reserva aire
-              (`BOTTOM_BAND`, 004-plan.md), y rellenarlo de azul se vería como un
-              bloque de mar vacío y desproporcionado. */}
-          <rect
-            className="spain-map__sea"
-            x={ROOT_VIEW_BOX.x}
-            y={ROOT_VIEW_BOX.y}
-            width={ROOT_VIEW_BOX.width}
-            height={seaBottom - ROOT_VIEW_BOX.y}
-            aria-hidden="true"
-          />
-          {/* Geometría puramente decorativa: sin `LocationMarker`, sin nombre
-              accesible propio — `aria-hidden` la saca del árbol de
-              accesibilidad por completo, coherente con que no es un lugar
-              del dominio (004-plan.md → "Reglas explícitas"). */}
-          <g clipPath="url(#north-africa-context-clip)" aria-hidden="true">
-            <path className="spain-map__north-africa-context" d={northAfricaContext.moroccoPath} />
-            <path className="spain-map__north-africa-context" d={northAfricaContext.algeriaPath} />
-          </g>
-          {/* Un `<path>` por territorio, coloreado por país — no una única
-              silueta combinada (005-plan.md → punto 3). */}
-          {Object.entries(territoryPaths).map(([id, path]) => (
-            <path key={id} className={`spain-map__territory spain-map__territory--${TERRITORY_COUNTRY[id as keyof typeof territoryPaths]}`} d={path} />
-          ))}
-          {/* Fronteras de comunidades autónomas / distritos — detalle visual de
-              la misma silueta, no un lugar nuevo: sin rol propio, expuesto
-              igual que el resto del `<svg>` raíz (`role="group"`). */}
-          <path className="spain-map__province-boundaries" d={provinceBoundariesPath} aria-hidden="true" />
-          {locationsByRegion.main.map((location) => (
-            <LocationMarker
-              key={location.id}
-              id={location.id}
-              x={location.x}
-              y={location.y}
-              name={location.name}
-              pokemonId={location.pokemonId}
-              minC={location.minC}
-              maxC={location.maxC}
-              selected={location.id === selectedLocationId}
-              dimmed={matchingIds !== null && !matchingIds.has(location.id)}
-              onActivate={onToggleLocation}
-              onDismiss={onClearLocation}
-              register={registerMarker}
+      {/* El dibujo y su tarjeta, en la caja en la que la tarjeta se ancla:
+          mide lo que el dibujo, sin la atribución de debajo. */}
+      <div className="spain-map__drawing">
+        {/* El contenedor de consulta va aquí y no en `.spain-map`: un
+            contenedor de consulta es también contenedor de los elementos
+            `position: fixed` de dentro, y la tarjeta necesita escapar de él
+            para ser hoja inferior en la composición apilada. */}
+        <div className="spain-map__viewport">
+          <svg
+            className="spain-map__canvas"
+            viewBox={`${ROOT_VIEW_BOX.x} ${ROOT_VIEW_BOX.y} ${ROOT_VIEW_BOX.width} ${ROOT_VIEW_BOX.height}`}
+            // La caja del `<svg>` se recorta a la altura real con contenido
+            // (`seaBottom`), no a `ROOT_VIEW_BOX.height` completo: por debajo de
+            // `seaBottom` el `viewBox` solo reserva aire (`BOTTOM_BAND`,
+            // 004-plan.md). Sin el recorte, la caja del mapa sería más alta que
+            // el dibujo: alargaría la fila de la leyenda en dos columnas, y la
+            // tarjeta anclada, que se coloca en fracciones de ese alto, dejaría
+            // de medir el dibujo. `preserveAspectRatio="… slice"` hace que sea
+            // un recorte de verdad, al mismo ancho y escala, no un reencuadre
+            // que reduzca el mapa para caber en una caja más baja; no se toca
+            // `ROOT_VIEW_BOX` ni ninguna coordenada de `map-geometry.ts`.
+            style={{ aspectRatio: `${ROOT_VIEW_BOX.width} / ${seaBottom}` }}
+            preserveAspectRatio="xMidYMin slice"
+            role="group"
+            aria-label="Mapa de España, Portugal y Andorra con el Pokémon del tiempo de cada lugar"
+          >
+            <defs>
+              <clipPath id="north-africa-context-clip">
+                <rect x={northAfricaContext.clip.x} y={northAfricaContext.clip.y} width={northAfricaContext.clip.width} height={northAfricaContext.clip.height} />
+              </clipPath>
+              {/* La sombra de los marcadores que no cumplen los filtros. Filtro
+                  SVG y no `filter` de CSS, que no se aplica igual a los
+                  elementos SVG en todos los navegadores. */}
+              <filter id={MARKER_SILHOUETTE_FILTER_ID}>
+                <feColorMatrix type="matrix" values={MARKER_SILHOUETTE_MATRIX} />
+              </filter>
+            </defs>
+            {/* El mar cubre el fondo de todo el contenido real del mapa — primer
+                elemento, detrás de toda la geometría de tierra (005-plan.md →
+                punto 3) — pero se detiene donde termina Canarias/el contexto
+                norteafricano (`seaBottom`), no en el borde inferior del
+                `viewBox`: por debajo de ese punto el `viewBox` solo reserva aire
+                (`BOTTOM_BAND`, 004-plan.md), y rellenarlo de azul se vería como un
+                bloque de mar vacío y desproporcionado. */}
+            <rect
+              className="spain-map__sea"
+              x={ROOT_VIEW_BOX.x}
+              y={ROOT_VIEW_BOX.y}
+              width={ROOT_VIEW_BOX.width}
+              height={seaBottom - ROOT_VIEW_BOX.y}
+              aria-hidden="true"
             />
-          ))}
-          <TerritoryInset
-            {...canaryBox}
-            label="Canarias"
-            locations={locationsByRegion.canary}
-            frame
-            selectedLocationId={selectedLocationId}
-            matchingIds={matchingIds}
-            onActivateLocation={onToggleLocation}
-            onDismissLocation={onClearLocation}
-            registerMarker={registerMarker}
+            {/* Geometría puramente decorativa: sin `LocationMarker`, sin nombre
+                accesible propio — `aria-hidden` la saca del árbol de
+                accesibilidad por completo, coherente con que no es un lugar
+                del dominio (004-plan.md → "Reglas explícitas"). */}
+            <g clipPath="url(#north-africa-context-clip)" aria-hidden="true">
+              <path className="spain-map__north-africa-context" d={northAfricaContext.moroccoPath} />
+              <path className="spain-map__north-africa-context" d={northAfricaContext.algeriaPath} />
+            </g>
+            {/* Un `<path>` por territorio, coloreado por país — no una única
+                silueta combinada (005-plan.md → punto 3). */}
+            {Object.entries(territoryPaths).map(([id, path]) => (
+              <path key={id} className={`spain-map__territory spain-map__territory--${TERRITORY_COUNTRY[id as keyof typeof territoryPaths]}`} d={path} />
+            ))}
+            {/* Fronteras de comunidades autónomas / distritos — detalle visual de
+                la misma silueta, no un lugar nuevo: sin rol propio, expuesto
+                igual que el resto del `<svg>` raíz (`role="group"`). */}
+            <path className="spain-map__province-boundaries" d={provinceBoundariesPath} aria-hidden="true" />
+            {locationsByRegion.main.map((location) => (
+              <LocationMarker
+                key={location.id}
+                id={location.id}
+                x={location.x}
+                y={location.y}
+                name={location.name}
+                pokemonId={location.pokemonId}
+                minC={location.minC}
+                maxC={location.maxC}
+                selected={location.id === selectedLocationId}
+                dimmed={matchingIds !== null && !matchingIds.has(location.id)}
+                onActivate={onToggleLocation}
+                onDismiss={onClearLocation}
+                register={registerMarker}
+              />
+            ))}
+            <TerritoryInset
+              {...canaryBox}
+              label="Canarias"
+              locations={locationsByRegion.canary}
+              frame
+              selectedLocationId={selectedLocationId}
+              matchingIds={matchingIds}
+              onActivateLocation={onToggleLocation}
+              onDismissLocation={onClearLocation}
+              registerMarker={registerMarker}
+            />
+          </svg>
+        </div>
+        {summary && anchor && (
+          <LocationCard
+            ref={card}
+            summary={summary}
+            side={anchor.x < 0.5 ? 'east' : 'west'}
+            style={{ '--anchor-x': anchor.x, '--anchor-y': anchor.y, '--anchor-clearance': ANCHOR_CLEARANCE } as CSSProperties}
+            onClose={closeCard}
           />
-        </svg>
+        )}
+        {/* Siempre montada, vacía cuando no hay selección: una región viva
+            solo anuncia cambios si ya existía antes de que llegaran. */}
+        <p className="spain-map__announcement" aria-live="polite">
+          {summary ? announceLocation(summary) : ''}
+        </p>
       </div>
-      {summary && anchor && (
-        <LocationCard
-          ref={card}
-          summary={summary}
-          side={anchor.x < 0.5 ? 'east' : 'west'}
-          style={{ '--anchor-x': anchor.x, '--anchor-y': anchor.y, '--anchor-clearance': ANCHOR_CLEARANCE } as CSSProperties}
-          onClose={closeCard}
-        />
-      )}
-      {/* Siempre montada, vacía cuando no hay selección: una región viva
-          solo anuncia cambios si ya existía antes de que llegaran. */}
-      <p className="spain-map__announcement" aria-live="polite">
-        {summary ? announceLocation(summary) : ''}
+      {/* Atribución común de los datos que dibuja el mapa y que repiten la
+          leyenda, la tarjeta, la lista y Oak: una sola, junto al mapa, que
+          es donde se muestran los de todos los lugares a la vez
+          (`tech-stack.md` → Legal). */}
+      <p className="spain-map__attribution">
+        Datos meteorológicos: AEMET · IPMA ·{' '}
+        <a className="spain-map__attribution-link" href="https://open-meteo.com/">
+          Open-Meteo.com
+        </a>{' '}
+        (
+        <a className="spain-map__attribution-link" href="https://creativecommons.org/licenses/by/4.0/">
+          CC BY 4.0
+        </a>
+        ), adaptados para el mapa.
       </p>
     </div>
   )

@@ -9,10 +9,9 @@
   border-block-start: 0.2rem solid vars.$ui-ink;
   font-family: vars.$font-body;
 
-  // Suelo de 1,2rem: el mínimo que la 008 admite para cualquier texto de la
-  // interfaz. Va en `$ui-ink` sobre el mar, 11,47:1, y no en color de mood,
-  // así que no le aplica la regla de ≥19px y bold.
-  font-size: clamp(1.2rem, 0.25vw + 1.12rem, 1.4rem);
+  // Va en `$ui-ink` sobre el mar, 11,47:1, y no en color de mood, así que no
+  // le aplica la regla de ≥19px y bold.
+  font-size: vars.$font-size-note;
   color: vars.$ui-ink;
   text-align: center;
 

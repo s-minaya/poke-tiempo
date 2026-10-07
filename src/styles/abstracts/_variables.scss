@@ -92,3 +92,8 @@ $z-landing: 20;
 $font-title: 'Poketiempo Unown', sans-serif; // cabecera (POKETIEMPO) + encabezado de la leyenda
 $font-heading: 'Pixelify Sans', monospace; // línea de previsión de la cabecera
 $font-body: 'Nunito Sans', sans-serif; // leyenda + créditos + temperaturas del mapa (prioriza legibilidad)
+
+// Texto secundario de la página: el pie y la atribución de los datos bajo el
+// mapa. Suelo de 1,2rem, el mínimo que la 008 admite para cualquier texto de
+// la interfaz.
+$font-size-note: clamp(1.2rem, 0.25vw + 1.12rem, 1.4rem);

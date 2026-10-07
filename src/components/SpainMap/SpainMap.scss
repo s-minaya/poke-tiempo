@@ -16,10 +16,6 @@ $desktop-header-block: 12.8rem;
 
   grid-area: map;
 
-  // Caja de referencia de la tarjeta anclada (`LocationCard.scss`), que se
-  // coloca en porcentajes de este ancho y este alto.
-  position: relative;
-
   // Lo único de la composición que se ajusta al hueco disponible, porque es
   // lo único con una proporción rígida: el menor entre el ancho que le dan y
   // el que le corresponde a su alto máximo. `--map-aspect` lo pone
@@ -38,9 +34,8 @@ $desktop-header-block: 12.8rem;
   // entero cabe en la primera pantalla. Es lo que lo limita en casi todos
   // los portátiles; a 1200px lo limita el ancho que deja la leyenda.
   // Y sin estirarse hasta el alto de la fila cuando la leyenda es más alta
-  // que el mapa: la tarjeta se ancla en fracciones del alto, y ese alto
-  // tiene que ser el del dibujo. Por debajo sigue el mismo azul del `body`,
-  // así que no cambia nada a la vista.
+  // que el mapa: el bloque mide lo que su dibujo y su atribución. Por debajo
+  // sigue el mismo azul del `body`, así que no cambia nada a la vista.
   @include bp.respond-from(bp.$breakpoint-desktop) {
     --map-max-block: calc(100vh - #{$desktop-header-block});
 
@@ -61,10 +56,36 @@ $desktop-header-block: 12.8rem;
     container: map / inline-size;
   }
 
+  // Caja de referencia de la tarjeta anclada (`LocationCard.scss`), que se
+  // coloca en porcentajes de este ancho y este alto: los del dibujo, sin la
+  // atribución que va debajo.
+  &__drawing {
+    position: relative;
+  }
+
   // Región viva de la selección (`SpainMap.tsx`): solo para lectores de
   // pantalla; a la vista ya está la tarjeta.
   &__announcement {
     @include a11y.visually-hidden;
+  }
+
+  // Atribución de los datos, justo bajo el dibujo y con su mismo ancho, en
+  // el cuerpo, el tamaño y el color del pie (`Credits.scss`).
+  &__attribution {
+    margin: 0;
+    padding: 0.8rem 2rem;
+    font-family: vars.$font-body;
+    font-size: vars.$font-size-note;
+    color: vars.$ui-ink;
+    text-align: center;
+  }
+
+  // `_reset.scss` quita el subrayado a todos los enlaces: aquí vuelve, para
+  // que se distingan del texto sin depender del color. Sin partirse: el
+  // nombre de la fuente y el de la licencia se leen enteros.
+  &__attribution-link {
+    text-decoration: underline;
+    white-space: nowrap;
   }
 
   &__canvas {

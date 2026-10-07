@@ -1,15 +1,17 @@
 import './Credits.scss'
 
 /**
- * Créditos de la página: fuentes de datos meteorológicos y autoría de la
- * cuenta original (`005-plan.md` → punto 6) — HTML semántico, sin URLs
- * inventadas.
+ * Pie de la página: la autoría de la cuenta original y el disclaimer de
+ * Pokémon, en HTML semántico. La cita de los datos va bajo el mapa
+ * (`SpainMap`), junto a lo que los muestra.
  */
 function Credits() {
   return (
     <footer className="credits">
-      <p className="credits__line">Datos meteorológicos: AEMET · IPMA · Open-Meteo</p>
       <p className="credits__line">PokéTiempo original: Gabriel Ortega Díaz</p>
+      <p className="credits__line">
+        PokéTiempo es un proyecto fan no oficial, sin afiliación ni patrocinio de los titulares de los derechos de Pokémon. Pokémon, sus personajes y sus nombres pertenecen a sus respectivos titulares.
+      </p>
     </footer>
   )
 }
