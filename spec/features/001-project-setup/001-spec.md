@@ -19,7 +19,7 @@ Es el primer punto de `roadmap.md` ("Siguiente 🔜"): ninguna de las features p
 - [x] Estructura de carpetas obligatoria creada: `src/components/`, `src/domain/`, `src/data/`, `src/styles/abstracts/`, `src/assets/{sprites,map,fonts,shared}/`, `scripts/`.
 - [x] `_breakpoints.scss`, `_variables.scss`, `_reset.scss` creados según `constitution/tech-stack.md`.
 - [x] `src/test/setup.ts` configurado con `jest-dom`.
-- [x] Workflow de GitHub Actions que construye y despliega a GitHub Pages, con `vite.config.ts` → `base` apuntando al subdirectorio real del repositorio (`/poke-tiempo/`). El cambio de **Settings → Pages a modo "GitHub Actions"** es un ajuste manual en GitHub que no se puede hacer desde el repositorio — pendiente de que lo active quien tenga acceso de administración.
+- [x] Workflow de GitHub Actions que construye y despliega a GitHub Pages, con `vite.config.ts` → `base` apuntando al subdirectorio real del repositorio (`/poke-tiempo/`). El cambio de **Settings → Pages a modo "GitHub Actions"** es un ajuste manual en GitHub que no se puede hacer desde el repositorio; está activado.
 - [x] HTML semántico y accesible desde el placeholder inicial (sin contenido de producto que evaluar todavía).
 - [x] `.env.example` y `.gitignore` ya existentes se respetan: `AEMET_API_KEY` nunca se commitea.
 

@@ -3,9 +3,8 @@
 @use '../../styles/abstracts/variables' as vars;
 
 // Poketiempo Unown: fuente propia vectorizada a partir del alfabeto Unown
-// (spec/features/005-header-and-legend/unown/, tech-stack.md → Identidad
-// visual). Único consumidor del título "POKETIEMPO"; Legend también la usa
-// para su encabezado ("Leyenda").
+// (tech-stack.md → Estilo visual). Único consumidor del título "POKETIEMPO";
+// Legend también la usa para su encabezado ("Leyenda").
 @font-face {
   font-family: 'Poketiempo Unown';
   src: url('../../assets/fonts/poketiempo-unown.woff2') format('woff2');

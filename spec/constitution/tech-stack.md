@@ -79,7 +79,7 @@ Motivos, para que nadie los reabra por costumbre:
 - `npm run build` — compila para producción (`dist/`). `npm run preview` para previsualizar.
 - `npm run fetch:forecast` — descarga la previsión de D+1 (`targetDate`, respecto a `Europe/Madrid`) de las tres fuentes (AEMET, IPMA, Open-Meteo) y reescribe `src/data/forecast.json`. Necesita `AEMET_API_KEY`.
 - `npm run generate:oak` — regenera `src/data/oak-today.json` y `src/data/oak-history.json` a partir del `forecast.json` actual. Sin `GROQ_API_KEY` funciona igual y publica el fallback local: es el camino normal en desarrollo.
-- `npm run build:locations` — regenera `src/data/locations.ts` a partir de la lista fija de 74 lugares (no del maestro completo de municipios de AEMET, que solo cubriría España). Solo hace falta al cambiar la lista de lugares.
+- `npm run build:locations` — regenera `src/data/locations.ts` a partir de la lista fija de 74 lugares (no del maestro completo de municipios de AEMET, que solo cubriría España). Solo hace falta al cambiar la lista de lugares. Necesita `AEMET_API_KEY`: resuelve el identificador de cada lugar en el maestro de municipios de AEMET y en la lista de localidades de IPMA.
 
 ## Modelo de datos / dominio
 

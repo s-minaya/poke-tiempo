@@ -8,7 +8,7 @@ _Define la razón de ser del proyecto. Es la referencia que decide si una featur
 
 La pantalla es una sola y tiene cuatro piezas:
 
-1. **Título** — "Poketiempo", arriba a la izquierda, con el alfabeto Unown como tipografía (ver `tech-stack.md` → Identidad visual).
+1. **Título** — "Poketiempo", arriba a la izquierda, con el alfabeto Unown como tipografía (ver `tech-stack.md` → Estilo visual).
 2. **Fecha de previsión** — "Previsión (día y mes)", arriba a la derecha.
 3. **Leyenda** — bajo el título, en columna: cada Pokémon que aparece en el mapa para la fecha de la previsión, con la condición que representa (caluroso, nuboso, lluvia…).
 4. **Mapa** — España (con Baleares, Canarias, Ceuta y Melilla), Portugal y Andorra, dividido por ciudades/islas, con el Pokémon correspondiente sobre cada una según su previsión.

@@ -36,9 +36,9 @@ Tres límites que gobiernan la geometría de contexto y su relación con el rest
 ## Fuera de alcance
 
 - Cabecera, fecha de previsión y leyenda — 005.
-- Alternativa textual completa del mapa, cita a AEMET/IPMA, disclaimer de Pokémon — 008. La legibilidad fina en móvil estrecho (320–375px) sigue siendo de la 008; 004 solo garantiza que el mapa no se rompe en ese ancho.
+- Alternativa textual completa del mapa — 008. Cita a AEMET/IPMA — 005. Disclaimer de Pokémon — pendiente (`roadmap.md`). La legibilidad fina en móvil estrecho (320–375px) sigue siendo de la 008; 004 solo garantiza que el mapa no se rompe en ese ancho.
 - Diálogos de Profesor Oak — 007.
 - Zoom, pan o clustering automático de puntos.
-- Paleta de color final (pendiente en `roadmap.md`).
+- Paleta de color final — 005.
 - Cualquier cambio en la 002 (pipeline de datos, fuentes, `forecast.json`).
 - Un componente de "hero" o cabecera de Pokémon del día por encima del mapa — la jerarquía "Pokémon antes que cartografía" se resuelve aquí solo con tamaño de sprite y composición del propio mapa, no añadiendo una pieza de UI nueva (eso, si se quiere, es decisión de la 005).

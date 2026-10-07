@@ -100,8 +100,10 @@ _Ver `005-spec.md` → "Ampliación de alcance" y `005-plan.md` → punto 8._
 
 ## Definición de "hecho" (además de los criterios de la spec)
 
-- [ ] Ninguna lista con interacción por fila queda sin memoizar (`LocationMarker` sigue con `React.memo`; `Legend` no tiene interacción por fila, no aplica).
-- [ ] Los sprites de la leyenda y del mapa no llevan `loading="lazy"` (por encima del pliegue).
-- [ ] Ningún dato nuevo se pide a AEMET/IPMA/Open-Meteo en runtime.
-- [ ] Ningún valor de color/tipografía nuevo se escribe como literal si ya existe un token para ese valor exacto (`_variables.scss`).
-- [ ] Grep de variables SCSS tocadas en esta feature: 0 quedan sin uso.
+- [x] Ninguna lista con interacción por fila queda sin memoizar (`LocationMarker` sigue con `React.memo`; `Legend` no tiene interacción por fila, no aplica).
+- [x] Los sprites de la leyenda y del mapa no llevan `loading="lazy"` (por encima del pliegue).
+- [x] Ningún dato nuevo se pide a AEMET/IPMA/Open-Meteo en runtime.
+- [x] Ningún valor de color/tipografía nuevo se escribe como literal si ya existe un token para ese valor exacto (`_variables.scss`).
+- [x] Grep de variables SCSS tocadas en esta feature: 0 quedan sin uso.
+
+Las cinco se comprobaron sobre el estado de la feature al cerrarse (`5b3a0cf`).
