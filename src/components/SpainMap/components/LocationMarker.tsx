@@ -12,7 +12,7 @@ import { spriteSources } from '../sprite-sources.ts'
 
 import './LocationMarker.scss'
 
-const TEMPERATURE_FONT_SIZE = 13
+const TEMPERATURE_FONT_SIZE = 14
 // Línea de base del texto de temperatura, relativa al centro del
 // marcador: superpuesta en la zona inferior del sprite (radio SPRITE_SIZE/2),
 // con un pequeño margen respecto a su borde inferior.

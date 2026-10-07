@@ -86,8 +86,9 @@
       grid-template-columns: minmax(26.8rem, 30.8rem) minmax(0, 1fr);
 
       // `stretch` (el valor por defecto de grid): la leyenda rellena su
-      // celda hasta la altura del mapa, para que el azul del mar llegue de
-      // lado a lado sin cortes.
+      // celda hasta el alto de la fila, el del mapa, y sus entradas se lo
+      // reparten (`Legend.scss`). La fila solo pasa a medir lo que la
+      // leyenda cuando ni con sus entradas juntas cabe junto al mapa.
       align-items: stretch;
     }
   }

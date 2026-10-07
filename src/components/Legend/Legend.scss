@@ -1,3 +1,4 @@
+@use '../../styles/abstracts/breakpoints' as bp;
 @use '../../styles/abstracts/variables' as vars;
 
 .legend {
@@ -7,6 +8,15 @@
 
   // Mismo azul que la cabecera y el mapa (`Header.scss`, `SpainMap.scss`).
   background: vars.$map-sea;
+
+  // En dos columnas, la leyenda mide lo que el mapa: la rejilla la estira
+  // hasta el alto de su fila (`WeatherApp.scss`) y sus entradas se reparten
+  // ese alto (`__list`, `__item`). Como columna, la lista ocupa lo que dejan
+  // el encabezado y la indicación.
+  @include bp.respond-from(bp.$breakpoint-desktop) {
+    display: flex;
+    flex-direction: column;
+  }
 
   // Mismo mood térmico que la línea de previsión (`Header.scss`): los mismos
   // dos tokens por mood, relleno y halo, que leen las etiquetas.
@@ -66,9 +76,9 @@
     color: vars.$ui-ink;
   }
 
-  // Cuántas columnas caben lo decide el hueco, no un punto de corte: una
-  // sola en la columna de escritorio y en un móvil vertical, varias en la
-  // banda bajo el mapa a partir de ahí. 26,8rem es lo que ocupa una entrada
+  // En la composición apilada, cuántas columnas caben lo decide el hueco, no
+  // un punto de corte: una sola en un móvil vertical, varias en la banda
+  // bajo el mapa a partir de ahí. 26,8rem es lo que ocupa una entrada
   // con la palabra más larga de las 25 etiquetas posibles (`POKEMON_LABELS`:
   // «torrenciales», 12rem a 22px), no solo de las que salen hoy: el borde
   // (0,6rem), el relleno (0,8rem), el sprite (6rem), los dos huecos
@@ -81,6 +91,33 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 26.8rem), 1fr));
     gap: 1.2rem;
+
+    // En dos columnas, una columna flex que se reparte el alto de la
+    // leyenda. Su tamaño propio es la suma de los de partida de sus
+    // entradas, el compacto: es lo que aporta a la fila de la rejilla, así
+    // que la fila mide lo que el mapa salvo que ni así quepan. El hueco entre
+    // entradas es fijo; el resto del aire lo pone cada entrada (`__item`).
+    @include bp.respond-from(bp.$breakpoint-desktop) {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+  }
+
+  // En dos columnas, cada entrada parte de 5rem —el sprite de 4,4rem y el
+  // borde del botón— y crece con el alto libre hasta 7,8rem: un botón de
+  // 7rem más 0,8rem de aire, que con el hueco de `__list` dan la misma
+  // separación que la rejilla de la composición apilada. Lo que se reparte
+  // es el aire; el sprite no cambia. Sin `min-height` propio: anularía el
+  // mínimo por contenido de flex, y una etiqueta de dos líneas, que pide
+  // más de 5rem, se saldría.
+  &__item {
+    @include bp.respond-from(bp.$breakpoint-desktop) {
+      display: flex;
+      flex: 1 1 5rem;
+      max-block-size: 7.8rem;
+    }
   }
 
   // Tres columnas: sprite, etiqueta y estado. El borde y la columna de
@@ -113,6 +150,16 @@
       border-color: vars.$ui-accent;
       background: vars.$color-white;
     }
+
+    // En dos columnas, la columna del sprite a su tamaño de escritorio
+    // (`__sprite`), y el botón, del alto de su `__item` hasta 7rem, el de la
+    // composición apilada, con el contenido centrado y sin relleno vertical.
+    @include bp.respond-from(bp.$breakpoint-desktop) {
+      grid-template-columns: 4.4rem minmax(0, 1fr) 1.6rem;
+      min-block-size: 4.4rem;
+      max-block-size: 7rem;
+      padding-block: 0;
+    }
   }
 
   &__sprite {
@@ -126,6 +173,16 @@
     // MÁXIMO, tech-stack.md) — sin esto, forzar el mismo ancho y alto los
     // deforma. `contain` los encaja en el cuadro sin estirarlos.
     object-fit: contain;
+
+    // En dos columnas, 4,4rem, el tamaño del sprite del mapa a 1200px y el
+    // objetivo de diseño de la 008. Fijo e igual en todas las entradas: la
+    // leyenda se ajusta al mapa repartiendo el aire (`__item`). Si siguiera
+    // al alto de su entrada, en una leyenda comprimida los de etiqueta de dos
+    // líneas, más altas, saldrían mayores que el resto.
+    @include bp.respond-from(bp.$breakpoint-desktop) {
+      width: 4.4rem;
+      height: 4.4rem;
+    }
 
     // Con otra entrada pulsada, silueta: la misma sombra que en el mapa. La
     // etiqueta no cambia, y la entrada sigue pudiéndose pulsar.

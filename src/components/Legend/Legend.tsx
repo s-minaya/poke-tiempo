@@ -46,7 +46,7 @@ function PixelCheck() {
  */
 const LegendEntry = memo(function LegendEntry({ id, pressed, dimmed, onToggle }: LegendEntryProps) {
   return (
-    <li>
+    <li className="legend__item">
       <button type="button" className="legend__entry" aria-pressed={pressed} onClick={() => onToggle?.(id)}>
         <img className={`legend__sprite${dimmed ? ' legend__sprite--dimmed' : ''}`} src={spriteSources[id]} alt="" width={60} height={60} />
         <span className="legend__label">{POKEMON_LABELS[id]}</span>

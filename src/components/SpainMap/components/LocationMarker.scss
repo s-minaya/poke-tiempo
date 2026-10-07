@@ -61,13 +61,13 @@
     font-weight: 700;
     user-select: none;
 
-    // Las cifras miden 13 unidades de `viewBox` sobre un ancho de 1240, así
+    // Las cifras miden 14 unidades de `viewBox` sobre un ancho de 1240, así
     // que su tamaño real depende de lo que mida la caja del mapa: 12px
-    // justos cuando llega a $map-temperature-threshold, y entre 3,9 y 10,7px
-    // por debajo. Ahí no se pintan: 12px es el suelo de legibilidad de la
-    // 008 y agrandarlas en unidades de `viewBox` las haría más anchas que la
-    // separación entre lugares vecinos (61u). El dato no se pierde — sigue
-    // en el `aria-label` del marcador.
+    // justos cuando llega a $map-temperature-threshold, y menos por debajo.
+    // Ahí no se pintan: 12px es el suelo de legibilidad de la 008. Más
+    // unidades de `viewBox` las harían aparecer con mapas más pequeños, pero
+    // desde 15 las de lugares vecinos se tocan (Cuenca y Tarancón). El dato
+    // no se pierde — sigue en el `aria-label` del marcador.
     // Consulta de contenedor y no de viewport a propósito: el mismo mapa
     // mide distinto en la composición apilada y en la de dos columnas, y lo
     // que decide es su ancho real (`SpainMap.scss` declara el contenedor).

@@ -131,7 +131,7 @@ El contrato meteorológico (ejes simultáneos, provenance por fuente principal +
 
 ### Composición y puntos de corte
 
-**La composición se reorganiza en vez de escalarse entera** (`mission.md` → "Una sola composición, que se adapta en vez de encogerse"). Dos plantillas de grid de `<main>` sobre las mismas áreas nombradas (`WeatherApp.scss`): apilada por debajo de `$breakpoint-desktop` —cabecera, mapa a todo el ancho, leyenda y lista— y de dos columnas a partir de ahí —cabecera arriba, leyenda en columna junto al mapa y lista en una banda debajo—. Los créditos, fuera de `<main>`, quedan al final de la página en las dos. A partir de `$breakpoint-desktop-large` la composición deja de crecer y queda centrada. `$breakpoint-tablet` no decide maquetación: solo qué ilustración de portada se sirve. Las temperaturas del mapa aparecen con `@container` sobre la propia caja del mapa, no sobre el viewport: el mismo mapa mide distinto en cada composición.
+**La composición se reorganiza en vez de escalarse entera** (`mission.md` → "Una sola composición, que se adapta en vez de encogerse"). Dos plantillas de grid de `<main>` sobre las mismas áreas nombradas (`WeatherApp.scss`): apilada por debajo de `$breakpoint-desktop` —cabecera, mapa a todo el ancho, leyenda y lista— y de dos columnas a partir de ahí —cabecera arriba, leyenda en columna junto al mapa y lista en una banda debajo—. En la de dos columnas, la leyenda mide lo que el mapa y sus entradas se reparten ese alto con el aire entre ellas; solo si ni juntas caben, sobresale y la lista empieza tras ella. El tope de alto del mapa es el 80 % de la ventana en la apilada, y en la de dos columnas, la ventana menos la cabecera, para que el mapa entero quepa en la primera pantalla. Los créditos, fuera de `<main>`, quedan al final de la página en las dos. A partir de `$breakpoint-desktop-large` la composición deja de crecer y queda centrada. `$breakpoint-tablet` no decide maquetación: solo qué ilustración de portada se sirve. Las temperaturas del mapa aparecen con `@container` sobre la propia caja del mapa, no sobre el viewport: el mismo mapa mide distinto en cada composición.
 
 No llevan punto de corte, a propósito: el número de columnas de leyenda y lista (`auto-fit` + `minmax`), el tamaño del mapa (el menor de su ancho y su alto disponibles), la tipografía (`clamp()`) y la orientación. Ninguna decisión de maquetación se toma en JS a partir del viewport, la orientación o el dispositivo. Motivos y medidas en `features/008-responsive-and-accessibility/008-plan.md`.
 
@@ -140,7 +140,7 @@ No llevan punto de corte, a propósito: el número de columnas de leyenda y list
 $breakpoint-tablet: 768px; // solo el <picture> de la portada
 $breakpoint-desktop: 1200px; // apilado → dos columnas
 $breakpoint-desktop-large: 1600px; // tope de la composición
-$map-temperature-threshold: 1150px; // @container sobre la caja del mapa
+$map-temperature-threshold: 1063px; // @container sobre la caja del mapa
 
 @mixin respond-from($breakpoint) {
   @media (min-width: $breakpoint) {
