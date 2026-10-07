@@ -71,12 +71,18 @@ $landing-fade-ms: 350ms;
     border: 0.167em solid vars.$color-near-black;
     border-radius: 0.333em;
 
+    // Halo blanco por fuera del borde (1.4.11): la ilustración tiene zonas
+    // claras y oscuras, y el borde #111 se pierde sobre las oscuras. Borde y
+    // halo contrastan 18,88:1 entre sí, así que el contorno se distingue sea
+    // cual sea el píxel de debajo. El foco lo sustituye por su anillo.
+    box-shadow: 0 0 0 2px vars.$color-white;
+
     // Suelo de área táctil: 2.5.8 pide 24×24 y el objetivo de diseño de la
     // 008 son 44×44. El botón mide ~160×54 en móvil y 226×76 en escritorio,
     // así que este suelo no interviene; queda como garantía.
     min-height: 48px;
-    background: vars.$color-green;
-    color: vars.$color-near-black;
+    background: vars.$landing-button-fill;
+    color: vars.$color-white;
     font-family: vars.$font-heading;
 
     // De 17px en móvil a 24px desde ~920px de ancho: en una pantalla pequeña

@@ -75,6 +75,11 @@ $ui-ink: #323232; // texto y bordes de los controles + "Leyenda"
 $ui-surface: #f5f5f5; // zona de controles y encabezados de grupo de la lista
 $ui-accent: #1b53ba; // lo elegido y el hover de los controles + título POKETIEMPO
 
+// Portada — relleno de EMPEZAR. Color de identidad de la portada decidido
+// por el usuario, ni del tiempo ni de estado (010-spec.md). Con texto
+// $color-white da 12,56:1.
+$landing-button-fill: #0f3a32;
+
 // Capas de pantalla completa (App.tsx). Durante el cruce desde la portada,
 // la portada se funde **por encima** de la escena de Oak, y Oak queda por
 // encima del mapa — incluidos los créditos, que llevan `z-index: 1`.
