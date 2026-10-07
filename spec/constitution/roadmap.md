@@ -35,7 +35,7 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 
 ## Siguiente 🔜
 
-_Ninguna todavía._
+**011 · Créditos y disclaimer** — implementada; falta la comprobación en producción tras el push. La cita de los datos sale del pie y va bajo el mapa, en una sola atribución común. Dice «Datos meteorológicos: AEMET · IPMA · Open-Meteo.com (CC BY 4.0), adaptados para el mapa.», con la web de Open-Meteo y su licencia enlazadas, subrayadas y en la misma pestaña, como pide la licencia de Open-Meteo, que quiere el enlace junto a donde se muestran sus datos. El pie se queda con la autoría de la cuenta original y suma el disclaimer de Pokémon: un proyecto fan no oficial, sin afiliación ni patrocinio de los titulares de los derechos, en el que Pokémon, sus personajes y sus nombres pertenecen a sus respectivos titulares. La constitución describe el disclaimer sin nombrar titulares concretos y anota la licencia SIL OFL 1.1 de Pixelify Sans y Nunito Sans. Ver `features/011-legal-credits/`.
 
 ## Orden previsto 📋
 
@@ -52,7 +52,6 @@ _Bloquean o condicionan alguna de las features de arriba. Ninguna se resuelve po
 - **Señal de DANA** — capacidad futura, fuera del alcance de la 002 (confirmado: no es una categoría de avisos oficiales de AEMET ni de IPMA). Se añadiría como ampliación explícita el día que exista una fuente/criterio fiable.
 - **Franjas mañana/tarde** — capacidad contemplada en el dominio de la 002 sin comprometer forma de dato; se diseña cuando exista un consumidor real (el modo `relevo` de la 007 sigue deshabilitado por esto).
 - **`npm run build:map` ya no reproduce las coordenadas commiteadas de `mapPoints`** (48 de los 74 lugares saldrían con `x`/`y` distintos si se regenerara), aunque `build-map.ts`, `locations.ts` y `spain-map.geo.json` están todos sin cambios respecto al commit que introdujo la 004 — confirmado ejecutando el `build-map.ts` de ese mismo commit contra los datos actuales: produce las mismas coordenadas "nuevas", no las commiteadas. Inconsistencia previa a la 005 entre el archivo generado y su propio generador, de causa no investigada (candidatos: ajuste manual posterior a la generación, o una dependencia que cambió de versión sin recommitear el resultado). La 005 añadió `territoryPaths` empalmando el resultado fresco sobre el `map-geometry.ts` ya commiteado, sin regenerar `mapPoints`/`canaryBox`/`provinceBoundariesPath`/`northAfricaContext`, precisamente para no alterar las posiciones reales de los 74 lugares mientras esto sigue sin investigar (ver `005-plan.md` → Riesgos).
-- **Disclaimer de Pokémon** — sigue pendiente. La alternativa textual completa del mapa y la auditoría de accesibilidad (foco, contraste, navegación por teclado, zoom, áreas táctiles) **han dejado de estarlo**: las cubre la 008 con la lista de lugares y con la verificación contra WCAG 2.2 AA. La atribución a AEMET/IPMA/Open-Meteo y a la cuenta original tampoco está pendiente: la cubre `Credits` (005).
 
 ## Backlog / ideas 💡
 

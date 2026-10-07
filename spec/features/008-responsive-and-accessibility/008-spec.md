@@ -108,7 +108,7 @@ Ese enfoque arrastra además tres problemas de accesibilidad que no se pueden re
 
 ## Fuera de alcance
 
-- **Disclaimer de Pokémon** — sigue pendiente en `roadmap.md`.
+- **Disclaimer de Pokémon** — 011.
 - **Búsqueda, filtros o agrupación de lugares** — `administrativeArea` deja la estructura preparada, pero no se construye ninguna de las tres aquí.
 - **Criterios AAA de WCAG 2.2** — sólo se persigue el nivel AA. Los 44 × 44 px de 2.5.5 son la única meta de nivel AAA que el proyecto adopta, y lo hace como objetivo de diseño, no como compromiso de conformidad.
 - **Zoom o desplazamiento dentro del mapa** — evaluado y descartado: alcanza los 44px pero impide ver la península entera, que es el primer requisito del mapa en móvil.
