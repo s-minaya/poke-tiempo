@@ -1,27 +1,27 @@
 {
-  "date": "2026-10-07",
-  "generatedAt": "2026-10-06T12:28:04.846Z",
+  "date": "2026-10-08",
+  "generatedAt": "2026-10-07T12:18:41.080Z",
   "source": "ai",
-  "dayMode": "alerta",
-  "serious": true,
+  "dayMode": "avistamiento",
+  "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Hoy hay 22 lugares del mapa bajo algún aviso y 52 con lluvia."
+      "text": "Vaya... hay 3 lugares bajo algún aviso y 17 con lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "consejo",
-      "text": "En Barcelona hay aviso oficial naranja por lluvia; se esperan 1,4 mm con 100 % de probabilidad."
+      "tone": "cientifico",
+      "text": "Curioso... Dragonite se avista en Alcañiz; allí el viento sopla a 45 km/h, con rachas de 69 km/h."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "neutral",
-      "text": "Zapdos aparece en 14 lugares del mapa; Navarra, Huesca y Benasque son algunos ejemplos."
+      "tone": "guasa",
+      "text": "Veamos, Castform (Niebla) parece tener vestuario infinito: Albacete, Ciudad Real y Manzanares."
     }
   ]
 }
