@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { DialogueClaims } from '../../src/domain/oak/claims.ts'
 import type { OakDialogues } from '../../src/domain/oak/plan-dialogues.ts'
+import { RELATIVE_DAY_WORDS, RELATIVE_TIME_PHRASES } from '../../src/domain/oak/relative-time-expressions.ts'
 import { checkFactualFit } from './factual-guard.ts'
 
 /**
@@ -15,7 +16,7 @@ const BRIEF: DialogueClaims[] = [
     role: 'apertura',
     tone: 'neutral',
     leitmotif: null,
-    claims: ['Hoy hay 7 lugares del mapa bajo algún aviso y 2 con lluvia.'],
+    claims: ['Hay 7 lugares del mapa bajo algún aviso y 2 con lluvia.'],
     allowed: { numbers: [7, 2], places: [], pokemon: [], alertLevels: [] },
   },
   {
@@ -45,7 +46,7 @@ const BRIEF: DialogueClaims[] = [
 ]
 
 const GOOD: [string, string, string] = [
-  'Veamos... hoy hay 7 lugares bajo aviso y 2 con lluvia. Sigamos atentos.',
+  'Veamos... hay 7 lugares bajo aviso y 2 con lluvia. Sigamos atentos.',
   '¡Vaya! Charmeleon aparece en 35 lugares, entre ellos La Rioja, Navarra y Huesca. En Benasque la mínima baja hasta 10 °C.',
   'Gyarados asoma en 6 lugares, por ejemplo A Coruña, Pontevedra y Gijón. Yo miraría desde lejos.',
 ]
@@ -91,8 +92,8 @@ describe('paráfrasis válidas', () => {
       BRIEF[2],
     ]
 
-    expect(check(1, 'Interesante... Castform aparece hoy en 4 lugares. Otra vez cambiando de ropa.', brief).ok).toBe(true)
-    expect(check(1, 'Interesante... Castform (Niebla) aparece hoy en 4 lugares del mapa.', brief).ok).toBe(true)
+    expect(check(1, 'Interesante... Castform aparece en 4 lugares. Otra vez cambiando de ropa.', brief).ok).toBe(true)
+    expect(check(1, 'Interesante... Castform (Niebla) aparece en 4 lugares del mapa.', brief).ok).toBe(true)
   })
 
   it('no confunde un nombre compuesto con el simple que contiene', () => {
@@ -157,10 +158,42 @@ describe('entidades que nadie autorizó', () => {
   })
 
   it('el motivo dice qué hueco y qué entidad, para poder leerlo en el log', () => {
-    const result = check(0, 'Hoy hay 7 lugares bajo aviso y 2 con lluvia. En Teruel, 19 grados.')
+    const result = check(0, 'Hay 7 lugares bajo aviso y 2 con lluvia. En Teruel, 19 grados.')
 
     expect(result.ok).toBe(false)
     expect(result.ok === false && result.reason).toContain('dialogue-1')
+  })
+})
+
+describe('expresiones relativas al momento de lectura', () => {
+  // Las listas del contrato, no una copia: si cambian, este test las sigue.
+  const rejected = [
+    ...RELATIVE_DAY_WORDS.map((word) => ({ written: word, reported: word })),
+    ...RELATIVE_TIME_PHRASES.map((phrase) => ({ written: phrase, reported: phrase })),
+    { written: 'estamos a lunes', reported: 'estamos a lunes' },
+    { written: 'estamos a sábado', reported: 'estamos a sabado' },
+    { written: 'estamos a 5 de octubre', reported: 'estamos a 5 de octubre' },
+  ]
+
+  it.each(rejected)('rechaza «$written» y dice cuál ha encontrado', ({ written, reported }) => {
+    expect(check(0, `Veamos... ${written} hay 7 lugares bajo aviso y 2 con lluvia.`)).toEqual({
+      ok: false,
+      reason: `dialogue-1: dice «${reported}», que depende del momento de lectura`,
+    })
+  })
+
+  it('también en mayúsculas, sin tildes y con espacios de más', () => {
+    expect(check(0, 'HOY hay 7 lugares bajo aviso y 2 con lluvia.').ok).toBe(false)
+    expect(check(0, 'Por la manana hay 7 lugares bajo aviso y 2 con lluvia.').ok).toBe(false)
+    expect(check(0, 'Esta   tarde hay 7 lugares bajo aviso y 2 con lluvia.').ok).toBe(false)
+  })
+
+  it.each([
+    'Veamos... el lunes hay 7 lugares bajo aviso y 2 con lluvia.',
+    'Durante la tarde del lunes, 7 lugares bajo aviso y 2 con lluvia.',
+    'La noche del lunes deja 7 lugares bajo aviso y 2 con lluvia.',
+  ])('acepta las formas ancladas a la fecha: «%s»', (text) => {
+    expect(check(0, text).ok).toBe(true)
   })
 })
 
@@ -173,7 +206,7 @@ describe('lo que esta guarda no ve', () => {
    * ofrece esa lectura— y el prompt, que la prohíbe expresamente.
    */
   it('no distingue "7 avisos" de "7 lugares bajo aviso": las dos usan el mismo 7', () => {
-    expect(check(0, 'Veamos... hoy tenemos 7 avisos y 2 lugares con lluvia.').ok).toBe(true)
+    expect(check(0, 'Veamos... tenemos 7 avisos y 2 lugares con lluvia.').ok).toBe(true)
   })
 
   it('un nombre nuevo al empezar una frase se confunde con la mayúscula normal', () => {

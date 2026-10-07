@@ -1,4 +1,5 @@
 import type { OakToday } from '../../domain/oak/oak-today.ts'
+import { findRelativeTimeExpression } from '../../domain/oak/relative-time-expressions.ts'
 import { isTone } from './oak-pose.ts'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -23,6 +24,11 @@ function isDialogue(value: unknown): boolean {
  * Tampoco sale si habla de otro día que el mapa. El workflow los publica
  * juntos, así que no debería pasar; si pasara, Oak estaría comentando un
  * mapa que el usuario no está viendo.
+ *
+ * Ni si algún diálogo depende del momento de lectura («hoy», «esta tarde»…,
+ * `relative-time-expressions.ts`): el mismo contrato que aplica la guarda al
+ * generar, también sobre un JSON ya publicado. Con uno así, EMPEZAR lleva al
+ * mapa.
  */
 export function readOakToday(data: unknown, forecastDate: string): OakToday | null {
   if (!isRecord(data)) return null
@@ -31,6 +37,7 @@ export function readOakToday(data: unknown, forecastDate: string): OakToday | nu
 
   const { dialogues } = data
   if (!Array.isArray(dialogues) || dialogues.length !== 3 || !dialogues.every(isDialogue)) return null
+  if (dialogues.some((dialogue: { text: string }) => findRelativeTimeExpression(dialogue.text) !== null)) return null
 
   return data as unknown as OakToday
 }

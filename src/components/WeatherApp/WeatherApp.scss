@@ -48,8 +48,11 @@
     // cabecera, y la leyenda y la lista de lugares van debajo. En vertical
     // una columna lateral le quitaría al mapa casi un tercio del ancho a
     // cambio de nada.
+    // `notice` solo tiene contenido cuando el aviso de frescura está
+    // montado (`FreshnessNotice`); vacía, la fila mide cero.
     grid-template-areas:
       'header'
+      'notice'
       'map'
       'legend'
       'list';
@@ -78,6 +81,7 @@
     display: grid;
     grid-template-areas:
       'header header'
+      'notice notice'
       'legend map'
       'list list';
 

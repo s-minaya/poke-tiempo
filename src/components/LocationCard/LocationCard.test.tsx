@@ -59,7 +59,7 @@ describe('LocationCard', () => {
 
     const card = screen.getByRole('region', { name: 'Gijón' })
     expect(card.querySelector('img')).not.toBeInTheDocument()
-    expect(card).toHaveTextContent('Sin previsión para hoy.')
+    expect(card).toHaveTextContent('Sin previsión.')
   })
 
   it('se cierra con su botón y con Escape', () => {

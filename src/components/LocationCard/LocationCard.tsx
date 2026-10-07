@@ -67,7 +67,7 @@ function LocationCard({ summary, side, style, onClose, ref }: LocationCardProps)
           Mínima <strong>{summary.minC}°</strong> · Máxima <strong>{summary.maxC}°</strong>
         </p>
       ) : (
-        <p className="location-card__temperatures">Sin previsión para hoy.</p>
+        <p className="location-card__temperatures">Sin previsión.</p>
       )}
     </section>
   )

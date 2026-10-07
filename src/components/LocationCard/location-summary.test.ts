@@ -47,7 +47,7 @@ describe('announceLocation', () => {
 
   it('sin previsión, lo dice', () => {
     expect(announceLocation(summarizeLocation(view({ pokemonId: null, minC: null, maxC: null }), 'Asturias'))).toBe(
-      'Gijón, Asturias. Sin previsión para hoy.',
+      'Gijón, Asturias. Sin previsión.',
     )
   })
 })

@@ -62,6 +62,6 @@ export function announceLocation(summary: LocationSummary): string {
   const temperatures =
     summary.minC != null && summary.maxC != null
       ? ` Mínima ${summary.minC} grados, máxima ${summary.maxC} grados.`
-      : ' Sin previsión para hoy.'
+      : ' Sin previsión.'
   return place + pokemon + temperatures
 }

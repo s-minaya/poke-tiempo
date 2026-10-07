@@ -1,0 +1,6 @@
+@use '../../styles/abstracts/accessibility' as a11y;
+
+// Fuera de la vista, pero en el árbol de accesibilidad.
+.freshness-announcement {
+  @include a11y.visually-hidden;
+}

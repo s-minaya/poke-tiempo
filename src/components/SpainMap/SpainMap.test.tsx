@@ -165,7 +165,7 @@ describe('SpainMap — selección de un lugar', () => {
     rerender(<SpainMap forecast={forecast([])} selectedLocationId="jaca" />)
 
     expect(container.querySelector('[aria-live="polite"]')).toBe(live)
-    expect(live).toHaveTextContent('Jaca, Huesca. Sin previsión para hoy.')
+    expect(live).toHaveTextContent('Jaca, Huesca. Sin previsión.')
   })
 
   it('cerrar la tarjeta con el foco dentro lo devuelve al marcador si no se sabe quién la abrió', () => {

@@ -5,7 +5,7 @@ import type { OakToday } from '../../domain/oak/oak-today.ts'
 import ProfessorOak, { MS_PER_CHAR, START_DELAY_MS } from './ProfessorOak.tsx'
 
 const TEXTS = [
-  'Vaya... hoy hay 7 lugares bajo algún aviso.',
+  'Vaya... hay 7 lugares bajo algún aviso.',
   '¡Vaya! Charmeleon aparece en 33 lugares del mapa.',
   'Curioso... Gyarados asoma en 6 lugares del mapa.',
 ] as const

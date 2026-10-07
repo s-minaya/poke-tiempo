@@ -1,6 +1,7 @@
 import type { DialogueClaims } from '../../src/domain/oak/claims.ts'
 import { KNOWN_POKEMON_NAMES, extractNumbers } from '../../src/domain/oak/claims.ts'
 import type { OakDialogues } from '../../src/domain/oak/plan-dialogues.ts'
+import { findRelativeTimeExpression } from '../../src/domain/oak/relative-time-expressions.ts'
 import type { AlertLevel } from '../../src/domain/types.ts'
 
 /**
@@ -12,7 +13,9 @@ import type { AlertLevel } from '../../src/domain/types.ts'
  * con reglas deterministas. Comprueba algo mucho más estrecho y decidible:
  * **que no haya entrado ninguna entidad factual nueva**. Una cifra, un
  * nombre propio, un Pokémon o un nivel de aviso que no estuvieran en los
- * claims de ese hueco.
+ * claims de ese hueco. Y una expresión que dependa del momento de lectura
+ * («hoy», «esta tarde», «estamos a lunes»…), que ningún claim puede
+ * sostener.
  *
  * Es la red por debajo del diseño, no el diseño: la defensa primera es que
  * el payload ya no lleva nada que invite a inventar (la `maximaC` de una
@@ -141,6 +144,12 @@ function foreignAlertLevel(text: string, allowed: ReadonlySet<string>): AlertLev
 
 function checkOne(text: string, slot: DialogueClaims, known: readonly string[]): string | null {
   const allowedNames = new Set([...slot.allowed.places, ...slot.allowed.pokemon])
+
+  // No es una entidad nueva, pero sí una afirmación que el texto no puede
+  // sostener: el mapa se lee cualquier día después de publicarse
+  // (`relative-time-expressions.ts`, el mismo contrato que el prompt).
+  const relative = findRelativeTimeExpression(text)
+  if (relative !== null) return `dice «${relative.expression}», que depende del momento de lectura`
 
   const number = extractNumbers(text).find((value) => !slot.allowed.numbers.includes(value))
   if (number !== undefined) return `cifra ${number} que no está en sus claims`

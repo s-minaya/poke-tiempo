@@ -1,0 +1,97 @@
+@use '../../styles/abstracts/variables' as vars;
+
+// Área propia de la rejilla, entre la cabecera y el contenido, a todo el
+// ancho en las dos composiciones (`WeatherApp.scss`). El mar del `body`
+// sigue detrás: el aviso es una caja sobre la misma superficie que la
+// cabecera, con su mismo margen lateral.
+.freshness-notice {
+  grid-area: notice;
+  padding: 0 2rem 1.6rem;
+
+  // Clara, sobre la superficie de interfaz: la oferta de recargar. Con dos
+  // días de retraso o más, invertida en tinta y blanco. Su fuerza la dan la
+  // posición, el tamaño, el icono y el texto; ningún rojo ni naranja, que
+  // son los colores de los avisos meteorológicos.
+  &__box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.2rem 1.6rem;
+    padding: 1.4rem 1.6rem;
+    border: 0.2rem solid vars.$ui-ink;
+    background: vars.$ui-surface;
+    font-family: vars.$font-body;
+    color: vars.$ui-ink;
+
+    &--very-late {
+      background: vars.$ui-ink;
+      color: vars.$color-white;
+    }
+  }
+
+  &__icon {
+    flex: none;
+    inline-size: 2.4rem;
+    block-size: 2.4rem;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2.5;
+    stroke-linecap: square;
+
+    &--large {
+      inline-size: 3.2rem;
+      block-size: 3.2rem;
+      stroke-width: 2;
+    }
+  }
+
+  // Icono y texto siempre juntos. El mensaje crece hasta empujar «Recargar»
+  // al extremo; cuando no caben en la misma fila, el botón pasa debajo.
+  &__message {
+    display: flex;
+    flex: 1 1 32rem;
+    align-items: flex-start;
+    gap: 1.2rem 1.6rem;
+    min-inline-size: 0;
+  }
+
+  &__body {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-inline-size: 0;
+  }
+
+  &__title {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  &__text {
+    font-size: 1.6rem;
+    line-height: 1.45;
+  }
+
+  // Control de la paleta de interfaz: blanco con borde de tinta en reposo y
+  // azul al pasar por encima. Mide al menos 44 × 44 px, el objetivo de
+  // diseño de la 008.
+  &__reload {
+    flex: none;
+    min-block-size: max(44px, 4.4rem);
+    min-inline-size: max(44px, 4.4rem);
+    padding: 0 2.2rem;
+    border: 0.2rem solid vars.$ui-ink;
+    background: vars.$color-white;
+    font-family: vars.$font-body;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: vars.$ui-ink;
+
+    &:hover {
+      border-color: vars.$ui-accent;
+      color: vars.$ui-accent;
+    }
+  }
+}

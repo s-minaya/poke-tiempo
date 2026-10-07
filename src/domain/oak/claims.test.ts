@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { POKEMON_LABELS } from '../pokemon-labels.ts'
 import { buildDayClaims, extractNumbers } from './claims.ts'
+import { findRelativeTimeExpression } from './relative-time-expressions.ts'
 import type { DayPlan, DialoguePlan, DialogueSlot, Tone } from './plan-dialogues.ts'
 import type { NarrativeFact, TemperatureRole } from './types.ts'
 
@@ -166,22 +167,22 @@ describe('day_shape: elegimos nosotros qué es interesante', () => {
   it('con avisos y lluvia, los dos recuentos y sin el total', () => {
     const text = textOf([dayShape(7, 2)])
 
-    expect(text).toBe('Hoy hay 7 lugares del mapa bajo algún aviso y 2 con lluvia.')
+    expect(text).toBe('Hay 7 lugares del mapa bajo algún aviso y 2 con lluvia.')
     expect(text).not.toContain('74')
   })
 
   it('con un solo recuento, el total entra como referencia', () => {
-    expect(textOf([dayShape(7, 0)])).toBe('Hoy, 7 de 74 lugares del mapa están bajo algún aviso.')
-    expect(textOf([dayShape(0, 2)])).toBe('Hoy, 2 de 74 lugares del mapa tienen lluvia.')
+    expect(textOf([dayShape(7, 0)])).toBe('En el mapa, 7 de 74 lugares están bajo algún aviso.')
+    expect(textOf([dayShape(0, 2)])).toBe('En el mapa, 2 de 74 lugares tienen lluvia.')
   })
 
   it('el singular concuerda', () => {
-    expect(textOf([dayShape(1, 0)])).toContain('1 de 74 lugares del mapa está bajo')
-    expect(textOf([dayShape(0, 1)])).toContain('1 de 74 lugares del mapa tiene lluvia')
+    expect(textOf([dayShape(1, 0)])).toContain('1 de 74 lugares está bajo')
+    expect(textOf([dayShape(0, 1)])).toContain('1 de 74 lugares tiene lluvia')
   })
 
   it('sin lluvia ni avisos, lo dice', () => {
-    expect(textOf([dayShape(0, 0)])).toBe('Hoy no hay lluvia ni avisos en ninguno de 74 lugares del mapa.')
+    expect(textOf([dayShape(0, 0)])).toBe('No hay lluvia ni avisos en ninguno de 74 lugares del mapa.')
   })
 })
 
@@ -273,12 +274,20 @@ describe('el resto de hechos', () => {
       { kind: 'marine', locationId: 'gijon', locationName: 'Gijón', mapPokemonId: 'gyarados', mapRepresentsFact: true, waveHeightM: 3.5, wavePeriodS: 9 },
       'Frente a Gijón se esperan olas de 3,5 m, con periodos de 9 s.',
     ],
-    ['calendario entre semana', { kind: 'calendar', date: '2026-09-23', weekday: 'miercoles', weekend: false }, 'Hoy es miércoles.'],
-    ['calendario en fin de semana', { kind: 'calendar', date: '2026-09-23', weekday: 'sabado', weekend: true }, 'Hoy es sábado, fin de semana.'],
+    ['calendario entre semana', { kind: 'calendar', date: '2026-09-23', weekday: 'miercoles', weekend: false }, 'La previsión es para el miércoles.'],
+    ['calendario en fin de semana', { kind: 'calendar', date: '2026-09-23', weekday: 'sabado', weekend: true }, 'La previsión es para el sábado, fin de semana.'],
   ]
 
   it.each(cases)('%s', (_name, fact, expected) => {
     expect(textOf([fact])).toBe(expected)
+  })
+
+  it('ningún claim depende del momento de lectura', () => {
+    const facts = [...cases.map(([, fact]) => fact), dayShape(7, 2), dayShape(7, 0), dayShape(0, 2), dayShape(0, 0), dayShape(1, 0), dayShape(0, 1)]
+
+    for (const fact of facts) {
+      expect(findRelativeTimeExpression(textOf([fact]))).toBeNull()
+    }
   })
 
   it('la fecha no se verbaliza: solo aportaría dígitos que Oak no puede usar', () => {

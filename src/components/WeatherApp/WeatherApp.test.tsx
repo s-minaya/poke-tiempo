@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 
+import type { ForecastFreshness } from '../../domain/forecast-freshness.ts'
 import type { Forecast } from '../../domain/types.ts'
 
 import { COUNT_ANNOUNCEMENT_DELAY_MS } from '../LocationList/components/count-text.ts'
@@ -8,6 +9,10 @@ import { COUNT_ANNOUNCEMENT_DELAY_MS } from '../LocationList/components/count-te
 import WeatherApp from './WeatherApp.tsx'
 
 import forecastData from '../../data/forecast.json'
+
+// La frescura llega como prop: estos tests no dependen del reloj. MAÑANA es
+// el estado con el que el pipeline publica cada `forecast.json`.
+const TOMORROW: ForecastFreshness = { status: 'tomorrow', daysLate: 0 }
 
 // Marcador y fila comparten el nombre del lugar: cada test busca en la vía
 // que ejerce.
@@ -21,21 +26,21 @@ function list() {
 
 describe('WeatherApp', () => {
   it('renders without crashing', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     expect(screen.getByRole('heading', { name: 'POKETIEMPO' })).toBeInTheDocument()
     expect(screen.getByRole('contentinfo')).toBeInTheDocument()
   })
 
   it('sin filtros, el mapa es el de la 008: 74 marcadores operables y ninguno en sombra', () => {
-    const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     expect(map().getAllByRole('button')).toHaveLength(74)
     expect(container.querySelectorAll('.location-marker--dimmed')).toHaveLength(0)
   })
 
   it('activar un marcador abre su tarjeta, y activarlo otra vez la cierra', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     const gijon = map().getByRole('button', { name: /^Gijón/ })
     fireEvent.click(gijon)
@@ -50,7 +55,7 @@ describe('WeatherApp', () => {
   })
 
   it('activar otro lugar cambia la tarjeta en vez de abrir una segunda', () => {
-    const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     fireEvent.click(map().getByRole('button', { name: /^Gijón/ }))
     fireEvent.click(map().getByRole('button', { name: /^Jaca/ }))
@@ -62,7 +67,7 @@ describe('WeatherApp', () => {
   })
 
   it('Escape sobre un marcador cierra la tarjeta y deja el foco donde estaba', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     const gijon = map().getByRole('button', { name: /^Gijón/ })
     fireEvent.click(gijon)
@@ -75,7 +80,7 @@ describe('WeatherApp', () => {
   })
 
   it('equivalencia: para cada uno de los 74 lugares, su fila y su marcador producen exactamente el mismo resultado', () => {
-    const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     const markers = map().getAllByRole('button')
     const rows = list().getAllByRole('button')
@@ -121,7 +126,7 @@ describe('WeatherApp', () => {
   }, 30_000)
 
   it('la alternancia cruza las vías: lo abierto desde el marcador se cierra desde su fila, y al revés', () => {
-    const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
     // Marcador y fila siguen montados al seleccionar: se buscan una vez. La
     // fila, por ser la pulsada, sin calcular el nombre de las otras 73.
     const marker = map().getByRole('button', { name: /^Jaca/ })
@@ -138,7 +143,7 @@ describe('WeatherApp', () => {
   })
 
   it('abierta desde una fila, cerrarla desde la tarjeta devuelve el foco a esa fila, no al mapa', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     const row = list().getByRole('button', { name: /^Jaca/ })
     row.focus()
@@ -152,7 +157,7 @@ describe('WeatherApp', () => {
   })
 
   it('abierta desde un marcador, cerrarla desde la tarjeta devuelve el foco a ese marcador', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     const marker = map().getByRole('button', { name: /^Jaca/ })
     marker.focus()
@@ -166,7 +171,7 @@ describe('WeatherApp', () => {
   })
 
   it('Tab no toca la selección: ni sobre el marcador, ni sobre la fila, ni dentro de la tarjeta', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     const marker = map().getByRole('button', { name: /^Jaca/ })
     fireEvent.click(marker)
@@ -188,7 +193,7 @@ describe('WeatherApp', () => {
       revealed.push(this)
     }
     try {
-      render(<WeatherApp forecast={forecastData as Forecast} />)
+      render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
       const row = list().getByRole('button', { name: /^Jaca/ })
       fireEvent.click(row)
@@ -208,7 +213,7 @@ describe('WeatherApp', () => {
   })
 
   it('el orden de tabulación es el del DOM: ningún tabindex positivo, y los 74 marcadores enfocables', () => {
-    const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     const positive = [...container.querySelectorAll('[tabindex]')].filter((element) => Number(element.getAttribute('tabindex')) > 0)
     expect(positive).toEqual([])
@@ -248,7 +253,7 @@ describe('WeatherApp — la leyenda filtra', () => {
   }
 
   it('equivalencia: con cualquier combinación de condiciones, los marcadores operables son exactamente las filas visibles', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
     const labels = legend()
       .getAllByRole('button')
       .map((entry) => entry.textContent!)
@@ -275,7 +280,7 @@ describe('WeatherApp — la leyenda filtra', () => {
   }, 30_000)
 
   it('pulsar una condición deja operables solo sus lugares, y soltarla devuelve los 74', () => {
-    const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
     const first = legend().getAllByRole('button')[0]
 
     fireEvent.click(first)
@@ -289,7 +294,7 @@ describe('WeatherApp — la leyenda filtra', () => {
   })
 
   it('una condición que excluye el lugar seleccionado cierra su tarjeta y suelta fila y marcador en la misma actualización', () => {
-    const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     const madrid = map().getByRole('button', { name: /^Madrid,/ })
     fireEvent.click(madrid)
@@ -316,7 +321,7 @@ describe('WeatherApp — la leyenda filtra', () => {
   })
 
   it('una condición que incluye el lugar seleccionado lo deja abierto', () => {
-    const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     fireEvent.click(map().getByRole('button', { name: /^Madrid,/ }))
     const madridCondition = container.querySelector('.location-card')!.textContent!
@@ -362,7 +367,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   }
 
   it('equivalencia: con búsqueda y zona, los marcadores operables son exactamente las filas visibles', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
     const firstCondition = within(screen.getByRole('region', { name: 'Leyenda' })).getAllByRole('button')[0]
 
     const steps: [string, () => void][] = [
@@ -387,7 +392,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   it('los resultados cambian al instante, con cada tecla; el anuncio espera medio segundo', () => {
     vi.useFakeTimers()
     try {
-      const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+      const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
       const live = () => [...container.querySelectorAll('[aria-live="polite"]')].map((region) => region.textContent).join('|')
       const before = live()
 
@@ -405,7 +410,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   })
 
   it('buscar no selecciona nada por su cuenta, aunque quede un solo resultado', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     fireEvent.change(searchbox(), { target: { value: 'gijón' } })
 
@@ -415,7 +420,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   })
 
   it('Escape en el buscador vacía solo la búsqueda: zona, condición, orden y selección siguen', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
     fireEvent.change(zone(), { target: { value: 'ES' } })
     fireEvent.click(screen.getByRole('radio', { name: /A–Z/ }))
     fireEvent.change(searchbox(), { target: { value: 'gijón' } })
@@ -431,7 +436,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   })
 
   it('el orden no es un filtro: no crea pastilla ni cambia el recuento', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     fireEvent.click(screen.getByRole('radio', { name: /Más calor/ }))
 
@@ -442,7 +447,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   })
 
   it('cambiar el orden no afecta a la selección', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
     fireEvent.click(map().getByRole('button', { name: /^Jaca,/ }))
 
     for (const label of [/A–Z/, /Más calor/, /Más frío/, /Zona/]) {
@@ -457,7 +462,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   })
 
   it('«Limpiar filtros» quita los tres, conserva el orden y lleva el foco al buscador', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
     fireEvent.click(screen.getByRole('radio', { name: /Más frío/ }))
     fireEvent.change(searchbox(), { target: { value: 'a' } })
     fireEvent.change(zone(), { target: { value: 'ES' } })
@@ -475,7 +480,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   })
 
   it('sin resultados, los controles y los filtros activos siguen a mano, y el estado vacío deja empezar de cero', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
     fireEvent.change(searchbox(), { target: { value: 'zzz' } })
 
     expect(screen.getByRole('heading', { name: 'Ni rastro por aquí' })).toBeInTheDocument()
@@ -493,7 +498,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   describe('al quitar una pastilla, el foco', () => {
     // Condición, zona y búsqueda: tres pastillas, en ese orden.
     function withThreeChips() {
-      render(<WeatherApp forecast={forecastData as Forecast} />)
+      render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
       fireEvent.click(within(screen.getByRole('region', { name: 'Leyenda' })).getAllByRole('button')[0])
       fireEvent.change(zone(), { target: { value: 'ES' } })
       fireEvent.change(searchbox(), { target: { value: 'a' } })
@@ -524,7 +529,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
     })
 
     it('va al buscador al quitar la única que quedaba', () => {
-      render(<WeatherApp forecast={forecastData as Forecast} />)
+      render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
       fireEvent.change(zone(), { target: { value: 'Galicia' } })
 
       fireEvent.click(chip('Zona: Galicia'))
@@ -535,7 +540,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   })
 
   it('un filtro que excluye el lugar seleccionado cierra su tarjeta, y limpiar los filtros no la devuelve', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
     fireEvent.click(map().getByRole('button', { name: /^Gijón,/ }))
 
     fireEvent.change(zone(), { target: { value: 'Andalucía' } })
@@ -547,7 +552,7 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   })
 
   it('flujo: seleccionar → buscar sin perderlo → reordenar → excluirlo por zona → limpiar filtros', () => {
-    render(<WeatherApp forecast={forecastData as Forecast} />)
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     // Seleccionar desde el mapa.
     fireEvent.click(map().getByRole('button', { name: /^Sevilla,/ }))
@@ -580,10 +585,38 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
   })
 
   it('«Saltar al buscador» es lo primero que se enfoca y lleva al buscador', () => {
-    const { container } = render(<WeatherApp forecast={forecastData as Forecast} />)
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     const skip = screen.getByRole('link', { name: 'Saltar al buscador' })
     expect(container.querySelector('a, button, input, select, [tabindex]')).toBe(skip)
     expect(skip).toHaveAttribute('href', `#${searchbox().id}`)
+  })
+
+  describe('aviso de frescura', () => {
+    // Por clase: comprobar por rol en todo el documento calcularía el nombre
+    // de cada marcador y cada fila.
+    it.each([
+      { status: 'tomorrow', daysLate: 0, offerReload: false, mounted: false },
+      { status: 'today', daysLate: 0, offerReload: false, mounted: false },
+      { status: 'late', daysLate: 1, offerReload: false, mounted: false },
+      { status: 'unknown', daysLate: 0, offerReload: false, mounted: false },
+      { status: 'very-late', daysLate: 2, offerReload: false, mounted: true },
+      { status: 'late', daysLate: 1, offerReload: true, mounted: true },
+      { status: 'very-late', daysLate: 2, offerReload: true, mounted: true },
+    ] as const)('$status, con oferta de recargar: $offerReload → en el DOM: $mounted', ({ status, daysLate, offerReload, mounted }) => {
+      const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={{ status, daysLate }} offerReload={offerReload} />)
+
+      expect(container.querySelector('.freshness-notice') !== null).toBe(mounted)
+    })
+
+    it('va entre la cabecera y el contenido', () => {
+      const { container } = render(
+        <WeatherApp forecast={forecastData as Forecast} freshness={{ status: 'very-late', daysLate: 2 }} offerReload={false} />,
+      )
+
+      const notice = container.querySelector('.freshness-notice')!
+      expect(notice.previousElementSibling).toBe(container.querySelector('.header'))
+      expect(notice.nextElementSibling).toBe(container.querySelector('.legend'))
+    })
   })
 })

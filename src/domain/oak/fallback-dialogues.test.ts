@@ -6,6 +6,7 @@ import { POKEMON_NAMES } from '../pokemon-names.ts'
 import { generateFallbackDialogues } from './fallback-dialogues.ts'
 import type { LeitmotifId } from './leitmotifs.ts'
 import { LEITMOTIFS } from './leitmotifs.ts'
+import { findRelativeTimeExpression } from './relative-time-expressions.ts'
 import type { DayPlan, DialoguePlan, DialogueSlot, Tone } from './plan-dialogues.ts'
 import type { AlertFact, CalendarFact, DayShapeFact, NarrativeFact, PokemonSpotlightFact } from './types.ts'
 
@@ -510,7 +511,7 @@ describe('forma del día y calendario', () => {
       const serious = { ...ordinary, serious: true }
       const [text] = generateFallbackDialogues(serious)
 
-      for (const celebration of ['Días así no se olvidan', 'Vaya con el mapa de hoy', 'Esto hay que contarlo', '¡Vaya!']) {
+      for (const celebration of ['Días así no se olvidan', 'Vaya con este mapa', 'Esto hay que contarlo', '¡Vaya!']) {
         expect(text.text).not.toContain(celebration)
       }
     }
@@ -521,10 +522,11 @@ describe('forma del día y calendario', () => {
     const rainy: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 0, distinctPokemonCount: 10 }
     const quiet: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, distinctPokemonCount: 10 }
 
-    expect(render([alerted])).toMatch(/avisos?|bajo aviso/)
-    expect(render([rainy])).toMatch(/llueve|lluvia/)
-    expect(render([rainy])).not.toMatch(/avisos?/)
-    expect(render([quiet])).toMatch(/no llueve|no hay lluvia/)
+    // Sin mayúsculas: el recuento puede abrir la frase.
+    expect(render([alerted])).toMatch(/avisos?|bajo aviso/i)
+    expect(render([rainy])).toMatch(/llueve|lluvia/i)
+    expect(render([rainy])).not.toMatch(/avisos?/i)
+    expect(render([quiet])).toMatch(/no llueve|no hay lluvia/i)
   })
 
   it('un día sin lluvia ni avisos no produce recuentos raros', () => {
@@ -741,5 +743,43 @@ describe('voz', () => {
     const text = render([ONE_PER_KIND.temperature, rain(4.2, 60)]).toLowerCase()
 
     expect(text).not.toMatch(/tercio norte|cota de nieve|se esperan precipitaciones en|litoral peninsular/)
+  })
+})
+
+describe('sin expresiones relativas al momento de lectura', () => {
+  const TONES: Tone[] = ['neutral', 'cientifico', 'epico', 'consejo', 'guasa']
+  const WEEKDAYS: CalendarFact['weekday'][] = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+  // Catorce fechas seguidas: cada `pick` recorre así todas sus variantes.
+  const DATES = Array.from({ length: 14 }, (_, day) => `2026-10-${String(day + 5).padStart(2, '0')}`)
+  const facts = Object.values(ONE_PER_KIND)
+
+  function textsOf(plan: DayPlan): string[] {
+    return generateFallbackDialogues(plan).map((dialogue) => dialogue.text)
+  }
+
+  it('ningún texto, en ningún tono, fecha, día de la semana, gag ni día serio', () => {
+    const texts: string[] = []
+
+    for (const date of DATES) {
+      for (const tone of TONES) {
+        for (const fact of facts) texts.push(...textsOf(planWith([fact], { tone, date })))
+        // Dos hechos por hueco: fuerza también las redacciones compactas.
+        for (const [index, fact] of facts.entries()) {
+          texts.push(...textsOf(planWith([fact, facts[(index + 1) % facts.length]], { tone, date })))
+        }
+        for (const weekday of WEEKDAYS) {
+          const day: CalendarFact = { kind: 'calendar', date, weekday, weekend: weekday === 'sabado' || weekday === 'domingo' }
+          texts.push(...textsOf(planWith([day], { tone, date })))
+          texts.push(...textsOf({ ...planWith([day, dayShape], { tone, date }), serious: true }))
+        }
+      }
+      for (const { id } of LEITMOTIFS) {
+        texts.push(...textsOf(planWith([dayShape], { tone: 'guasa', leitmotif: id, date })))
+      }
+    }
+
+    const offenders = texts.filter((text) => findRelativeTimeExpression(text) !== null)
+    expect(offenders).toEqual([])
+    expect(texts.length).toBeGreaterThan(3000)
   })
 })

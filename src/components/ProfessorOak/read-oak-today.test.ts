@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { RELATIVE_DAY_WORDS, RELATIVE_TIME_PHRASES } from '../../domain/oak/relative-time-expressions.ts'
 import { readOakToday } from './read-oak-today.ts'
 
 const DATE = '2026-09-23'
@@ -12,7 +13,7 @@ function oakToday(overrides: Record<string, unknown> = {}) {
     dayMode: 'invasion',
     serious: false,
     dialogues: [
-      { id: 'dialogue-1', role: 'apertura', tone: 'neutral', text: 'Vaya... hoy hay 7 lugares bajo algún aviso.' },
+      { id: 'dialogue-1', role: 'apertura', tone: 'neutral', text: 'Vaya... hay 7 lugares bajo algún aviso.' },
       { id: 'dialogue-2', role: 'foco', tone: 'epico', text: 'Charmeleon aparece en 33 lugares del mapa.' },
       { id: 'dialogue-3', role: 'cierre', tone: 'guasa', text: 'Gyarados asoma en 6 lugares. Yo miraría desde lejos.' },
     ],
@@ -62,5 +63,33 @@ describe('readOakToday', () => {
 
   it('lo que ni siquiera es un objeto, tampoco', () => {
     for (const value of [null, undefined, 'oak', 42, []]) expect(readOakToday(value, DATE)).toBeNull()
+  })
+
+  describe('expresiones relativas al momento de lectura', () => {
+    // Las listas del contrato, no una copia.
+    const expressions = [...RELATIVE_DAY_WORDS, ...RELATIVE_TIME_PHRASES, 'estamos a lunes', 'estamos a 5 de octubre']
+
+    it.each(expressions)('con «%s» en cualquier bocadillo, no se cuenta', (expression) => {
+      for (const index of [0, 1, 2]) {
+        const dialogues = oakToday().dialogues.map((dialogue, at) => (at === index ? { ...dialogue, text: `Veamos... ${expression}, ${dialogue.text}` } : dialogue))
+
+        expect(readOakToday(oakToday({ dialogues }), DATE)).toBeNull()
+      }
+    })
+
+    it('un oak-today.json que dice «Hoy hay…» no se cuenta', () => {
+      const [first, second, third] = oakToday().dialogues
+
+      expect(readOakToday(oakToday({ dialogues: [{ ...first, text: 'Hoy hay 33 lugares bajo aviso y 69 con lluvia.' }, second, third] }), DATE)).toBeNull()
+    })
+
+    it.each(['El lunes hay 7 lugares bajo algún aviso.', 'Durante la tarde del lunes, 7 lugares bajo aviso.', 'Estamos a 30 grados en Sevilla.'])(
+      'las formas que no dependen del momento de lectura sí: «%s»',
+      (text) => {
+        const [first, second, third] = oakToday().dialogues
+
+        expect(readOakToday(oakToday({ dialogues: [{ ...first, text }, second, third] }), DATE)).not.toBeNull()
+      },
+    )
   })
 })

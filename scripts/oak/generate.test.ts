@@ -65,7 +65,7 @@ function aiReturning(texts: [string, string, string]) {
 }
 
 const AI_TEXTS: [string, string, string] = [
-  'Vaya, hoy el mapa viene con seis avisos repartidos. Habrá que estar atentos.',
+  'Vaya, el mapa viene con seis avisos repartidos. Habrá que estar atentos.',
   'Hay aviso naranja por lluvia en Ibiza, y allí se esperan 7,6 mm. Yo llevaría paraguas.',
   'Castform ha vuelto a cambiarse de ropa. Esta vez le toca niebla en cuatro sitios.',
 ]

@@ -354,8 +354,8 @@ function spotlightClause(fact: PokemonSpotlightFact, context: ClauseContext): Cl
  * Oak sitúa la jornada, no recita una tabla.
  *
  * **Qué recuento sitúa la jornada, en este orden: avisos, lluvia, y si no hay
- * ninguno de los dos, decirlo.** `distinctPokemonCount` no abre nunca: "hoy
- * tenemos 8 Pokémon distintos" es cierto y no informa de nada — casi
+ * ninguno de los dos, decirlo.** `distinctPokemonCount` no abre nunca:
+ * "tenemos 8 Pokémon distintos" es cierto y no informa de nada — casi
  * cualquier día del año da un número parecido. El campo sigue en
  * `DayShapeFact` porque el hecho no cambia; lo que cambia es qué merece ser
  * la primera frase. Mismo criterio que los claims que recibe la IA, para que
@@ -372,8 +372,8 @@ function dayShapeClause(fact: DayShapeFact, context: ClauseContext): Clause {
     return {
       fragment: pick(
         fact.alertedLocations === 1
-          ? [`hoy hay aviso en uno de ${everywhere}`, `hoy solo uno de ${everywhere} está bajo aviso`]
-          : [`hoy hay avisos en ${whole(fact.alertedLocations)} de ${everywhere}`, `hoy ${whole(fact.alertedLocations)} de ${everywhere} están bajo aviso`],
+          ? [`hay aviso en uno de ${everywhere}`, `solo uno de ${everywhere} está bajo aviso`]
+          : [`hay avisos en ${whole(fact.alertedLocations)} de ${everywhere}`, `${whole(fact.alertedLocations)} de ${everywhere} están bajo aviso`],
         parts,
       ),
     }
@@ -384,25 +384,29 @@ function dayShapeClause(fact: DayShapeFact, context: ClauseContext): Clause {
     return {
       fragment: pick(
         fact.rainingLocations === 1
-          ? [`hoy solo llueve en uno de ${everywhere}`, `hoy llueve en uno de ${everywhere}`]
-          : [`hoy llueve en ${whole(fact.rainingLocations)} de ${everywhere}`, `hoy ${whole(fact.rainingLocations)} de ${everywhere} tienen lluvia`],
+          ? [`solo llueve en uno de ${everywhere}`, `llueve en uno de ${everywhere}`]
+          : [`llueve en ${whole(fact.rainingLocations)} de ${everywhere}`, `${whole(fact.rainingLocations)} de ${everywhere} tienen lluvia`],
         parts,
       ),
     }
   }
 
   if (context.compact) return { fragment: `sin lluvia ni avisos en ${everywhere}` }
-  return { fragment: pick([`hoy no llueve en ninguno de ${everywhere}`, `hoy no hay lluvia ni avisos en ${everywhere}`], parts) }
+  return { fragment: pick([`no llueve en ninguno de ${everywhere}`, `no hay lluvia ni avisos en ${everywhere}`], parts) }
 }
 
-/** Día de la semana y poco más: ni efemérides, ni estaciones, ni fiestas. */
+/**
+ * Día de la semana y poco más: ni efemérides, ni estaciones, ni fiestas.
+ * Anclado a la previsión, nunca al momento de lectura
+ * (`relative-time-expressions.ts`).
+ */
 function calendarClause(fact: CalendarFact, context: ClauseContext): Clause {
   const parts = [...context.parts, 'calendar', fact.date]
   const weekday = WEEKDAY_TEXT[fact.weekday]
 
-  if (context.compact) return { fragment: `hoy, ${weekday}` }
-  if (fact.weekend) return { fragment: pick([`hoy es ${weekday}, fin de semana`, `estamos a ${weekday}`], parts) }
-  return { fragment: pick([`hoy es ${weekday}`, `estamos a ${weekday}`], parts) }
+  if (context.compact) return { fragment: `previsión del ${weekday}` }
+  if (fact.weekend) return { fragment: pick([`la previsión es para el ${weekday}, fin de semana`, `el mapa es del ${weekday}, fin de semana`], parts) }
+  return { fragment: pick([`la previsión es para el ${weekday}`, `el mapa es del ${weekday}`], parts) }
 }
 
 function clauseFor(fact: NarrativeFact, context: ClauseContext): Clause {
@@ -454,7 +458,7 @@ const OPENERS: Record<Tone, readonly string[]> = {
 const TAILS: Record<Tone, readonly string[]> = {
   neutral: ['Seguimos observando.', 'Tomo nota.'],
   cientifico: ['Habrá que anotarlo.', 'Me lo apunto en el cuaderno.'],
-  epico: ['Días así no se olvidan.', 'Vaya con el mapa de hoy.'],
+  epico: ['Días así no se olvidan.', 'Vaya con este mapa.'],
   consejo: ['Yo tendría cuidado.', 'Conviene estar atento.', 'Yo saldría preparado.'],
   guasa: [],
 }

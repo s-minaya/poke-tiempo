@@ -1,3 +1,5 @@
+@use '../../styles/abstracts/accessibility' as a11y;
+@use '../../styles/abstracts/breakpoints' as bp;
 @use '../../styles/abstracts/variables' as vars;
 
 // Poketiempo Unown: fuente propia vectorizada a partir del alfabeto Unown
@@ -9,6 +11,10 @@
   src: url('../../assets/fonts/poketiempo-unown.woff2') format('woff2');
   font-display: swap;
 }
+
+// Tamaño de la fecha de la previsión (ver `&__date`), también el de su
+// párrafo (`&__forecast`).
+$forecast-font-size: max(19px, clamp(1.9rem, 0.57vw + 1.72rem, 2.4rem));
 
 .header {
   // Dos custom properties en el bloque raíz, redefinidas por cada
@@ -101,9 +107,102 @@
     font-weight: 700;
   }
 
+  // La fecha, su etiqueta, la frase de un día de retraso y la hora de
+  // generación: un solo grupo, que se coloca junto al título o debajo según
+  // quepa. En la composición de dos columnas comparte fila con el título y
+  // se alinea a la derecha; en la apilada, a la izquierda, con el mismo
+  // margen que el título.
+  &__dateline {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+
+    @include bp.respond-from(bp.$breakpoint-desktop) {
+      align-items: flex-end;
+      text-align: end;
+    }
+  }
+
+  // La fecha y su etiqueta, texto en línea y no una fila flex: los hijos de
+  // un contenedor flex pasan a ser bloques, y el navegador expone entonces
+  // la fecha y la etiqueta como textos sueltos que un lector de pantalla lee
+  // por separado. En línea son una sola frase, «…6 de octubre, hoy». El
+  // párrafo va al tamaño de la fecha para que cada renglón mida al menos lo
+  // que el de ella: la etiqueta, si baja sola, cabe sin pisar la fecha,
+  // también con el espaciado de texto de 1.4.12.
   &__forecast {
+    font-size: $forecast-font-size;
+  }
+
+  &__separator {
+    @include a11y.visually-hidden;
+  }
+
+  // HOY y MAÑANA, clara; ATRASADA, invertida y con el icono de reloj. Se
+  // distinguen por luminosidad, icono y texto, no por un color nuevo: solo
+  // tinta y blanco de la paleta de interfaz (`010-spec.md`).
+  &__label {
+    // Entera en una línea: si no cabe tras la fecha, baja completa, con
+    // 0,8rem de aire por encima que le da su interlineado. Centrada con la
+    // fecha: las dos van a `middle`.
+    white-space: nowrap;
+    vertical-align: middle;
+    line-height: 4rem;
+    padding: 0.4rem 1rem;
+    border: 0.2rem solid vars.$ui-ink;
+    background: vars.$color-white;
+    font-family: vars.$font-body;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: vars.$ui-ink;
+
+    &--late {
+      background: vars.$ui-ink;
+      color: vars.$color-white;
+    }
+  }
+
+  &__label-icon {
+    display: inline-block;
+    vertical-align: middle;
+    margin-inline-end: 0.6rem;
+    inline-size: 1.6rem;
+    block-size: 1.6rem;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2.5;
+    stroke-linecap: square;
+  }
+
+  &__delay,
+  &__generated {
+    font-family: vars.$font-body;
+    line-height: 1.45;
+    color: vars.$ui-ink;
+  }
+
+  &__delay {
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+
+  &__generated {
+    font-size: 1.4rem;
+  }
+
+  &__date {
+    // El margen, más el espacio del marcado, la separa de la etiqueta.
+    margin-inline-end: 0.6rem;
+    vertical-align: middle;
     font-family: vars.$font-heading;
     color: var(--mood-fill);
+
+    // La fecha llega en minúsculas (`format-forecast-headline.ts`): un
+    // lector de pantalla la lee como frase y no deletrea cada palabra.
+    text-transform: uppercase;
 
     // Peso visual comparable al título, como en la imagen de referencia
     // original — la previsión no es un texto secundario discreto. El suelo
@@ -113,7 +212,7 @@
     // 19px de verdad muerde: con una base de navegador por debajo de 16px,
     // 1,9rem se quedaría corto y el umbral volvería a ser 4,5:1, que el halo
     // de "cold" (4,07:1) no alcanza.
-    font-size: max(19px, clamp(1.9rem, 0.57vw + 1.72rem, 2.4rem));
+    font-size: $forecast-font-size;
     letter-spacing: 0.03em;
 
     // Pixelify Sans trae 700 real (index.html): negrita de verdad, no

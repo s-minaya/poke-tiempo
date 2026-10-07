@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { POKEMON_LABELS } from '../../src/domain/pokemon-labels.ts'
 import { buildDayClaims } from '../../src/domain/oak/claims.ts'
 import type { DayPlan, DialoguePlan } from '../../src/domain/oak/plan-dialogues.ts'
+import { READING_DATE_RULE, RELATIVE_DAY_WORDS, RELATIVE_TIME_PHRASES, findRelativeTimeExpression } from '../../src/domain/oak/relative-time-expressions.ts'
 import type { NarrativeFact, PokemonSpotlightFact } from '../../src/domain/oak/types.ts'
 import { DEFAULT_MODEL, GROQ_ENDPOINT, buildPromptPayload, generateOakDialogues } from './groq-adapter.ts'
 
@@ -59,7 +60,7 @@ const dayPlan: DayPlan = {
 }
 
 const VALID_TEXTS = [
-  'Bien. Hoy hay 6 lugares bajo aviso y 23 con lluvia. Seguimos observando.',
+  'Bien. Hay 6 lugares bajo aviso y 23 con lluvia. Seguimos observando.',
   'Tenemos un aviso naranja por lluvia en Ibiza, y allí se esperan 7,6 mm.',
   'Yo miraría el mar desde una distancia prudente. Mega-Gyarados anda por Gijón.',
 ]
@@ -217,6 +218,23 @@ describe('petición', () => {
     }
   })
 
+  it('el system prompt prohíbe exactamente las expresiones del contrato, y no las usa en sus ejemplos', async () => {
+    const spy = mockFetch(() => completion(validPayload()))
+    await generateOakDialogues(dayPlan)
+    const system: string = JSON.parse(String(spy.mock.calls[0][1].body)).messages[0].content
+
+    const rule = system.split('\n').find((line) => line.startsWith('No uses expresiones cuyo significado dependa del momento de lectura'))
+    for (const expression of [...RELATIVE_DAY_WORDS, ...RELATIVE_TIME_PHRASES]) {
+      expect(rule).toContain(`«${expression}»`)
+    }
+    expect(rule).toContain(READING_DATE_RULE)
+
+    // Fuera de esa regla y de la aclaración sobre «mañana», ninguna línea
+    // del prompt usa lo que la regla prohíbe.
+    const rest = system.split('\n').filter((line) => line !== rule && !line.startsWith('«Mañana» tampoco'))
+    expect(rest.filter((line) => findRelativeTimeExpression(line) !== null)).toEqual([])
+  })
+
   it('la clave viaja en la cabecera y en ningún otro sitio', async () => {
     const spy = mockFetch(() => completion(validPayload()))
     await generateOakDialogues(dayPlan)
@@ -271,10 +289,11 @@ describe('todo lo que cae al fallback', () => {
     { name: 'text que no es cadena', respond: () => completion({ dialogues: validPayload().dialogues.map((d) => ({ ...d, text: 42 })) }) },
     // La forma es correcta y el contenido no: una respuesta que se inventa
     // una entidad es tan inválida como una que llega torcida.
-    { name: 'una cifra que no estaba en los claims', respond: () => completion(replacing(0, 'Bien. Hoy hay 6 lugares bajo aviso y 40 con lluvia. Seguimos observando.')) },
+    { name: 'una cifra que no estaba en los claims', respond: () => completion(replacing(0, 'Bien. Hay 6 lugares bajo aviso y 40 con lluvia. Seguimos observando.')) },
     { name: 'un lugar que no estaba en los claims', respond: () => completion(replacing(1, 'Tenemos un aviso naranja por lluvia en Ibiza, y en Teruel se esperan 7,6 mm.')) },
     { name: 'un Pokémon que no estaba en los claims', respond: () => completion(replacing(2, 'Yo miraría el mar desde lejos. Snorunt anda por Gijón, como siempre.')) },
     { name: 'un nivel de aviso que no estaba en los claims', respond: () => completion(replacing(1, 'Tenemos un aviso rojo por lluvia en Ibiza, y allí se esperan 7,6 mm.')) },
+    { name: 'una expresión que depende del momento de lectura', respond: () => completion(replacing(0, 'Bien. Esta tarde hay 6 lugares bajo aviso y 23 con lluvia. Seguimos observando.')) },
   ]
 
   it.each(cases)('$name → null', async ({ respond }) => {

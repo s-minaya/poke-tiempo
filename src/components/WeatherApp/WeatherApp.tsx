@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import type { ExplorationState, LocationFilters, ZoneFilter } from './location-filters.ts'
+import type { ForecastFreshness } from '../../domain/forecast-freshness.ts'
 import type { PokedexId } from '../../domain/pokedex.ts'
 import type { Forecast } from '../../domain/types.ts'
 
@@ -10,6 +11,7 @@ import { INITIAL_EXPLORATION, NO_FILTERS, applyFilters, buildSearchIndex, matchi
 import { LOCATION_SEARCH_ID } from '../LocationList/components/location-search-id.ts'
 
 import Credits from '../Credits/Credits.tsx'
+import FreshnessNotice from '../FreshnessNotice/FreshnessNotice.tsx'
 import Header from '../Header/Header.tsx'
 import Legend from '../Legend/Legend.tsx'
 import LocationList from '../LocationList/LocationList.tsx'
@@ -21,11 +23,15 @@ import './WeatherApp.scss'
 
 interface WeatherAppProps {
   forecast: Forecast
+  /** Cuán fresca es la previsión respecto al calendario de Madrid (`forecast-freshness.ts`). */
+  freshness: ForecastFreshness
+  /** Si se ofrece recargar: la página cargó al día y ahora está atrasada. */
+  offerReload: boolean
   /** Montada pero fuera de alcance mientras otra escena está delante (Oak): ni foco, ni clics, ni lectores de pantalla. */
   inert?: boolean
 }
 
-function WeatherApp({ forecast, inert = false }: WeatherAppProps) {
+function WeatherApp({ forecast, freshness, offerReload, inert = false }: WeatherAppProps) {
   // Los filtros y el lugar cuya tarjeta está abierta. Es estado de
   // interacción, no de maquetación: lo comparten la leyenda, el mapa y la
   // lista. Un solo objeto, para que un filtro que excluye el lugar
@@ -87,7 +93,12 @@ function WeatherApp({ forecast, inert = false }: WeatherAppProps) {
           plantilla en `.app` y adoptada aquí con `subgrid`. Cada componente
           fija su propio `grid-area` en su `.scss`. */}
       <main className="app__layout">
-        <Header forecast={forecast} />
+        <Header forecast={forecast} freshness={freshness} />
+        {/* Solo con dos días de retraso o más, o con la oferta de recargar:
+            en cualquier otro caso no está en el DOM. */}
+        {(freshness.status === 'very-late' || offerReload) && (
+          <FreshnessNotice freshness={freshness} forecastDate={forecast.date} offerReload={offerReload} />
+        )}
         <Legend forecast={forecast} selectedConditions={exploration.filters.conditions} onToggleCondition={toggleCondition} />
         <SpainMap
           forecast={forecast}

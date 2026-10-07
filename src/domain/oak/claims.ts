@@ -281,24 +281,25 @@ function dayShapeClaims(fact: DayShapeFact): ClaimSet {
   const total = places(fact.totalLocations)
 
   if (alerted > 0 && raining > 0) {
-    return claim(`Hoy hay ${places(alerted)} del mapa bajo algún aviso y ${whole(raining)} con lluvia.`)
+    return claim(`Hay ${places(alerted)} del mapa bajo algún aviso y ${whole(raining)} con lluvia.`)
   }
   if (alerted > 0) {
-    return claim(`Hoy, ${alerted} de ${total} del mapa ${alerted === 1 ? 'está' : 'están'} bajo algún aviso.`)
+    return claim(`En el mapa, ${alerted} de ${total} ${alerted === 1 ? 'está' : 'están'} bajo algún aviso.`)
   }
   if (raining > 0) {
-    return claim(`Hoy, ${raining} de ${total} del mapa ${raining === 1 ? 'tiene' : 'tienen'} lluvia.`)
+    return claim(`En el mapa, ${raining} de ${total} ${raining === 1 ? 'tiene' : 'tienen'} lluvia.`)
   }
-  return claim(`Hoy no hay lluvia ni avisos en ninguno de ${total} del mapa.`)
+  return claim(`No hay lluvia ni avisos en ninguno de ${total} del mapa.`)
 }
 
 /**
- * Día de la semana y nada más. La fecha no se verbaliza: Oak no la dice y
- * mandarla solo aportaría dígitos que no puede usar.
+ * Día de la semana y nada más, anclado a la previsión y no al momento de
+ * lectura (`relative-time-expressions.ts`). La fecha no se verbaliza: Oak no
+ * la dice y mandarla solo aportaría dígitos que no puede usar.
  */
 function calendarClaims(fact: CalendarFact): ClaimSet {
   const weekday = WEEKDAY_TEXT[fact.weekday]
-  return claim(fact.weekend ? `Hoy es ${weekday}, fin de semana.` : `Hoy es ${weekday}.`)
+  return claim(fact.weekend ? `La previsión es para el ${weekday}, fin de semana.` : `La previsión es para el ${weekday}.`)
 }
 
 function claimsFor(fact: NarrativeFact): ClaimSet {
