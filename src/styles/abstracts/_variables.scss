@@ -82,7 +82,7 @@ $landing-button-fill: #0f3a32;
 
 // Capas de pantalla completa (App.tsx). Durante el cruce desde la portada,
 // la portada se funde **por encima** de la escena de Oak, y Oak queda por
-// encima del mapa — incluidos los créditos, que llevan `z-index: 1`.
+// encima del mapa y de los créditos.
 // La tarjeta de lugar queda por encima del mapa y por debajo de ambas.
 $z-location-card: 5;
 $z-oak: 10;

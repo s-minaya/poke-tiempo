@@ -70,34 +70,20 @@
   // columna bajo el título y mapa como cuerpo; la lista de lugares, en una
   // banda a todo el ancho por debajo. Vuelve en cuanto el mapa puede
   // quedarse con los ~880px que mantienen sus marcadores en el objetivo de
-  // diseño de 44px (880 + la columna de la leyenda + márgenes).
-
-  // La rejilla la define `.app`, no `<main>`, y `<main>` la adopta con
-  // `subgrid`. Es lo que permite a los créditos —que viven fuera de `<main>`
-  // para ser el `contentinfo` de la página— colocarse en el área del mapa y
-  // apoyarse sobre el mar al pie del dibujo, como en la cuenta original,
-  // aunque la lista siga debajo (`Credits.scss`).
+  // diseño de 44px (880 + la columna de la leyenda + márgenes). Los
+  // créditos, fuera de `<main>`, quedan debajo de todo, como en la apilada.
   @include bp.respond-from(bp.$breakpoint-desktop) {
-    display: grid;
-    grid-template-areas:
-      'header header'
-      'notice notice'
-      'legend map'
-      'list list';
-
-    // La columna de la leyenda: una entrada completa de `Legend.scss`
-    // (26,8rem, con el borde y la columna del ✓) más su relleno de 2rem a
-    // cada lado. A 1200px deja 892px al mapa, por encima de los 880.
-    grid-template-columns: minmax(26.8rem, 30.8rem) minmax(0, 1fr);
-
     &__layout {
-      grid-area: 1 / 1 / -1 / -1;
+      grid-template-areas:
+        'header header'
+        'notice notice'
+        'legend map'
+        'list list';
 
-      // Filas y columnas de `.app`. Los nombres de área también llegan de
-      // allí: una subrejilla hereda las líneas con nombre de la suya, así
-      // que `grid-area: map` en cada componente sigue funcionando. El
-      // shorthand anula además las áreas de la composición apilada.
-      grid-template: subgrid / subgrid;
+      // La columna de la leyenda: una entrada completa de `Legend.scss`
+      // (26,8rem, con el borde y la columna del ✓) más su relleno de 2rem a
+      // cada lado. A 1200px deja 892px al mapa, por encima de los 880.
+      grid-template-columns: minmax(26.8rem, 30.8rem) minmax(0, 1fr);
 
       // `stretch` (el valor por defecto de grid): la leyenda rellena su
       // celda hasta la altura del mapa, para que el azul del mar llegue de

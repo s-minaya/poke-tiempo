@@ -32,6 +32,14 @@ describe('WeatherApp', () => {
     expect(screen.getByRole('contentinfo')).toBeInTheDocument()
   })
 
+  it('los créditos son lo último de la página y quedan fuera de <main>', () => {
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
+
+    const footer = screen.getByRole('contentinfo')
+    expect(container.querySelector('.app')!.lastElementChild).toBe(footer)
+    expect(screen.getByRole('main')).not.toContainElement(footer)
+  })
+
   it('sin filtros, el mapa es el de la 008: 74 marcadores operables y ninguno en sombra', () => {
     const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 

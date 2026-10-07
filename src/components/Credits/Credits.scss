@@ -1,46 +1,20 @@
-@use '../../styles/abstracts/breakpoints' as bp;
 @use '../../styles/abstracts/variables' as vars;
 
+// Pie de página: lo último de la página en las dos composiciones, bajo la
+// lista y a todo el ancho de `.app` (`WeatherApp.scss`). Sin fondo propio:
+// el texto va sobre el de la página, `$map-sea`, como la cabecera, y una
+// línea de tinta lo separa de la lista.
 .credits {
-  // En apilado, una banda propia en flujo normal bajo la composición: la
-  // página crece lo que haga falta, y bajo un mapa a todo el ancho no hay
-  // mar donde apoyarse.
-  inline-size: fit-content;
-  margin: 0.8rem auto;
-  padding: 0.4rem 1.2rem;
-  border-radius: 999px;
+  padding: 1.6rem 2rem;
+  border-block-start: 0.2rem solid vars.$ui-ink;
   font-family: vars.$font-body;
 
-  // Fondo propio (a diferencia del resto de textos superpuestos al mar,
-  // que usan borde en vez de relleno): aquí el fondo real varía según qué
-  // haya debajo (mar, tierra, contexto norteafricano), así que un borde de
-  // mood no bastaría en todos los casos — una pastilla clara sí garantiza
-  // contraste sea cual sea el color de fondo real en ese punto.
-  background: rgb(255 255 255 / 80%);
-
   // Suelo de 1,2rem: el mínimo que la 008 admite para cualquier texto de la
-  // interfaz. No lleva color de mood —va en $color-near-black sobre pastilla
-  // clara, 18,4:1— así que no le aplica la regla de ≥19px y bold.
+  // interfaz. Va en `$ui-ink` sobre el mar, 11,47:1, y no en color de mood,
+  // así que no le aplica la regla de ≥19px y bold.
   font-size: clamp(1.2rem, 0.25vw + 1.12rem, 1.4rem);
-  color: vars.$color-near-black;
+  color: vars.$ui-ink;
   text-align: center;
-
-  // En dos columnas vuelven sobre el mar, como en la cuenta original: en el
-  // área del mapa de la rejilla de `.app` (`WeatherApp.scss`), apoyados en
-  // su borde inferior, por encima de la franja de contexto norteafricano —
-  // zona decorativa, sin ningún `LocationMarker` con el que puedan competir
-  // (`SpainMap.tsx`). Siguen siendo el mismo `<footer>` fuera de `<main>`:
-  // sólo cambia dónde se pintan. Los márgenes automáticos los centran
-  // dentro de la columna.
-  @include bp.respond-from(bp.$breakpoint-desktop) {
-    grid-area: map;
-    align-self: end;
-    margin-block: 0;
-
-    // Los grid items respetan `z-index` sin necesidad de `position`: la
-    // pastilla se pinta por encima del mapa (ver `_variables.scss` → capas).
-    z-index: 1;
-  }
 
   &__line {
     margin: 0;
