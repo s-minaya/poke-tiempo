@@ -1,12 +1,19 @@
+@use '../../styles/abstracts/full-bleed' as fb;
 @use '../../styles/abstracts/variables' as vars;
 
-// Pie de página: lo último de la página en las dos composiciones, bajo la
+// Grosor de la línea de tinta: lo comparten el borde y el degradado que la
+// lleva hasta los bordes de la ventana.
+$rule-width: 0.2rem;
+
+// Pie de página: lo último de la página en todas las composiciones, bajo la
 // lista y a todo el ancho de `.app` (`WeatherApp.scss`). Sin fondo propio:
 // el texto va sobre el de la página, `$map-sea`, como la cabecera, y una
-// línea de tinta lo separa de la lista.
+// línea de tinta lo separa de la lista. En escritorio grande, el texto se
+// queda en los 1600px de `.app` y la línea llega a los bordes de la ventana,
+// como el blanco de la lista (`_full-bleed.scss`).
 .credits {
   padding: 1.6rem 2rem;
-  border-block-start: 0.2rem solid vars.$ui-ink;
+  border-block-start: $rule-width solid vars.$ui-ink;
   font-family: vars.$font-body;
 
   // Va en `$ui-ink` sobre el mar, 11,47:1, y no en color de mood, así que no
@@ -14,6 +21,8 @@
   font-size: vars.$font-size-note;
   color: vars.$ui-ink;
   text-align: center;
+
+  @include fb.full-bleed(linear-gradient(vars.$ui-ink $rule-width, transparent $rule-width));
 
   &__line {
     margin: 0;

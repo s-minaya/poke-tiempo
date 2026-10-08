@@ -1,19 +1,30 @@
 @use 'sass:color';
 @use 'sass:map';
 @use '../../styles/abstracts/accessibility' as a11y;
+@use '../../styles/abstracts/full-bleed' as fb;
 @use '../../styles/abstracts/variables' as vars;
 
 $divider: color.change(vars.$ui-ink, $alpha: 0.15);
 
+// Grosores de las dos líneas que llegan a sangre: los comparten el borde y
+// el degradado que lo pinta hasta los bordes de la ventana.
+$divider-width: 1px;
+$controls-rule-width: 0.2rem;
+
 // Un panel claro: es contenido para leer y tocar, no parte del dibujo del
 // mapa, así que no va sobre el mar. Solo usa la paleta de interfaz —tinta,
 // nube, azul y blanco—; lo único con color de significado es la muestra de
-// franja de los encabezados de temperatura.
+// franja de los encabezados de temperatura. En escritorio grande, el
+// contenido se queda en los 1600px de `.app`, pero el blanco del panel y sus
+// bandas llegan a los bordes de la ventana (`_full-bleed.scss`): a los
+// lados, la lista sigue leyéndose como lista y no como una isla sobre el mar.
 .location-list {
   grid-area: list;
   background: vars.$color-white;
   color: vars.$ui-ink;
   font-family: vars.$font-body;
+
+  @include fb.full-bleed(linear-gradient(vars.$color-white 0 0));
 
   // La banda de título: tinta, con la Poké Ball en trazo blanco.
   &__titlebar {
@@ -23,6 +34,8 @@ $divider: color.change(vars.$ui-ink, $alpha: 0.15);
     padding: 1.1rem 1.6rem;
     background: vars.$ui-ink;
     color: vars.$color-white;
+
+    @include fb.full-bleed(linear-gradient(vars.$ui-ink 0 0));
   }
 
   &__ball {
@@ -51,8 +64,10 @@ $divider: color.change(vars.$ui-ink, $alpha: 0.15);
     flex-direction: column;
     gap: 1.2rem;
     padding: 1.6rem 1.6rem 1.4rem;
-    border-block-end: 0.2rem solid vars.$ui-ink;
+    border-block-end: $controls-rule-width solid vars.$ui-ink;
     background: vars.$ui-surface;
+
+    @include fb.full-bleed(linear-gradient(to top, vars.$ui-ink $controls-rule-width, vars.$ui-surface $controls-rule-width));
   }
 
   &__group-heading {
@@ -61,13 +76,15 @@ $divider: color.change(vars.$ui-ink, $alpha: 0.15);
     gap: 0.8rem;
     margin: 0;
     padding: 0.9rem 1.6rem;
-    border-block-end: 1px solid $divider;
+    border-block-end: $divider-width solid $divider;
     background: vars.$ui-surface;
     font-family: vars.$font-heading;
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+
+    @include fb.full-bleed(linear-gradient(to top, $divider $divider-width, vars.$ui-surface $divider-width));
   }
 
   &__group-title {

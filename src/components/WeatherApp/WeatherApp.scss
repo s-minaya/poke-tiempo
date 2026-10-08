@@ -9,7 +9,9 @@
 .app {
   // Tope de la composición: a partir de aquí deja de crecer y queda centrada
   // con el espacio sobrante. Envuelve también a los créditos, que quedan
-  // alineados con el resto aunque no formen parte de `<main>`.
+  // alineados con el resto aunque no formen parte de `<main>`. Más allá del
+  // tope solo llegan, a sangre, los fondos de la lista y la línea del pie
+  // (`_full-bleed.scss`): el contenido no se estira.
   position: relative;
   max-inline-size: bp.$breakpoint-desktop-large;
   margin-inline: auto;

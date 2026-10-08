@@ -1,0 +1,22 @@
+// Fondo a sangre: lo que pinta `$image` llega hasta los bordes de la
+// ventana, a izquierda y derecha, sin cambiar el ancho de nada. El contenido
+// sigue en su caja; solo se extiende el fondo.
+
+// `border-image` con `fill` pinta la imagen en toda la caja, y su `outset`
+// de `100vw` la saca por los dos lados. Lo que un `border-image` pinta fuera
+// de la caja no ocupa sitio ni cuenta como desbordamiento: no crea scroll y
+// no recorta nada, tampoco los anillos de foco de dentro. Sustituye al borde
+// de la caja, así que `$image` tiene que pintar también ese borde, si lo hay.
+
+// Con `forced-colors`, el navegador cambia fondos y bordes por los colores
+// del sistema, pero no las imágenes: sin la imagen, vuelven el fondo y el
+// borde de siempre, y ninguna banda queda fuera del contenido. Con
+// `border-image-source`: la forma abreviada, `border-image: none`, sale vacía
+// del minificador del build.
+@mixin full-bleed($image) {
+  border-image: $image fill 0 / 0 / 0 100vw;
+
+  @media (forced-colors: active) {
+    border-image-source: none;
+  }
+}
