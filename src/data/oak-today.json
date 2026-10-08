@@ -1,27 +1,27 @@
 {
-  "date": "2026-10-08",
-  "generatedAt": "2026-10-07T12:18:41.080Z",
+  "date": "2026-10-09",
+  "generatedAt": "2026-10-08T12:29:31.852Z",
   "source": "ai",
-  "dayMode": "avistamiento",
-  "serious": false,
+  "dayMode": "alerta",
+  "serious": true,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... hay 3 lugares bajo algún aviso y 17 con lluvia."
+      "text": "Vaya... 3 ubicaciones están bajo aviso y 63 presentan lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "cientifico",
-      "text": "Curioso... Dragonite se avista en Alcañiz; allí el viento sopla a 45 km/h, con rachas de 69 km/h."
+      "tone": "consejo",
+      "text": "Aviso oficial naranja por fenómenos costeros afecta a Menorca; se esperan olas de 2,3 m y periodos de 7,6 s."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "guasa",
-      "text": "Veamos, Castform (Niebla) parece tener vestuario infinito: Albacete, Ciudad Real y Manzanares."
+      "tone": "neutral",
+      "text": "Castform (Niebla) se observa en 2 lugares: Zamora y Segovia."
     }
   ]
 }
