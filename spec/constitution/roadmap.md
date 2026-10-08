@@ -35,9 +35,11 @@ _Orden y estado de las features. Es la vista de "qué hay hecho, qué toca ahora
 
 **011 · Créditos y disclaimer** — la cita de los datos sale del pie y va bajo el mapa, en una sola atribución común. Dice «Datos meteorológicos: AEMET · IPMA · Open-Meteo.com (CC BY 4.0), adaptados para el mapa.», con la web de Open-Meteo y su licencia enlazadas, subrayadas y en la misma pestaña, como pide la licencia de Open-Meteo, que quiere el enlace junto a donde se muestran sus datos. El pie se queda con la autoría de la cuenta original y suma el disclaimer de Pokémon: un proyecto fan no oficial, sin afiliación ni patrocinio de los titulares de los derechos, en el que Pokémon, sus personajes y sus nombres pertenecen a sus respectivos titulares. La constitución describe el disclaimer sin nombrar titulares concretos y anota la licencia SIL OFL 1.1 de Pixelify Sans y Nunito Sans. Ver `features/011-legal-credits/`.
 
+**012 · Escritorio compacto y aprovechamiento del espacio** — en escritorio, las temperaturas del mapa se ven siempre, desde 1200px: el mapa nunca baja del ancho en que sus cifras miden 12px, aunque en una ventana baja su parte de abajo quede bajo el pliegue. Hasta que caben juntas la leyenda y un mapa con temperaturas —un punto de corte que se deriva de esas medidas y de la barra de desplazamiento, 1372px con la base de 16px—, la leyenda va bajo el mapa; desde ahí, a su lado. Los sprites del mapa van en una capa propia, por debajo de los marcadores, y ninguno tapa una cifra ni un aro de foco. Por encima de 1600px, el contenido sigue centrado y los fondos de la lista y la línea del pie llegan a los bordes de la ventana. Ver `features/012-desktop-layout/`.
+
 ## Siguiente 🔜
 
-**012 · Escritorio compacto y aprovechamiento del espacio** — implementada; falta la comprobación en producción tras el push. En escritorio, las temperaturas del mapa se ven siempre, desde 1200px: el mapa nunca baja del ancho en que sus cifras miden 12px, aunque en una ventana baja su parte de abajo quede bajo el pliegue. Hasta que caben juntas la leyenda y un mapa con temperaturas —un punto de corte que se deriva de esas medidas y de la barra de desplazamiento, 1372px con la base de 16px—, la leyenda va bajo el mapa; desde ahí, a su lado. Los sprites del mapa van en una capa propia, por debajo de los marcadores, y ninguno tapa una cifra ni un aro de foco. Por encima de 1600px, el contenido sigue centrado y los fondos de la lista y la línea del pie llegan a los bordes de la ventana. Ver `features/012-desktop-layout/`.
+_Ninguna todavía._
 
 ## Orden previsto 📋
 

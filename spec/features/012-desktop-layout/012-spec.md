@@ -1,6 +1,6 @@
 # 012 · Escritorio compacto y aprovechamiento del espacio
 
-**Estado:** implementada; pendiente de la comprobación en producción.
+**Estado:** cerrada.
 
 ## Qué hace
 

@@ -1,6 +1,6 @@
 # 012 · Escritorio compacto y aprovechamiento del espacio — Plan
 
-**Estado:** implementada; pendiente de la comprobación en producción.
+**Estado:** cerrada.
 
 ## Enfoque
 
@@ -109,7 +109,7 @@ Todo es CSS salvo el orden de las capas del SVG: los sprites del mapa van en una
 - **El fondo a sangre se hace con `border-image`.** No cambia el ancho de nada, no crea scroll, porque lo que pinta fuera de la caja no cuenta como desbordamiento, y no recorta nada.
   - Descartado `box-shadow` con `clip-path`: recortaría los anillos de foco en los bordes de la lista.
   - Descartado salir del contenedor con `100vw`: incluye la barra y daría scroll horizontal.
-- **La geometría del mapa queda fuera:** el mar al este de Baleares se valorará cuando esta composición esté en producción.
+- **La geometría del mapa queda fuera:** el mar al este de Baleares se valorará después, como decisión aparte.
 
 ## Riesgos
 

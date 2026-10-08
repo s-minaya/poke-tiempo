@@ -1,6 +1,6 @@
 # 012 · Escritorio compacto y aprovechamiento del espacio — Tareas
 
-**Estado.** Implementada; falta la comprobación en producción tras el push.
+**Estado.** Feature cerrada.
 
 ## Bloque 1 — Composición de escritorio
 
@@ -49,8 +49,8 @@
 - [x] Validar contra los criterios de aceptación de `012-spec.md`.
 - [x] `roadmap.md`: la 012 en «Siguiente», pendiente de la comprobación en producción.
 - [x] `npm run lint`, `npm run test` y `npm run build` sin errores.
-- [ ] Tras el push autorizado: el despliegue en verde y, en producción, las temperaturas a 1200 y 1366px, las dos columnas desde el punto de corte y el fondo a sangre a 1920px.
-- [ ] Con la comprobación en producción hecha: `roadmap.md`, la 012 en «Hecho».
+- [x] Tras el push autorizado: el despliegue en verde y, en producción, las temperaturas a 1200 y 1366px, las dos columnas desde el punto de corte y el fondo a sangre a 1920px.
+- [x] Con la comprobación en producción hecha: `roadmap.md`, la 012 en «Hecho».
 
 ## Definición de "hecho"
 
