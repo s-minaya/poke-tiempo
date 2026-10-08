@@ -42,12 +42,12 @@ Sin dependencias nuevas: 74 lugares se filtran en cada tecla sin librería de b�
    - Cada entrada es un `<li>` con un `<button type="button" aria-pressed>` en rejilla de tres columnas: el sprite, decorativo; la etiqueta, que es su nombre accesible; y el estado. Fila memoizada, con callback estable que recibe el id.
    - El borde de 0,3rem y la columna de estado existen también en reposo, con el borde transparente y la columna vacía: pulsar o soltar no mueve ni ensancha nada.
    - Pulsada: borde `$ui-accent`, fondo blanco y un ✓ en la columna de estado. El ✓ es un SVG decorativo de 8 × 5 celdas cuadradas de 0,2rem (`shape-rendering: crispEdges`), relleno de `$ui-accent` y sin fondo. En hover, el borde azul sin la caja blanca. Con alguna pulsada, el sprite del resto pasa a silueta (`filter: brightness(0)` y opacidad); su etiqueta no cambia.
-   - La columna mínima de `__list` es de 26,8rem: borde (0,6rem), relleno (0,8rem), sprite (6rem), dos huecos (2,4rem), columna de estado (1,6rem) y 15,4rem de etiqueta, en los que «torrenciales» cabe entera también con el espaciado de letra de 1.4.12. En dos columnas, `WeatherApp.scss` ensancha la leyenda en la misma medida (`minmax(26,8rem, 30,8rem)`): a 1200px el mapa mide 892px, y sus cifras aparecen desde 1458px de viewport.
+   - La columna mínima de `__list` es de 26,8rem: borde (0,6rem), relleno (0,8rem), sprite (6rem), dos huecos (2,4rem), columna de estado (1,6rem) y 15,4rem de etiqueta, en los que «torrenciales» cabe entera también con el espaciado de letra de 1.4.12. En dos columnas, la leyenda mide `$legend-column-width` (`_breakpoints.scss`), con la misma columna de estado y los mismos 15,4rem de etiqueta, y de esa medida se deriva el punto de corte de dos columnas (012).
    - Bajo «Leyenda», «Pulsa un Pokémon para verlo en el mapa», en `$ui-ink`.
 
 7. **El mapa responde** — `src/components/SpainMap/`:
-   - `SpainMap` recibe `matchingIds` y le pasa `dimmed` a cada `LocationMarker`, también a través de `TerritoryInset`.
-   - Un `LocationMarker` en sombra no lleva `role`, `tabIndex`, `aria-label`, `<title>` ni manejadores; lleva `aria-hidden="true"` y `pointer-events: none`, y no pinta temperaturas. Su sprite pasa por un filtro SVG de silueta (`feColorMatrix`) definido una vez en el `<defs>` del mapa, y no por `filter` de CSS, que no se aplica igual a los elementos SVG en todos los navegadores.
+   - `SpainMap` recibe `matchingIds` y lo pasa, también a través de `TerritoryInset`, a `MarkerLayers` (012), que decide una vez por lugar si está en sombra, para la capa de sprites y para los marcadores.
+   - Un lugar en sombra no monta marcador: ni `role`, `tabIndex`, `aria-label`, `<title>`, manejadores ni temperaturas. Solo queda su sprite, en la capa de sprites (`aria-hidden="true"` y `pointer-events: none`, 012), y pasa por un filtro SVG de silueta (`feColorMatrix`) definido una vez en el `<defs>` del mapa, y no por `filter` de CSS, que no se aplica igual a los elementos SVG en todos los navegadores.
    - Sin animación: el cambio es instantáneo, así que no hay movimiento que `prefers-reduced-motion` tenga que quitar.
 
 8. **La barra y la lista** — `src/components/LocationList/`:
@@ -187,7 +187,7 @@ El recuento pasa de 31 criterios que se cumplen y 24 que no aplican a 33 y 22. C
 - **Una silueta pequeña no se reconoce.** No hace falta: la sombra dice «no coincide», y la lista dice cuáles sí.
 - **Días con una sola condición.** La leyenda sigue funcionando como filtro, pero sirve de poco; la búsqueda y la zona siguen siendo útiles.
 - **`<select>` con estilo propio.** `appearance: none` y una flecha propia; al abrirlo se usa la lista nativa de cada sistema, que es lo accesible.
-- **La columna del ✓ ensancha la leyenda.** En dos columnas el mapa pierde ese ancho: a 1200px mide 892px, por encima de los 880 del objetivo de 44px, y sus cifras aparecen desde 1458px de viewport.
+- **La columna del ✓ ensancha la leyenda.** En dos columnas el mapa pierde ese ancho, y el punto de corte de dos columnas sube en la misma medida (012).
 - **Anchos calculados para el texto más largo.** La columna de la leyenda está calculada para «torrenciales» y el campo de zona para «Comunidad Valenciana», las dos con el espaciado de 1.4.12. Una etiqueta o una zona más largas piden revisar esas medidas.
 - **El azul tiene pariente en el significado.** Los moods gélido y frío también son azules (1,51–1,54:1 contra sus tonos oscuros). En la interfaz, el azul nunca pinta un dato del tiempo y siempre va con una señal que no es color.
 - **La suite no mide layout.** jsdom no calcula geometría: plantillas, desbordamientos, zoom y foco tapado se verifican en navegador.

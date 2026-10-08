@@ -6,10 +6,10 @@
 
 La composición se **reorganiza** con el tamaño de pantalla en vez de escalarse entera. El texto tiene tamaños absolutos legibles en cualquier pantalla, y **lo único que se ajusta al hueco disponible es la caja del mapa**.
 
-Eso se traduce en dos composiciones:
+Eso se traduce en dos composiciones (tres desde la 012):
 
 - **Apilada** (por debajo de 1200px): cabecera, mapa a todo el ancho, leyenda en banda bajo el mapa, lista de los 74 lugares y créditos. El mapa ocupa proporcionalmente más pantalla que en escritorio, no menos.
-- **Dos columnas** (a partir de 1200px): la composición de la cuenta original — título y previsión arriba, leyenda en columna a la izquierda, mapa como cuerpo, créditos sobre el mar — con la lista de lugares en una banda debajo.
+- **Dos columnas** (en escritorio): la composición de la cuenta original — título y previsión arriba, leyenda en columna a la izquierda, mapa como cuerpo, créditos sobre el mar — con la lista de lugares en una banda debajo. Desde la 012, el escritorio empieza en 1200px y las dos columnas llegan cuando caben juntas la leyenda y un mapa con temperaturas; entre medias, un escritorio compacto con la leyenda bajo el mapa (`tech-stack.md` → Composición y puntos de corte).
 
 **Cada uno de los 74 lugares del mapa se puede seleccionar** con ratón, dedo o teclado, y al hacerlo aparece de qué lugar se trata, a qué área administrativa pertenece, qué Pokémon le ha tocado, su condición y sus temperaturas. La **lista de lugares** ofrece exactamente la misma función con áreas táctiles holgadas, y es también la alternativa textual completa del mapa que exige `mission.md`.
 
@@ -43,9 +43,9 @@ Ese enfoque arrastra además tres problemas de accesibilidad que no se pueden re
 - **Tokens de mood intactos.** Ningún color de mood cambia ni se añade. El tono oscuro de cada mood es el halo de la línea de previsión y de las etiquetas de la leyenda.
 - **Unown sin halo, en la paleta de interfaz.** El título y «Leyenda» van en Poketiempo Unown, de trazo fino y con un ojo en cada letra: cualquier borde alrededor de esos glifos los empasta y los hace difíciles de leer. Se pintan sin trazo y en dos colores fijos de la paleta de interfaz (`tech-stack.md` → Estilo visual): el título en azul `#1B53BA`, que es la marca, y «Leyenda» en tinta `#323232`, la de los controles que encabeza desde la 009. No siguen el mood, y en eso sustituyen a la 005: el mood está en la previsión y en las etiquetas, en Pixelify Sans y Nunito Sans, con su relleno y su halo.
 - **Texto grande como umbral aplicable al texto de mood.** La previsión y las etiquetas miden **≥19px y son bold**: son "texto grande" de WCAG 1.4.3 y les corresponde 3:1 en vez de 4,5:1. Su halo da 4,07–9,48:1 contra el mar; los rellenos por sí solos no llegan (1,57–4,12:1). El título y «Leyenda» no dependen de ese umbral: 6,28:1 y 11,47:1 superan también el 4,5:1 del texto normal.
-- **El marcador seleccionado no dibuja disco.** La selección la muestran la tarjeta —anclada junto al Pokémon en dos columnas, hoja inferior con el nombre del lugar en la composición apilada— y la barra de su fila. El marcador expone su estado con `aria-pressed`, y solo el foco de teclado le dibuja su anillo: un clic no deja ningún contorno.
+- **El marcador seleccionado no dibuja disco.** La selección la muestran la tarjeta —anclada junto al Pokémon en escritorio, hoja inferior con el nombre del lugar en la composición apilada— y la barra de su fila. El marcador expone su estado con `aria-pressed`, y solo el foco de teclado le dibuja su anillo: un clic no deja ningún contorno.
 - **Temperaturas del mapa.** Llevan un **contorno exterior `$color-near-black`** (16,6–18,4:1 contra los cuatro fondos del mapa), conservando por dentro el relleno y el trazo de su franja. Hace falta porque tres de las seis franjas tienen el trazo *claro* (blanco, verde, amarillo) y engrosarlo no aporta contraste.
-- **Visibilidad de esas temperaturas.** Sólo se pintan cuando la caja del mapa alcanza **1150px**, punto en el que las cifras llegan a 12px. Por debajo miden entre 3,9 y 10,7px. No se agrandan en unidades de `viewBox` porque a 768px de mapa harían falta 19,4u y el texto sería más ancho que la separación entre lugares vecinos (61u). El suelo de 12px se mantiene aunque eso deje fuera anchos de 1366px: no se baja la legibilidad para encajar una resolución concreta.
+- **Visibilidad de esas temperaturas.** Sólo se pintan cuando la caja del mapa alcanza **1063px** (010), punto en el que las cifras llegan a 12px. Por debajo medirían menos. No se agrandan en unidades de `viewBox` porque a 768px de mapa harían falta 19,4u y el texto sería más ancho que la separación entre lugares vecinos (61u). El suelo de 12px se mantiene: no se baja la legibilidad para encajar una resolución concreta. Desde la 012, en escritorio el mapa nunca baja de ese umbral, y las temperaturas se ven desde 1200px.
 - **`administrativeArea` como dato del modelo**, en el generador de lugares, no inferido de `name`.
 
 ## Criterios de aceptación
@@ -55,8 +55,8 @@ Ese enfoque arrastra además tres problemas de accesibilidad que no se pueden re
 - [x] `html { font-size }` no depende del viewport. La composición no se escala globalmente mediante una raíz ligada a `100vw` o `100vh`; se mantienen los ajustes locales con `clamp()` y las unidades de altura de viewport documentados en el plan.
 - [x] Ningún texto de la interfaz baja de 12px en ninguno de los ocho rangos verificados.
 - [x] En los ocho rangos no hay scroll horizontal ni contenido cortado, y no queda una zona vacía por debajo de la composición.
-- [x] Por debajo de 1200px la composición es de una columna; a partir de 1200px es la de dos columnas de la cuenta original, con título, previsión, leyenda y mapa en su sitio de siempre.
-- [x] El mapa se ajusta al menor de su ancho disponible y su alto disponible, sin ninguna media query de orientación.
+- [x] Por debajo de 1200px la composición es de una columna; en escritorio llega la de dos columnas de la cuenta original, con título, previsión, leyenda y mapa en su sitio de siempre (desde la 012, a partir del punto de corte de columnas, con un escritorio compacto entre 1200px y ese punto).
+- [x] El mapa se ajusta al menor de su ancho disponible y su alto disponible, sin ninguna media query de orientación (desde la 012, con el suelo de sus temperaturas en escritorio).
 - [x] A partir de 1600px la composición deja de crecer y queda centrada.
 - [x] El número de columnas de la leyenda y de la lista lo resuelve `auto-fit`, sin un breakpoint propio.
 
@@ -68,7 +68,7 @@ Ese enfoque arrastra además tres problemas de accesibilidad que no se pueden re
 - [x] Una fila de la lista **selecciona el mismo lugar y produce el mismo resultado** que su marcador: mismo estado seleccionado —`aria-pressed` en la fila y en el marcador— y misma tarjeta. Verificado con un test que ejerce los dos caminos y compara el resultado.
 - [x] El marcador seleccionado no dibuja disco ni ninguna otra marca propia; su estado está en `aria-pressed`.
 - [x] Las filas de la lista miden al menos 56px de alto.
-- [x] Las temperaturas sobre el sprite aparecen sólo cuando la caja del mapa alcanza 1150px, y en ese punto miden al menos 12px.
+- [x] Las temperaturas sobre el sprite aparecen sólo cuando la caja del mapa alcanza 1063px (010), y en ese punto miden al menos 12px.
 - [x] Ni `ROOT_VIEW_BOX` ni ninguna coordenada de `map-geometry.ts` cambia.
 - [x] El contexto norteafricano muestra el mismo trazo que el resto de siluetas, sin costura visible entre Marruecos y Argelia.
 - [x] Ningún `LocationMarker` de los 74 queda completamente oculto por otro, verificado con datos reales.
@@ -77,8 +77,8 @@ Ese enfoque arrastra además tres problemas de accesibilidad que no se pueden re
 
 - [x] **WCAG 1.4.4.** Al 200 % de zoom el contenido aumenta realmente de tamaño y no se pierde información ni funcionalidad. La ausencia de scroll bidimensional se verifica conforme a 1.4.10 hasta una anchura equivalente de 320 CSS px.
 - [x] **WCAG 1.4.10 (Reflow).** A 400 % de zoom sobre 1280px —prueba equivalente a un ancho de 320 CSS px— el contenido sigue siendo utilizable en una sola columna, sin scroll en los dos ejes a la vez y sin pérdida de información ni de funcionalidad.
-- [x] **WCAG 1.4.12 (Text Spacing).** Aplicando los overrides del criterio (interlineado 1,5×, espaciado entre párrafos 2×, entre letras 0,12em y entre palabras 0,16em) no hay pérdida de contenido, recortes ni solapes en ninguna de las dos composiciones.
-- [x] **WCAG 2.4.11 (Focus Not Obscured, Minimum).** El elemento con el foco nunca queda completamente tapado por otro contenido. Se comprueba específicamente con `LocationCard` abierta —anclada junto al marcador en dos columnas y como hoja inferior en apilado— recorriendo los marcadores con el tabulador.
+- [x] **WCAG 1.4.12 (Text Spacing).** Aplicando los overrides del criterio (interlineado 1,5×, espaciado entre párrafos 2×, entre letras 0,12em y entre palabras 0,16em) no hay pérdida de contenido, recortes ni solapes en ninguna composición.
+- [x] **WCAG 2.4.11 (Focus Not Obscured, Minimum).** El elemento con el foco nunca queda completamente tapado por otro contenido. Se comprueba específicamente con `LocationCard` abierta —anclada junto al marcador en escritorio y como hoja inferior en apilado— recorriendo los marcadores con el tabulador.
 - [x] Todo elemento enfocable tiene un indicador de foco visible sobre mar, tierra clara y la ilustración de portada.
 - [x] Ningún subárbol con el foco dentro queda marcado `aria-hidden`; la portada usa `inert` al salir.
 - [x] El título «POKETIEMPO» se pinta en azul `#1B53BA` y el encabezado «Leyenda» en tinta `#323232`, sin halo ni trazo e iguales en los cinco moods: 6,28:1 y 11,47:1 contra el mar.
