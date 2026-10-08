@@ -1,6 +1,6 @@
 # 011 · Créditos y disclaimer — Tareas
 
-**Estado.** Implementada; falta la comprobación en producción tras el push.
+**Estado.** Feature cerrada.
 
 ## Bloque 1 — Atribución, pie y tests
 
@@ -27,8 +27,8 @@
 - [x] `roadmap.md`: la 011 en «Siguiente», pendiente de la comprobación en producción, y el disclaimer fuera de «Decisiones pendientes».
 - [x] Barrer la narración del proceso de comentarios y de los tres archivos de la 011 (`AGENTS.md`, paso 7).
 - [x] Validar contra los criterios de aceptación de `011-spec.md`.
-- [ ] Tras el push autorizado: el despliegue en verde, y en producción, la atribución bajo el mapa, el pie con sus dos líneas y los dos enlaces con su destino.
-- [ ] Con la comprobación en producción hecha: la 011 en «Hecho» en `roadmap.md` y su estado, cerrada.
+- [x] Tras el push autorizado: el despliegue en verde, y en producción, la atribución bajo el mapa, el pie con sus dos líneas y los dos enlaces con su destino.
+- [x] Con la comprobación en producción hecha: la 011 en «Hecho» en `roadmap.md` y su estado, cerrada.
 
 ## Definición de "hecho"
 

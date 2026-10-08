@@ -1,6 +1,6 @@
 # 011 · Créditos y disclaimer — Plan
 
-**Estado:** implementada; pendiente de la comprobación en producción.
+**Estado:** cerrada.
 
 ## Enfoque
 

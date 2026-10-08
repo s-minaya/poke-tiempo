@@ -1,6 +1,6 @@
 # 011 · Créditos y disclaimer
 
-**Estado:** implementada; pendiente de la comprobación en producción.
+**Estado:** cerrada.
 
 ## Qué hace
 
