@@ -8,7 +8,7 @@ import { buildLocationViews } from '../../domain/location-views.ts'
 
 import LocationCard from '../LocationCard/LocationCard.tsx'
 import { announceLocation, summarizeView } from '../LocationCard/location-summary.ts'
-import LocationMarker from './components/LocationMarker.tsx'
+import MarkerLayers from './components/MarkerLayers.tsx'
 import TerritoryInset from './components/TerritoryInset.tsx'
 import { MARKER_SILHOUETTE_FILTER_ID, MARKER_SILHOUETTE_MATRIX } from './components/marker-silhouette.ts'
 import { SPRITE_SIZE } from './components/marker-size.ts'
@@ -167,7 +167,7 @@ function SpainMap({ forecast, selectedLocationId = null, matchingIds = null, onT
               <clipPath id="north-africa-context-clip">
                 <rect x={northAfricaContext.clip.x} y={northAfricaContext.clip.y} width={northAfricaContext.clip.width} height={northAfricaContext.clip.height} />
               </clipPath>
-              {/* La sombra de los marcadores que no cumplen los filtros. Filtro
+              {/* La silueta de los lugares que no cumplen los filtros. Filtro
                   SVG y no `filter` de CSS, que no se aplica igual a los
                   elementos SVG en todos los navegadores. */}
               <filter id={MARKER_SILHOUETTE_FILTER_ID}>
@@ -206,23 +206,14 @@ function SpainMap({ forecast, selectedLocationId = null, matchingIds = null, onT
                 la misma silueta, no un lugar nuevo: sin rol propio, expuesto
                 igual que el resto del `<svg>` raíz (`role="group"`). */}
             <path className="spain-map__province-boundaries" d={provinceBoundariesPath} aria-hidden="true" />
-            {locationsByRegion.main.map((location) => (
-              <LocationMarker
-                key={location.id}
-                id={location.id}
-                x={location.x}
-                y={location.y}
-                name={location.name}
-                pokemonId={location.pokemonId}
-                minC={location.minC}
-                maxC={location.maxC}
-                selected={location.id === selectedLocationId}
-                dimmed={matchingIds !== null && !matchingIds.has(location.id)}
-                onActivate={onToggleLocation}
-                onDismiss={onClearLocation}
-                register={registerMarker}
-              />
-            ))}
+            <MarkerLayers
+              locations={locationsByRegion.main}
+              selectedLocationId={selectedLocationId}
+              matchingIds={matchingIds}
+              onActivateLocation={onToggleLocation}
+              onDismissLocation={onClearLocation}
+              registerMarker={registerMarker}
+            />
             <TerritoryInset
               {...canaryBox}
               label="Canarias"

@@ -7,7 +7,7 @@ import { locations } from '../../data/locations.ts'
 
 /**
  * Los `PokedexId` que de verdad aparecen hoy en el mapa — el mismo
- * `pokemonId` que pinta cada `LocationMarker` (`buildLocationViews`,
+ * `pokemonId` que pinta el mapa en cada lugar (`buildLocationViews`,
  * reutilizado tal cual, sin repetir el cruce `assignPokemon` →
  * `pickMapPokemon`), deduplicados y en el mismo orden que `MAP_PRIORITY`.
  * Nunca los 25 `PokedexId` fijos: la leyenda solo lista lo que se ve hoy.

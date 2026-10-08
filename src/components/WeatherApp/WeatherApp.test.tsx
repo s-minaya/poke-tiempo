@@ -44,7 +44,7 @@ describe('WeatherApp', () => {
     const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
 
     expect(map().getAllByRole('button')).toHaveLength(74)
-    expect(container.querySelectorAll('.location-marker--dimmed')).toHaveLength(0)
+    expect(container.querySelectorAll('.marker-layers__sprites image[filter]')).toHaveLength(0)
   })
 
   it('activar un marcador abre su tarjeta, y activarlo otra vez la cierra', () => {
@@ -294,11 +294,13 @@ describe('WeatherApp — la leyenda filtra', () => {
     fireEvent.click(first)
     const operable = operableMarkers().length
     expect(operable).toBeLessThan(74)
-    expect(container.querySelectorAll('.location-marker--dimmed')).toHaveLength(74 - operable)
+    // El resto no monta marcador: queda su silueta.
+    expect(container.querySelectorAll('.location-marker')).toHaveLength(operable)
+    expect(container.querySelectorAll('.marker-layers__sprites image[filter]').length).toBeGreaterThan(0)
 
     fireEvent.click(first)
     expect(operableMarkers()).toHaveLength(74)
-    expect(container.querySelectorAll('.location-marker--dimmed')).toHaveLength(0)
+    expect(container.querySelectorAll('.marker-layers__sprites image[filter]')).toHaveLength(0)
   })
 
   it('una condición que excluye el lugar seleccionado cierra su tarjeta y suelta fila y marcador en la misma actualización', () => {

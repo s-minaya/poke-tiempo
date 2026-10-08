@@ -15,19 +15,6 @@
     outline: none;
   }
 
-  // En sombra no hay nada que pulsar: el puntero la atraviesa, y un clic
-  // sobre ella llega a lo que haya debajo, como si no estuviera.
-  &--dimmed {
-    cursor: default;
-    pointer-events: none;
-  }
-
-  &__sprite {
-    // Evita que un arrastre cerca de un sprite dispare la selección de
-    // texto del navegador.
-    user-select: none;
-  }
-
   // Transparente pero pintado (no `none`): así recibe el puntero en todo
   // el cuadrado del sprite.
   &__hit {

@@ -4,10 +4,10 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import LocationMarker from './LocationMarker.tsx'
 
 describe('LocationMarker', () => {
-  it('expone el nombre del lugar como nombre accesible, incluso sin Pokémon ni temperatura', () => {
+  it('expone el nombre del lugar como nombre accesible, incluso sin temperatura, y no pinta ningún sprite', () => {
     const { container } = render(
       <svg>
-        <LocationMarker id="a-coruna" x={10} y={20} name="A Coruña" pokemonId={null} />
+        <LocationMarker id="a-coruna" x={10} y={20} name="A Coruña" />
       </svg>,
     )
 
@@ -16,22 +16,10 @@ describe('LocationMarker', () => {
     expect(container.querySelector('text')).not.toBeInTheDocument()
   })
 
-  it('pinta un único sprite cuando hay Pokémon asignado', () => {
-    const { container } = render(
-      <svg>
-        <LocationMarker id="madrid" x={10} y={20} name="Madrid" pokemonId="zapdos" />
-      </svg>,
-    )
-
-    const images = container.querySelectorAll('image')
-    expect(images).toHaveLength(1)
-    expect(images[0].getAttribute('href')).toContain('zapdos')
-  })
-
   it('coloca el grupo en la posición proyectada', () => {
     const { container } = render(
       <svg>
-        <LocationMarker id="madrid" x={10} y={20} name="Madrid" pokemonId={null} />
+        <LocationMarker id="madrid" x={10} y={20} name="Madrid" />
       </svg>,
     )
 
@@ -41,7 +29,7 @@ describe('LocationMarker', () => {
   it('con minC/maxC: nombre accesible incluye las temperaturas redondeadas, mínima primero', () => {
     render(
       <svg>
-        <LocationMarker id="granada" x={10} y={20} name="Granada" pokemonId={null} minC={12.4} maxC={23.6} />
+        <LocationMarker id="granada" x={10} y={20} name="Granada" minC={12.4} maxC={23.6} />
       </svg>,
     )
 
@@ -51,7 +39,7 @@ describe('LocationMarker', () => {
   it('pinta mínima y máxima como texto, mínima primero, con °', () => {
     const { container } = render(
       <svg>
-        <LocationMarker id="granada" x={10} y={20} name="Granada" pokemonId={null} minC={8} maxC={23} />
+        <LocationMarker id="granada" x={10} y={20} name="Granada" minC={8} maxC={23} />
       </svg>,
     )
 
@@ -64,7 +52,7 @@ describe('LocationMarker', () => {
   it('cada cifra lleva la clase de su propia franja — la máxima no decide el color de la mínima', () => {
     const { container } = render(
       <svg>
-        <LocationMarker id="granada" x={10} y={20} name="Granada" pokemonId={null} minC={-2} maxC={36} />
+        <LocationMarker id="granada" x={10} y={20} name="Granada" minC={-2} maxC={36} />
       </svg>,
     )
 
@@ -76,7 +64,7 @@ describe('LocationMarker', () => {
   it('sin minC/maxC (marcador sin forecast): sigue siendo válido, sin pintar temperatura', () => {
     const { container } = render(
       <svg>
-        <LocationMarker id="a-coruna" x={10} y={20} name="A Coruña" pokemonId={null} minC={null} maxC={null} />
+        <LocationMarker id="a-coruna" x={10} y={20} name="A Coruña" minC={null} maxC={null} />
       </svg>,
     )
 
@@ -87,7 +75,7 @@ describe('LocationMarker', () => {
   it('la copia de contorno de las cifras queda fuera del árbol accesible', () => {
     const { container } = render(
       <svg>
-        <LocationMarker id="granada" x={10} y={20} name="Granada" pokemonId={null} minC={8} maxC={23} />
+        <LocationMarker id="granada" x={10} y={20} name="Granada" minC={8} maxC={23} />
       </svg>,
     )
 
@@ -97,7 +85,7 @@ describe('LocationMarker', () => {
   it('es un botón enfocable en el orden del documento, sin pulsar por defecto', () => {
     render(
       <svg>
-        <LocationMarker id="granada" x={10} y={20} name="Granada" pokemonId={null} />
+        <LocationMarker id="granada" x={10} y={20} name="Granada" />
       </svg>,
     )
 
@@ -107,7 +95,7 @@ describe('LocationMarker', () => {
   })
 
   it('seleccionado, se anuncia como pulsado y no dibuja nada propio', () => {
-    const props = { id: 'granada', x: 10, y: 20, name: 'Granada', pokemonId: 'zapdos', minC: 8, maxC: 23 } as const
+    const props = { id: 'granada', x: 10, y: 20, name: 'Granada', minC: 8, maxC: 23 } as const
     const { container: idle } = render(
       <svg>
         <LocationMarker {...props} />
@@ -134,7 +122,7 @@ describe('LocationMarker', () => {
     const onActivate = vi.fn()
     render(
       <svg>
-        <LocationMarker id="granada" x={10} y={20} name="Granada" pokemonId={null} onActivate={onActivate} />
+        <LocationMarker id="granada" x={10} y={20} name="Granada" onActivate={onActivate} />
       </svg>,
     )
 
@@ -153,7 +141,7 @@ describe('LocationMarker', () => {
     const onActivate = vi.fn()
     render(
       <svg>
-        <LocationMarker id="granada" x={10} y={20} name="Granada" pokemonId={null} onActivate={onActivate} />
+        <LocationMarker id="granada" x={10} y={20} name="Granada" onActivate={onActivate} />
       </svg>,
     )
 
@@ -168,78 +156,12 @@ describe('LocationMarker', () => {
     const onDismiss = vi.fn()
     render(
       <svg>
-        <LocationMarker id="granada" x={10} y={20} name="Granada" pokemonId={null} onDismiss={onDismiss} />
+        <LocationMarker id="granada" x={10} y={20} name="Granada" onDismiss={onDismiss} />
       </svg>,
     )
 
     fireEvent.keyDown(screen.getByRole('button', { name: 'Granada' }), { key: 'Escape' })
 
     expect(onDismiss).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('LocationMarker en sombra', () => {
-  const props = { id: 'granada', x: 10, y: 20, name: 'Granada', pokemonId: 'zapdos', minC: 8, maxC: 23 } as const
-
-  it('no es un botón: sin rol, foco, nombre, estado, título, cifras ni aro de foco, y fuera del árbol accesible', () => {
-    const { container } = render(
-      <svg>
-        <LocationMarker {...props} dimmed />
-      </svg>,
-    )
-
-    const marker = container.querySelector('.location-marker')!
-    expect(screen.queryByRole('button')).not.toBeInTheDocument()
-    expect(marker).toHaveAttribute('aria-hidden', 'true')
-    for (const attribute of ['role', 'tabindex', 'aria-label', 'aria-pressed']) expect(marker).not.toHaveAttribute(attribute)
-    expect(marker.querySelector('title')).not.toBeInTheDocument()
-    expect(marker.querySelector('text')).not.toBeInTheDocument()
-    expect(marker.querySelector('.location-marker__focus-ring')).not.toBeInTheDocument()
-  })
-
-  it('conserva la posición y el sprite, al mismo tamaño, pasado por el filtro de silueta', () => {
-    const { container: normal } = render(
-      <svg>
-        <LocationMarker {...props} />
-      </svg>,
-    )
-    const { container: dimmed } = render(
-      <svg>
-        <LocationMarker {...props} dimmed />
-      </svg>,
-    )
-
-    const sprite = (container: HTMLElement) => container.querySelector('image')!
-    expect(dimmed.querySelector('g')).toHaveAttribute('transform', normal.querySelector('g')!.getAttribute('transform')!)
-    for (const attribute of ['href', 'x', 'y', 'width', 'height']) {
-      expect(sprite(dimmed)).toHaveAttribute(attribute, sprite(normal).getAttribute(attribute)!)
-    }
-    expect(sprite(dimmed)).toHaveAttribute('filter', 'url(#location-marker-silhouette)')
-    expect(sprite(normal)).not.toHaveAttribute('filter')
-  })
-
-  it('no se registra como destino del foco, y vuelve a hacerlo al coincidir de nuevo', () => {
-    const register = vi.fn()
-    const { rerender } = render(
-      <svg>
-        <LocationMarker {...props} register={register} />
-      </svg>,
-    )
-    expect(register).toHaveBeenLastCalledWith('granada', expect.any(SVGGElement))
-
-    rerender(
-      <svg>
-        <LocationMarker {...props} register={register} dimmed />
-      </svg>,
-    )
-    expect(register).toHaveBeenLastCalledWith('granada', null)
-
-    rerender(
-      <svg>
-        <LocationMarker {...props} register={register} />
-      </svg>,
-    )
-    expect(register).toHaveBeenLastCalledWith('granada', expect.any(SVGGElement))
-    expect(screen.getByRole('button', { name: /^Granada/ })).toBeInTheDocument()
   })
 })

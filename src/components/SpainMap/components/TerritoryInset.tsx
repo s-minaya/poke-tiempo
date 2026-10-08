@@ -1,6 +1,6 @@
 import type { LocationView } from '../../../domain/location-views.ts'
 
-import LocationMarker from './LocationMarker.tsx'
+import MarkerLayers from './MarkerLayers.tsx'
 
 import './TerritoryInset.scss'
 
@@ -27,7 +27,7 @@ interface TerritoryInsetProps {
    * en los mapas políticos de España).
    */
   frame?: boolean
-  /** Selección de lugar: se pasa tal cual a cada marcador (`SpainMap.tsx`). */
+  /** Selección de lugar: se pasa tal cual a sus lugares (`SpainMap.tsx`). */
   selectedLocationId?: string | null
   /** Los lugares que cumplen los filtros, o `null` sin filtros (`SpainMap.tsx`). */
   matchingIds?: ReadonlySet<string> | null
@@ -80,23 +80,15 @@ function TerritoryInset({
       <rect className="territory-inset__sea" x={0} y={0} width={width} height={height} aria-hidden="true" />
       {frame && <path className="territory-inset__frame" d={framePath(width, height)} />}
       <path className="territory-inset__landmass" d={path} />
-      {locations.map((location) => (
-        <LocationMarker
-          key={location.id}
-          id={location.id}
-          x={location.x}
-          y={location.y}
-          name={location.name}
-          pokemonId={location.pokemonId}
-          minC={location.minC}
-          maxC={location.maxC}
-          selected={location.id === selectedLocationId}
-          dimmed={matchingIds !== null && !matchingIds.has(location.id)}
-          onActivate={onActivateLocation}
-          onDismiss={onDismissLocation}
-          register={registerMarker}
-        />
-      ))}
+      <MarkerLayers
+        locations={locations}
+        selectedLocationId={selectedLocationId}
+        matchingIds={matchingIds}
+        onActivateLocation={onActivateLocation}
+        onDismissLocation={onDismissLocation}
+        registerMarker={registerMarker}
+      />
+
     </svg>
   )
 }

@@ -1,14 +1,9 @@
 import { memo, useCallback, useRef } from 'react'
 import type { KeyboardEvent } from 'react'
 
-import type { PokedexId } from '../../../domain/pokedex.ts'
-
 import { useRevealWhenSelected } from '../../LocationCard/use-reveal-when-selected.ts'
 import { classifyMarkerTemperature } from './marker-temperature.ts'
-import { MARKER_SILHOUETTE_FILTER_ID } from './marker-silhouette.ts'
 import { SPRITE_SIZE } from './marker-size.ts'
-
-import { spriteSources } from '../sprite-sources.ts'
 
 import './LocationMarker.scss'
 
@@ -27,7 +22,6 @@ interface LocationMarkerProps {
   x: number
   y: number
   name: string
-  pokemonId: PokedexId | null
   /**
    * Opcionales para que el componente siga siendo válido en tests/casos de
    * robustez sin forecast — en producción los 74 lugares siempre lo traen
@@ -37,8 +31,6 @@ interface LocationMarkerProps {
   maxC?: number | null
   /** Es el lugar que muestra ahora la tarjeta. */
   selected?: boolean
-  /** Hay filtros y este lugar no los cumple: sombra, fuera de alcance. */
-  dimmed?: boolean
   /** Clic, toque, Intro o Espacio. */
   onActivate?: (id: string) => void
   /** Escape: cerrar la tarjeta sin mover el foco de aquí. */
@@ -58,13 +50,16 @@ function accessibleName(name: string, roundedMinC: number | null, roundedMaxC: n
 
 /**
  * Un lugar del mapa: nombre accesible siempre presente (también sirve de
- * tooltip nativo al pasar el ratón), como mucho un sprite — el que decidió
- * `pickMapPokemon` — y, cuando hay forecast, su mínima y máxima
- * superpuestas en la zona inferior del sprite (mínima primero). Cada
+ * tooltip nativo al pasar el ratón) y, cuando hay forecast, su mínima y
+ * máxima superpuestas en la zona inferior del sprite (mínima primero). Cada
  * cifra se colorea de forma independiente según su propia franja
  * (`marker-temperature.ts`) — la máxima nunca decide el color de la
- * mínima. Un lugar sin forecast no pinta ningún sprite ni temperatura,
- * pero conserva su `<title>`.
+ * mínima. Un lugar sin forecast no pinta ninguna temperatura, pero conserva
+ * su `<title>`.
+ *
+ * El sprite —el Pokémon que decidió `pickMapPokemon`— no va aquí: lo pinta
+ * `MarkerLayers` en una capa por debajo de todos los marcadores, para que
+ * ningún sprite tape las cifras ni el aro de foco de un vecino.
  *
  * Es un botón: se selecciona con clic, toque, Intro o Espacio, y
  * `aria-pressed` dice si es el lugar que muestra la tarjeta. Seleccionado no
@@ -84,26 +79,23 @@ function accessibleName(name: string, roundedMinC: number | null, roundedMaxC: n
  * en el `aria-label`, que sigue presente cuando el mapa es demasiado
  * pequeño para pintar las cifras.
  *
- * En sombra (`dimmed`, hay filtros y el lugar no los cumple) deja de ser un
- * botón: ni rol, ni `tabIndex`, ni nombre, ni `<title>`, ni manejadores, ni
- * cifras. Solo queda la silueta de su Pokémon, en la misma posición y al
- * mismo tamaño, con `aria-hidden`: nada que se oculte al lector de pantalla
- * sigue siendo enfocable u operable. Su fila tampoco está en la lista, así
- * que cada marcador operable sigue teniendo una fila equivalente (009-spec.md).
+ * Un lugar en sombra (hay filtros y no los cumple) no monta marcador: solo
+ * queda su silueta, en la capa de sprites (`MarkerLayers`).
  */
-function LocationMarker({ id, x, y, name, pokemonId, minC, maxC, selected = false, dimmed = false, onActivate, onDismiss, register }: LocationMarkerProps) {
+function LocationMarker({ id, x, y, name, minC, maxC, selected = false, onActivate, onDismiss, register }: LocationMarkerProps) {
   const roundedMinC = minC != null ? Math.round(minC) : null
   const roundedMaxC = maxC != null ? Math.round(maxC) : null
   const hasTemperature = roundedMinC !== null && roundedMaxC !== null
 
   const element = useRef<SVGGElement | null>(null)
-  // En sombra no se registra: no es un sitio al que devolver el foco.
+  // Al desmontarse, en sombra incluida, se borra: deja de ser un sitio al que
+  // devolver el foco.
   const setElement = useCallback(
     (node: SVGGElement | null) => {
       element.current = node
-      register?.(id, dimmed ? null : node)
+      register?.(id, node)
     },
-    [id, register, dimmed],
+    [id, register],
   )
 
   const markActivated = useRevealWhenSelected(element, selected)
@@ -124,24 +116,6 @@ function LocationMarker({ id, x, y, name, pokemonId, minC, maxC, selected = fals
     }
   }
 
-  if (dimmed) {
-    return (
-      <g ref={setElement} className="location-marker location-marker--dimmed" transform={`translate(${x}, ${y})`} aria-hidden="true">
-        {pokemonId && (
-          <image
-            className="location-marker__sprite"
-            href={spriteSources[pokemonId]}
-            x={-SPRITE_SIZE / 2}
-            y={-SPRITE_SIZE / 2}
-            width={SPRITE_SIZE}
-            height={SPRITE_SIZE}
-            filter={`url(#${MARKER_SILHOUETTE_FILTER_ID})`}
-          />
-        )}
-      </g>
-    )
-  }
-
   return (
     <g
       ref={setElement}
@@ -159,16 +133,6 @@ function LocationMarker({ id, x, y, name, pokemonId, minC, maxC, selected = fals
           abajo es además el tooltip nativo del navegador al pasar el
           ratón. */}
       <title>{name}</title>
-      {pokemonId && (
-        <image
-          className="location-marker__sprite"
-          href={spriteSources[pokemonId]}
-          x={-SPRITE_SIZE / 2}
-          y={-SPRITE_SIZE / 2}
-          width={SPRITE_SIZE}
-          height={SPRITE_SIZE}
-        />
-      )}
       {hasTemperature && (
         <text className="location-marker__temperature location-marker__temperature--contour" y={TEMPERATURE_BASELINE_Y} textAnchor="middle" fontSize={TEMPERATURE_FONT_SIZE} aria-hidden="true">
           {`${formatDegrees(roundedMinC)} ${formatDegrees(roundedMaxC)}`}

@@ -1,0 +1,9 @@
+.marker-layers {
+  // Los sprites no reciben el puntero: un clic o un toque llega al área de
+  // toque del marcador, que va encima y cubre el cuadrado entero del sprite.
+  // Una silueta en sombra no tiene nada que pulsar, y el clic sigue hasta lo
+  // que haya debajo, como si no estuviera.
+  &__sprites {
+    pointer-events: none;
+  }
+}

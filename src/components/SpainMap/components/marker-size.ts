@@ -6,7 +6,8 @@
  * coherente con el margen (`POINT_PADDING`) que deja `build-map.ts` en los
  * bordes del recuadro de Canarias.
  *
- * Vive fuera de `LocationMarker.tsx` porque también lo necesita `SpainMap`,
- * para anclar la tarjeta del lugar justo al lado del sprite.
+ * Vive en su propio módulo porque lo usan el sprite (`MarkerLayers.tsx`), el
+ * marcador, con su área de toque y su aro de foco (`LocationMarker.tsx`), y
+ * `SpainMap`, para anclar la tarjeta del lugar justo al lado del sprite.
  */
 export const SPRITE_SIZE = 62
