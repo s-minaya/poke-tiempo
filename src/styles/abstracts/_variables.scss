@@ -88,6 +88,11 @@ $z-location-card: 5;
 $z-oak: 10;
 $z-landing: 20;
 
+// Tamaño de la raíz (`_reset.scss`), relativo a la base de texto del
+// navegador. `_breakpoints.scss` lo usa para llevar una medida en `rem` a
+// una media query.
+$root-font-size: 62.5%;
+
 // Tipografía
 $font-title: 'Poketiempo Unown', sans-serif; // cabecera (POKETIEMPO) + encabezado de la leyenda
 $font-heading: 'Pixelify Sans', monospace; // línea de previsión de la cabecera

@@ -47,7 +47,10 @@
     // Composición apilada: el mapa ocupa todo el ancho justo bajo la
     // cabecera, y la leyenda y la lista de lugares van debajo. En vertical
     // una columna lateral le quitaría al mapa casi un tercio del ancho a
-    // cambio de nada.
+    // cambio de nada. Es también la del escritorio compacto, desde
+    // `$breakpoint-desktop` hasta que caben las dos columnas: ahí la leyenda
+    // al lado dejaría el mapa por debajo del umbral de sus temperaturas, y
+    // debajo deja el mapa en la primera pantalla.
     // `notice` solo tiene contenido cuando el aviso de frescura está
     // montado (`FreshnessNotice`); vacía, la fila mide cero.
     grid-template-areas:
@@ -68,11 +71,11 @@
 
   // Composición de la cuenta original: cabecera a todo el ancho, leyenda en
   // columna bajo el título y mapa como cuerpo; la lista de lugares, en una
-  // banda a todo el ancho por debajo. Vuelve en cuanto el mapa puede
-  // quedarse con los ~880px que mantienen sus marcadores en el objetivo de
-  // diseño de 44px (880 + la columna de la leyenda + márgenes). Los
-  // créditos, fuera de `<main>`, quedan debajo de todo, como en la apilada.
-  @include bp.respond-from(bp.$breakpoint-desktop) {
+  // banda a todo el ancho por debajo. Vuelve desde el primer ancho en que
+  // caben juntas la leyenda y un mapa con sus temperaturas
+  // (`_breakpoints.scss`). Los créditos, fuera de `<main>`, quedan debajo de
+  // todo, como en la apilada.
+  @include bp.respond-from(bp.$breakpoint-desktop-columns) {
     &__layout {
       grid-template-areas:
         'header header'
@@ -80,10 +83,9 @@
         'legend map'
         'list list';
 
-      // La columna de la leyenda: una entrada completa de `Legend.scss`
-      // (26,8rem, con el borde y la columna del ✓) más su relleno de 2rem a
-      // cada lado. A 1200px deja 892px al mapa, por encima de los 880.
-      grid-template-columns: minmax(26.8rem, 30.8rem) minmax(0, 1fr);
+      // La leyenda, en su columna; el mapa, en el resto, que desde este punto
+      // de corte mide al menos el umbral de sus temperaturas.
+      grid-template-columns: bp.$legend-column-width minmax(0, 1fr);
 
       // `stretch` (el valor por defecto de grid): la leyenda rellena su
       // celda hasta el alto de la fila, el del mapa, y sus entradas se lo

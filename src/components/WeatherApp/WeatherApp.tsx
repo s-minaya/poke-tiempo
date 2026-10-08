@@ -89,8 +89,9 @@ function WeatherApp({ forecast, freshness, offerReload, inert = false }: Weather
         Saltar al buscador
       </a>
       {/* Grid con nombres de área (WeatherApp.scss): una columna en la
-          composición apilada; a partir de `$breakpoint-desktop`, dos. Cada
-          componente fija su propio `grid-area` en su `.scss`. */}
+          composición apilada y en el escritorio compacto; a partir de
+          `$breakpoint-desktop-columns`, dos. Cada componente fija su propio
+          `grid-area` en su `.scss`. */}
       <main className="app__layout">
         <Header forecast={forecast} freshness={freshness} />
         {/* Solo con dos días de retraso o más, o con la oferta de recargar:

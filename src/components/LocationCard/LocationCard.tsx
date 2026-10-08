@@ -10,9 +10,9 @@ import './LocationCard.scss'
 interface LocationCardProps {
   summary: LocationSummary
   /**
-   * Hacia qué lado del marcador se abre en la composición de dos columnas
-   * — hacia donde hay más mapa libre. En la apilada no cuenta: ahí es una
-   * hoja inferior a todo el ancho.
+   * Hacia qué lado del marcador se abre en escritorio — hacia donde hay más
+   * mapa libre. En la composición apilada no cuenta: ahí es una hoja
+   * inferior a todo el ancho.
    */
   side: 'east' | 'west'
   /** Posición del marcador (`--anchor-x`, `--anchor-y`, `--anchor-clearance`), en fracciones del mapa. */

@@ -95,8 +95,8 @@ $forecast-font-size: max(19px, clamp(1.9rem, 0.57vw + 1.72rem, 2.4rem));
     // que se recalcula con el viewport—, pero esa preferencia sí se
     // perdería. El `max(19px, …)` de fuera es el mismo suelo duro que llevan
     // la previsión y las etiquetas; el contraste del título no lo necesita.
-    // El término fluido en `vw` alcanza el techo justo al entrar la
-    // composición de dos columnas.
+    // El término fluido en `vw` alcanza el techo justo al entrar en
+    // escritorio.
     font-size: max(19px, clamp(3.6rem, 1.36vw + 3.16rem, 4.8rem));
     letter-spacing: 0.05em;
 
@@ -108,9 +108,9 @@ $forecast-font-size: max(19px, clamp(1.9rem, 0.57vw + 1.72rem, 2.4rem));
 
   // La fecha, su etiqueta, la frase de un día de retraso y la hora de
   // generación: un solo grupo, que se coloca junto al título o debajo según
-  // quepa. En la composición de dos columnas comparte fila con el título y
-  // se alinea a la derecha; en la apilada, a la izquierda, con el mismo
-  // margen que el título.
+  // quepa. En escritorio comparte fila con el título y se alinea a la
+  // derecha; en la composición apilada, a la izquierda, con el mismo margen
+  // que el título.
   &__dateline {
     display: flex;
     flex-direction: column;

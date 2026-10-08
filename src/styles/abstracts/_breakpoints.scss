@@ -1,11 +1,17 @@
-// Puntos de corte del viewport. Sólo existen dos, y cada uno marca dónde el
-// contenido deja de caber bien — no un catálogo de dispositivos.
-// `$breakpoint-tablet` no es uno de ellos: no decide maquetación, sólo qué
-// ilustración de portada se sirve (`<picture>` en `Landing`, precarga en
-// `Loader`). Eso es dirección de arte.
+@use 'sass:math';
+@use 'variables' as vars;
+
+// Puntos de corte del viewport. Cada uno marca dónde el contenido deja de
+// caber bien — no un catálogo de dispositivos. Tres deciden la maquetación:
+// el escritorio, sus dos columnas y el tope. `$breakpoint-tablet` no: solo
+// decide qué ilustración de portada se sirve (`<picture>` en `Landing`,
+// precarga en `Loader`). Eso es dirección de arte.
 $breakpoint-tablet: 768px;
 
-// Apilado (una columna) por debajo; composición de dos columnas por encima.
+// Escritorio. Por debajo, la composición apilada. Desde aquí, el mapa no baja
+// del umbral de sus temperaturas (`SpainMap.scss`), la tarjeta se ancla junto
+// a su marcador y la cabecera es la de escritorio. Hasta
+// `$breakpoint-desktop-columns`, escritorio compacto: la plantilla apilada.
 $breakpoint-desktop: 1200px;
 
 // La composición deja de crecer y queda centrada.
@@ -13,11 +19,34 @@ $breakpoint-desktop-large: 1600px;
 
 // Ancho de la caja del mapa a partir del cual sus temperaturas por marcador
 // son legibles: 14 unidades de `viewBox` sobre 1240 llegan a 12px justo aquí.
-// No es un punto de corte del viewport y no se usa con `respond-from`, sino
-// con `@container` sobre el propio mapa — el mismo mapa mide distinto en la
-// composición apilada y en la de dos columnas, y lo que decide es su ancho
-// real. Va en `px` porque mide una caja, no texto.
+// Lo usan `@container` sobre el propio mapa, que mide distinto en cada
+// composición, y el suelo del mapa en escritorio. Va en `px` porque mide una
+// caja, no texto.
 $map-temperature-threshold: 1063px;
+
+// La columna de la leyenda en dos columnas: una entrada con el sprite de
+// 4,4rem (`Legend.scss`), que mide 25,2rem con los 15,4rem de etiqueta en los
+// que «torrenciales» cabe con el espaciado de texto de WCAG 1.4.12, más 2rem
+// de relleno a cada lado.
+$legend-column-width: 29.2rem;
+
+// La barra de desplazamiento clásica más ancha: 15px en Chrome y Edge sobre
+// Windows, 17px en Firefox. Las superpuestas no ocupan nada, y con ellas el
+// margen sobra.
+$scrollbar-allowance: 17px;
+
+// Una medida en `rem` de la página, en el `em` de una media query: ahí `em`
+// es la base de texto del navegador, no la raíz.
+@function media-em($rem) {
+  @return math.div($rem, 1rem) * math.div(vars.$root-font-size, 100%) * 1em;
+}
+
+// Dos columnas: el primer ancho en que caben juntas la leyenda y un mapa con
+// sus temperaturas, más la barra. Mezcla unidades a propósito: el ancho de la
+// leyenda escala con la base de texto que tenga configurada la persona, y el
+// umbral es el mínimo físico del dibujo para que sus cifras midan 12px, que no
+// depende del texto. Con la base de 16px, 1372px.
+$breakpoint-desktop-columns: calc(media-em($legend-column-width) + $map-temperature-threshold + $scrollbar-allowance);
 
 @mixin respond-from($breakpoint) {
   @media (min-width: $breakpoint) {

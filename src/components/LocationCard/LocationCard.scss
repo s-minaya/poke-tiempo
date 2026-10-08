@@ -22,7 +22,7 @@ html:has(.location-card) {
     padding-block-end: var(--location-sheet-max);
   }
 
-  // En dos columnas la tarjeta va dentro del mapa, no encima de la página.
+  // En escritorio la tarjeta va dentro del mapa, no encima de la página.
   @include bp.respond-from(bp.$breakpoint-desktop) {
     scroll-padding-block-end: auto;
 
@@ -71,8 +71,9 @@ html:has(.location-card) {
   border-end-start-radius: 0;
   border-end-end-radius: 0;
 
-  // Composición de dos columnas: anclada junto al marcador, hacia el lado
-  // donde hay más mapa libre (`SpainMap.tsx` elige `--east` o `--west`).
+  // Escritorio, compacto o en dos columnas: anclada junto al marcador, hacia
+  // el lado donde hay más mapa libre (`SpainMap.tsx` elige `--east` o
+  // `--west`).
   // En vertical, el desplazamiento propio es proporcional a la altura del
   // marcador: arriba del todo la tarjeta cuelga hacia abajo, abajo del todo
   // sube, y en medio queda centrada. Así nunca se sale del mapa por arriba

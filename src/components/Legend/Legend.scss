@@ -13,7 +13,7 @@
   // hasta el alto de su fila (`WeatherApp.scss`) y sus entradas se reparten
   // ese alto (`__list`, `__item`). Como columna, la lista ocupa lo que dejan
   // el encabezado y la indicación.
-  @include bp.respond-from(bp.$breakpoint-desktop) {
+  @include bp.respond-from(bp.$breakpoint-desktop-columns) {
     display: flex;
     flex-direction: column;
   }
@@ -76,11 +76,12 @@
     color: vars.$ui-ink;
   }
 
-  // En la composición apilada, cuántas columnas caben lo decide el hueco, no
-  // un punto de corte: una sola en un móvil vertical, varias en la banda
-  // bajo el mapa a partir de ahí. 26,8rem es lo que ocupa una entrada
-  // con la palabra más larga de las 25 etiquetas posibles (`POKEMON_LABELS`:
-  // «torrenciales», 12rem a 22px), no solo de las que salen hoy: el borde
+  // En la composición apilada y en el escritorio compacto, cuántas columnas
+  // caben lo decide el hueco, no un punto de corte: una sola en un móvil
+  // vertical, varias en la banda bajo el mapa a partir de ahí. 26,8rem es lo
+  // que ocupa una entrada con la palabra más larga de las 25 etiquetas
+  // posibles (`POKEMON_LABELS`: «torrenciales», 12rem a 22px), no solo de
+  // las que salen hoy: el borde
   // (0,6rem), el relleno (0,8rem), el sprite (6rem), los dos huecos
   // (2,4rem), la columna de estado (1,6rem) y 15,4rem de etiqueta, en los
   // que «torrenciales» cabe entera también con el espaciado de letra
@@ -97,7 +98,7 @@
     // entradas, el compacto: es lo que aporta a la fila de la rejilla, así
     // que la fila mide lo que el mapa salvo que ni así quepan. El hueco entre
     // entradas es fijo; el resto del aire lo pone cada entrada (`__item`).
-    @include bp.respond-from(bp.$breakpoint-desktop) {
+    @include bp.respond-from(bp.$breakpoint-desktop-columns) {
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
@@ -113,7 +114,7 @@
   // mínimo por contenido de flex, y una etiqueta de dos líneas, que pide
   // más de 5rem, se saldría.
   &__item {
-    @include bp.respond-from(bp.$breakpoint-desktop) {
+    @include bp.respond-from(bp.$breakpoint-desktop-columns) {
       display: flex;
       flex: 1 1 5rem;
       max-block-size: 7.8rem;
@@ -154,7 +155,7 @@
     // En dos columnas, la columna del sprite a su tamaño de escritorio
     // (`__sprite`), y el botón, del alto de su `__item` hasta 7rem, el de la
     // composición apilada, con el contenido centrado y sin relleno vertical.
-    @include bp.respond-from(bp.$breakpoint-desktop) {
+    @include bp.respond-from(bp.$breakpoint-desktop-columns) {
       grid-template-columns: 4.4rem minmax(0, 1fr) 1.6rem;
       min-block-size: 4.4rem;
       max-block-size: 7rem;
@@ -174,12 +175,12 @@
     // deforma. `contain` los encaja en el cuadro sin estirarlos.
     object-fit: contain;
 
-    // En dos columnas, 4,4rem, el tamaño del sprite del mapa a 1200px y el
-    // objetivo de diseño de la 008. Fijo e igual en todas las entradas: la
-    // leyenda se ajusta al mapa repartiendo el aire (`__item`). Si siguiera
-    // al alto de su entrada, en una leyenda comprimida los de etiqueta de dos
-    // líneas, más altas, saldrían mayores que el resto.
-    @include bp.respond-from(bp.$breakpoint-desktop) {
+    // En dos columnas, 4,4rem, el objetivo de diseño de la 008 para los
+    // marcadores. Fijo e igual en todas las entradas: la leyenda se ajusta al
+    // mapa repartiendo el aire (`__item`). Si siguiera al alto de su entrada,
+    // en una leyenda comprimida los de etiqueta de dos líneas, más altas,
+    // saldrían mayores que el resto.
+    @include bp.respond-from(bp.$breakpoint-desktop-columns) {
       width: 4.4rem;
       height: 4.4rem;
     }

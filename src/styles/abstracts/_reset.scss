@@ -9,8 +9,9 @@
   padding: 0;
 }
 
-// `62.5%` de la base del navegador: con los 16px que traen por defecto, 1rem
-// = 10px, y el resto del proyecto puede pensar en `rem` como si fueran px.
+// `$root-font-size`, el 62,5 % de la base del navegador: con los 16px que
+// traen por defecto, 1rem = 10px, y el resto del proyecto puede pensar en
+// `rem` como si fueran px.
 // Es un porcentaje, no un tamaño absoluto: quien tenga configurado un cuerpo
 // de fuente mayor obtiene una raíz proporcionalmente mayor y toda la interfaz
 // crece con él. Los "10px" son la referencia con la que se escriben los
@@ -21,7 +22,7 @@
 // y la raíz con él). Lo único que se ajusta al hueco disponible es la caja del
 // mapa, que es el único elemento con una proporción rígida.
 html {
-  font-size: 62.5%;
+  font-size: vars.$root-font-size;
 }
 
 body {
