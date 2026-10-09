@@ -2,10 +2,6 @@
 @use "../../styles/abstracts/breakpoints" as bp;
 @use "../../styles/abstracts/variables" as vars;
 
-// Alto de la cabecera en escritorio (`Header.scss`): 12,7rem de 1200 a
-// 1920px. En `rem`, sigue a la base de letra del usuario.
-$desktop-header-block: 12.8rem;
-
 .spain-map {
   // Tope de alto del mapa. En la composición apilada no sale de restarle a
   // la pantalla lo que ocupan la cabecera, la leyenda o los créditos: la
@@ -37,21 +33,55 @@ $desktop-header-block: 12.8rem;
   // una ventana baja, el mapa mide justo ese umbral y su parte de abajo
   // queda bajo el pliegue.
   @include bp.respond-from(bp.$breakpoint-desktop) {
-    --map-max-block: calc(100vh - #{$desktop-header-block});
+    inline-size: bp.desktop-map-width(100%);
 
-    inline-size: min(100%, max(#{bp.$map-temperature-threshold}, calc(var(--map-max-block) * var(--map-aspect))));
+    // Pegado a la derecha, no centrado. El contexto norteafricano acaba en
+    // un corte recto en el borde derecho del dibujo (004-plan.md), que se lee
+    // como el final del mapa solo si coincide con el de la ventana: con mar
+    // al otro lado, parece un recorte a mitad de país. El ancho que sobra
+    // queda a la izquierda, del lado del Atlántico y de Canarias.
+    margin-inline: auto 0;
 
-    @supports (height: 1svh) {
-      --map-max-block: calc(100svh - #{$desktop-header-block});
-    }
+    @include bp.desktop-map-max-block;
   }
 
-  // En dos columnas, sin estirarse hasta el alto de la fila cuando la
-  // leyenda es más alta que el mapa: el bloque mide lo que su dibujo y su
-  // atribución. Por debajo sigue el mismo azul del `body`, así que no cambia
-  // nada a la vista.
+  // Por encima del tope, el mapa sale de la caja centrada hasta el borde de la
+  // ventana, sin cambiar de tamaño: tanto como la ventana pasa del tope por
+  // cada lado. `100vw` incluye la barra clásica, así que el dibujo sigue bajo
+  // ella, donde lo recorta `#root` (`_reset.scss`), sin scroll. Desde
+  // `$breakpoint-desktop-wide`, el mar que quedaría junto a la leyenda pasaría
+  // del que ya deja la composición de dos columnas, y el mapa vuelve a la caja.
+  @include bp.respond-from(bp.$breakpoint-desktop-large) {
+    margin-inline-end: calc((#{bp.$breakpoint-desktop-large} - 100vw) / 2);
+  }
+
+  @include bp.respond-from(bp.$breakpoint-desktop-wide) {
+    margin-inline-end: 0;
+  }
+
+  // En dos columnas, la celda mide el alto de la fila, que marca la leyenda
+  // cuando es más alta que el mapa, y el dibujo y su atribución (`__body`)
+  // se apoyan al final: mapa y leyenda acaban juntos, justo donde empieza la
+  // lista. El aire que sobra queda arriba, sobre el mar del propio dibujo,
+  // que en su borde superior no corta tierra.
   @include bp.respond-from(bp.$breakpoint-desktop-columns) {
-    align-self: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  // El dibujo y su atribución, juntos. En dos columnas, cuando la leyenda es
+  // más alta que el mapa, acompañan a la ventana dentro de su celda: sin
+  // scroll quedan bajo la cabecera, en la primera pantalla; al bajar, su
+  // borde inferior sigue al de la ventana hasta apoyarse al final de la
+  // fila. Pegajoso aquí, dentro de la celda, y no en `.spain-map`: la celda
+  // pegajosa se acota a toda la rejilla, no a su fila, y el mapa subía sobre
+  // la cabecera.
+  &__body {
+    @include bp.respond-from(bp.$breakpoint-desktop-columns) {
+      position: sticky;
+      inset-block-end: 0;
+    }
   }
 
   // Contenedor de consulta del propio mapa: sus temperaturas por marcador
@@ -85,6 +115,10 @@ $desktop-header-block: 12.8rem;
     font-family: vars.$font-body;
     font-size: vars.$font-size-note;
     color: vars.$ui-ink;
+
+    // Una banda propia bajo el dibujo, más clara que el mar: la tinta da
+    // 11,28:1 sobre ella.
+    background-color: vars.$map-attribution;
     text-align: center;
   }
 

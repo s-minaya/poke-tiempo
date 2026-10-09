@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 
+import type { CSSProperties } from 'react'
 import type { ExplorationState, LocationFilters, ZoneFilter } from './location-filters.ts'
 import type { ForecastFreshness } from '../../domain/forecast-freshness.ts'
 import type { PokedexId } from '../../domain/pokedex.ts'
@@ -9,6 +10,7 @@ import { buildLocationViews } from '../../domain/location-views.ts'
 import { summarizeView } from '../LocationCard/location-summary.ts'
 import { INITIAL_EXPLORATION, NO_FILTERS, applyFilters, buildSearchIndex, matchingLocationIds } from './location-filters.ts'
 import { LOCATION_SEARCH_ID } from '../LocationList/components/location-search-id.ts'
+import { MAP_ASPECT } from '../SpainMap/map-frame.ts'
 
 import Credits from '../Credits/Credits.tsx'
 import FreshnessNotice from '../FreshnessNotice/FreshnessNotice.tsx'
@@ -91,8 +93,10 @@ function WeatherApp({ forecast, freshness, offerReload, inert = false }: Weather
       {/* Grid con nombres de área (WeatherApp.scss): una columna en la
           composición apilada y en el escritorio compacto; a partir de
           `$breakpoint-desktop-columns`, dos. Cada componente fija su propio
-          `grid-area` en su `.scss`. */}
-      <main className="app__layout">
+          `grid-area` en su `.scss`. La proporción del mapa, para que la
+          rejilla le dé su ancho exacto y el resto sea de la leyenda
+          (`WeatherApp.scss`). */}
+      <main className="app__layout" style={{ '--map-aspect': MAP_ASPECT } as CSSProperties}>
         <Header forecast={forecast} freshness={freshness} />
         {/* Solo con dos días de retraso o más, o con la oferta de recargar:
             en cualquier otro caso no está en el DOM. */}

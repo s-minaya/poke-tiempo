@@ -1,6 +1,7 @@
 @use 'sass:color';
 @use 'sass:map';
 @use '../../styles/abstracts/accessibility' as a11y;
+@use '../../styles/abstracts/breakpoints' as bp;
 @use '../../styles/abstracts/full-bleed' as fb;
 @use '../../styles/abstracts/variables' as vars;
 
@@ -26,6 +27,19 @@ $controls-rule-width: 0.2rem;
 
   @include fb.full-bleed(linear-gradient(vars.$color-white 0 0));
 
+  // Por encima del tope y hasta las pantallas anchas, la lista sale de la caja
+  // centrada hasta los bordes de la ventana, y sus partes se amplían hasta
+  // llenarla (`desktop-large-zoom`): se ve como a 1600px, más grande. `100vw`
+  // incluye la barra clásica, y la lista deja la más ancha
+  // (`$scrollbar-allowance`) repartida entre los dos lados: con la de Chrome,
+  // queda a 1px de cada borde, en vez de perder bajo ella y bajo el recorte
+  // de `#root` (`_reset.scss`) la barra de la fila elegida de la primera
+  // columna. Sin entrar nunca en la caja: justo por encima del tope, la caja
+  // ya llena la ventana.
+  @include bp.respond-between(bp.$breakpoint-desktop-large, bp.$breakpoint-desktop-wide) {
+    margin-inline: min(0px, calc((#{bp.$breakpoint-desktop-large} - 100vw + #{bp.$scrollbar-allowance}) / 2));
+  }
+
   // La banda de título: tinta, con la Poké Ball en trazo blanco.
   &__titlebar {
     display: flex;
@@ -36,6 +50,7 @@ $controls-rule-width: 0.2rem;
     color: vars.$color-white;
 
     @include fb.full-bleed(linear-gradient(vars.$ui-ink 0 0));
+    @include bp.desktop-large-zoom;
   }
 
   &__ball {
@@ -68,6 +83,12 @@ $controls-rule-width: 0.2rem;
     background: vars.$ui-surface;
 
     @include fb.full-bleed(linear-gradient(to top, vars.$ui-ink $controls-rule-width, vars.$ui-surface $controls-rule-width));
+    @include bp.desktop-large-zoom;
+  }
+
+  // Cada grupo, con su encabezado y sus filas.
+  &__group {
+    @include bp.desktop-large-zoom;
   }
 
   &__group-heading {

@@ -2,8 +2,8 @@ import { compileString } from 'sass'
 import { describe, expect, it } from 'vitest'
 
 // Compila los módulos reales y lee lo que emiten: los valores de las medidas
-// de las que sale el punto de corte de columnas y la media query que genera
-// `respond-from($breakpoint-desktop-columns)`. Si una medida cambia y el
+// de las que salen los puntos de corte de columnas, de leyenda partida y de
+// pantallas anchas, y las media queries que generan. Si una medida cambia y un
 // punto de corte no la sigue —o se escribe como literal—, la combinación deja
 // de cuadrar.
 const { css } = compileString(
@@ -16,11 +16,25 @@ const { css } = compileString(
     legend: bp.$legend-column-width;
     threshold: bp.$map-temperature-threshold;
     allowance: bp.$scrollbar-allowance;
+    large: bp.$breakpoint-desktop-large;
+    split: bp.$legend-split-width;
   }
 
   @include bp.respond-from(bp.$breakpoint-desktop-columns) {
     .columns {
       grid: columns;
+    }
+  }
+
+  @include bp.respond-from(bp.$breakpoint-desktop-wide) {
+    .wide {
+      grid: wide;
+    }
+  }
+
+  @include bp.respond-between(bp.$breakpoint-legend-split, bp.$breakpoint-desktop-wide) {
+    .split {
+      grid: split;
     }
   }`,
   { loadPaths: ['src/styles/abstracts'] },
@@ -61,5 +75,30 @@ describe('punto de corte de dos columnas', () => {
 
   it('la raíz de la página usa el mismo tamaño que la conversión a em', () => {
     expect(css).toMatch(new RegExp(`html \\{\\s*font-size: ${token('root', '%')}%;`))
+  })
+})
+
+/** Una medida en `rem` de la página, en el `em` de una media query. */
+function mediaEm(name: string): number {
+  return Number((token(name, 'rem') * (token('root', '%') / 100)).toFixed(6))
+}
+
+/** `$breakpoint-desktop-wide`, tal como lo emite Sass. */
+function wideBreakpoint(): string {
+  const large = token('large', 'px')
+  return `calc(${large}px + 2 * (${large}px - ${mediaEm('legend')}em - ${token('threshold', 'px')}px))`
+}
+
+describe('punto de corte de pantallas anchas', () => {
+  it('es el tope más el doble del mar que deja junto a la leyenda la composición de dos columnas: el tope menos la leyenda, en em de media query, y el umbral del mapa', () => {
+    expect(css).toContain(`@media (min-width: ${wideBreakpoint()}) {\n  .wide {`)
+  })
+})
+
+describe('leyenda partida', () => {
+  it('va desde el ancho en que caben entre los bordes de la ventana la leyenda partida y el mapa que llena su celda, el tope menos la columna de la leyenda, hasta las pantallas anchas', () => {
+    const split = `calc(${token('large', 'px')}px - ${mediaEm('legend')}em + ${mediaEm('split')}em)`
+
+    expect(css).toContain(`@media (min-width: ${split}) and (width < ${wideBreakpoint()}) {\n  .split {`)
   })
 })

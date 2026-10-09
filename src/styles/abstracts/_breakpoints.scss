@@ -2,10 +2,11 @@
 @use 'variables' as vars;
 
 // Puntos de corte del viewport. Cada uno marca dónde el contenido deja de
-// caber bien — no un catálogo de dispositivos. Tres deciden la maquetación:
-// el escritorio, sus dos columnas y el tope. `$breakpoint-tablet` no: solo
-// decide qué ilustración de portada se sirve (`<picture>` en `Landing`,
-// precarga en `Loader`). Eso es dirección de arte.
+// caber bien — no un catálogo de dispositivos. Cinco deciden la maquetación:
+// el escritorio, sus dos columnas, el tope, la leyenda partida y hasta dónde
+// el mapa llega al borde de la ventana por encima del tope.
+// `$breakpoint-tablet` no: solo decide qué ilustración de portada se sirve
+// (`<picture>` en `Landing`, precarga en `Loader`). Eso es dirección de arte.
 $breakpoint-tablet: 768px;
 
 // Escritorio. Por debajo, la composición apilada. Desde aquí, el mapa no baja
@@ -24,11 +25,38 @@ $breakpoint-desktop-large: 1600px;
 // caja, no texto.
 $map-temperature-threshold: 1063px;
 
+// Alto de la cabecera en escritorio (`Header.scss`), en `rem` para que siga a
+// la base de letra del usuario. Con él se calcula el tope de alto del mapa
+// (`SpainMap.scss`) y, con ese tope, la columna del mapa en la rejilla
+// (`WeatherApp.scss`). La cabecera mide de 12,8 a 13,1rem, según el tamaño
+// del título: cuando el mapa se ajusta al alto de la ventana, hasta 3px del
+// borde de abajo del dibujo quedan bajo el pliegue.
+$desktop-header-block: 12.8rem;
+
 // La columna de la leyenda en dos columnas: una entrada con el sprite de
 // 4,4rem (`Legend.scss`), que mide 25,2rem con los 15,4rem de etiqueta en los
 // que «torrenciales» cabe con el espaciado de texto de WCAG 1.4.12, más 2rem
 // de relleno a cada lado.
 $legend-column-width: 29.2rem;
+
+// El sprite de la leyenda partida, mayor que los 6rem de la composición
+// apilada para llenar más del alto junto al mapa: el más grande con el que
+// la leyenda partida sigue cabiendo a 1920px, la pantalla grande más común
+// (`$breakpoint-legend-split`).
+$legend-split-sprite: 7rem;
+
+// Lo que ocupa la leyenda partida desde el borde izquierdo de la ventana: dos
+// entradas como las de la composición apilada, pero con el sprite de 7rem
+// (27,8rem cada una: los 26,8rem de `Legend.scss` con 1rem más de sprite), el
+// hueco de 1,2rem entre ellas y 2rem a cada lado, el relleno de la leyenda
+// hacia el borde y la misma separación hacia el mapa.
+$legend-split-width: 60.8rem;
+
+// Lo más que se separan del borde izquierdo el título y la leyenda en una sola
+// columna (`legend-inset()`): con la previsión más larga en un día normal,
+// «miércoles 30 de septiembre» con MAÑANA, el título de 6,4rem y la previsión
+// siguen cabiendo en una fila a 1600px, y la cabecera no crece.
+$legend-inset-max: 18rem;
 
 // La barra de desplazamiento clásica más ancha: 15px en Chrome y Edge sobre
 // Windows, 17px en Firefox. Las superpuestas no ocupan nada, y con ellas el
@@ -48,8 +76,101 @@ $scrollbar-allowance: 17px;
 // depende del texto. Con la base de 16px, 1372px.
 $breakpoint-desktop-columns: calc(media-em($legend-column-width) + $map-temperature-threshold + $scrollbar-allowance);
 
+// Leyenda partida: desde aquí y hasta `$breakpoint-desktop-wide`, las
+// entradas de la leyenda van en dos columnas, con sprites más grandes, y
+// salen del contenido hasta el borde izquierdo de la ventana, como
+// el mapa hasta el derecho (`Legend.scss`). Ni la rejilla ni el mapa
+// cambian. Es el primer ancho en que caben sin pisar el mapa: entre los dos
+// bordes de la ventana, la leyenda partida y el mapa más ancho de este
+// tramo, el que llena su celda, que es el tope menos la columna de la
+// leyenda. Sin la barra, por lo mismo que `$breakpoint-desktop-wide`. Con la
+// base de 16px, 1916px.
+$breakpoint-legend-split: calc($breakpoint-desktop-large - media-em($legend-column-width) + media-em($legend-split-width));
+
+// Pantallas anchas: desde aquí, el mapa deja de llegar al borde de la ventana
+// y vuelve a la caja centrada (`SpainMap.scss`). Por encima del tope, pegar el
+// mapa al borde suma mar del lado del Atlántico, junto a la leyenda: la mitad
+// de lo que la ventana pasa del tope. Este es el ancho en que eso alcanza lo
+// más que ya deja ahí la composición de dos columnas: el tope menos la leyenda
+// y un mapa en el umbral de sus temperaturas. Mezcla unidades por lo mismo que
+// el de dos columnas, y va sin la barra: el mapa sale de la caja con `100vw`,
+// que ya la incluye. Con la base de 16px, 2090px.
+$breakpoint-desktop-wide: calc($breakpoint-desktop-large + 2 * ($breakpoint-desktop-large - media-em($legend-column-width) - $map-temperature-threshold));
+
 @mixin respond-from($breakpoint) {
   @media (min-width: $breakpoint) {
     @content;
+  }
+}
+
+// Desde `$from` y por debajo de `$to`. Si `$to` no pasa de `$from`, no se
+// aplica en ningún ancho.
+@mixin respond-between($from, $to) {
+  @media (min-width: $from) and (width < $to) {
+    @content;
+  }
+}
+
+// La leyenda en una sola columna junto al mapa: en dos columnas, salvo
+// mientras va partida, de `$breakpoint-legend-split` a
+// `$breakpoint-desktop-wide`.
+@mixin respond-legend-column {
+  @include respond-between($breakpoint-desktop-columns, $breakpoint-legend-split) {
+    @content;
+  }
+
+  @include respond-from($breakpoint-desktop-wide) {
+    @content;
+  }
+}
+
+// La leyenda partida.
+@mixin respond-legend-split {
+  @include respond-between($breakpoint-legend-split, $breakpoint-desktop-wide) {
+    @content;
+  }
+}
+
+// En escritorio, el tope de alto del mapa es la ventana menos la cabecera,
+// para que el mapa entero quepa en la primera pantalla. `svh` es el alto que
+// siempre está disponible en móvil; `vh` cuenta con la barra del navegador
+// escondida.
+@mixin desktop-map-max-block {
+  --map-max-block: calc(100vh - #{$desktop-header-block});
+
+  @supports (height: 1svh) {
+    --map-max-block: calc(100svh - #{$desktop-header-block});
+  }
+}
+
+// El ancho del mapa en escritorio: el menor entre el que le dan
+// (`$available`) y el que le corresponde a su tope de alto
+// (`desktop-map-max-block`), sin bajar del umbral de sus temperaturas. Lo
+// usan el propio mapa, sobre su celda (`SpainMap.scss`), y la rejilla, que
+// con la leyenda en una sola columna le da al mapa una columna de su ancho
+// exacto (`WeatherApp.scss`). La proporción, `--map-aspect`, la ponen
+// `SpainMap.tsx` y `WeatherApp.tsx` (`map-frame.ts`).
+@function desktop-map-width($available) {
+  @return min(#{$available}, max(#{$map-temperature-threshold}, calc(var(--map-max-block) * var(--map-aspect))));
+}
+
+// Con la leyenda en una sola columna, cuánto se separan del borde izquierdo
+// el título (`Header.scss`) y la leyenda (`Legend.scss`), los dos lo mismo:
+// todo el ancho libre de la columna de la leyenda (`$free`), hasta
+// `$legend-inset-max`. La leyenda queda junto al mapa, y lo que pase de ese
+// tope, entre los dos.
+@function legend-inset($free) {
+  @return min(#{$legend-inset-max}, #{$free});
+}
+
+// Por encima del tope y hasta `$breakpoint-desktop-wide`, como el mapa y la
+// leyenda partida, la lista de lugares llega a los bordes de la ventana
+// (`LocationList.scss`). Lo que lleva dentro se compone como a
+// `$breakpoint-desktop-large` y se amplía en la proporción en que la ventana
+// pasa de él, sin bajar de su tamaño. `tan(atan2(…))` da esa proporción como
+// número, que es lo que pide `zoom`. Sin la barra, por lo mismo que la lista.
+@mixin desktop-large-zoom {
+  @include respond-between($breakpoint-desktop-large, $breakpoint-desktop-wide) {
+    zoom: max(1, tan(atan2(calc(100vw - #{$scrollbar-allowance}), #{$breakpoint-desktop-large})));
   }
 }

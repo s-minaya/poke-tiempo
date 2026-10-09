@@ -256,6 +256,14 @@ describe('SpainMap — selección de un lugar', () => {
     expect(drawing).toContainElement(container.querySelector<HTMLElement>('.location-card'))
     expect(drawing).not.toContainElement(attribution as HTMLElement)
   })
+
+  it('el dibujo y la atribución van juntos en un único envoltorio, el único hijo del mapa', () => {
+    const { container } = render(<SpainMap forecast={forecast([])} />)
+
+    const body = container.querySelector('.spain-map__body')
+    expect([...container.querySelector('.spain-map')!.children]).toEqual([body])
+    expect([...body!.children]).toEqual([container.querySelector('.spain-map__drawing'), container.querySelector('.spain-map__attribution')])
+  })
 })
 
 describe('SpainMap — filtros', () => {

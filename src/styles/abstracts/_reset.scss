@@ -1,3 +1,4 @@
+@use 'breakpoints' as bp;
 @use 'variables' as vars;
 
 // Reseteo base.
@@ -40,6 +41,19 @@ body {
 
   @supports (height: 1svh) {
     min-height: 100svh;
+  }
+}
+
+// Por encima del tope de la composición, el mapa y las entradas de la leyenda
+// partida llegan a los bordes de la ventana con `100vw`, que incluye la barra
+// clásica (`SpainMap.scss`, `Legend.scss`): lo que pasa de los bordes, media
+// barra a cada lado, se recorta en vez de dar scroll horizontal. `clip` y no
+// `hidden`: no crea un contenedor de scroll, así que lo pegajoso sigue
+// refiriéndose a la ventana. Solo desde el tope: por debajo, nada de la página
+// se recorta.
+#root {
+  @include bp.respond-from(bp.$breakpoint-desktop-large) {
+    overflow-x: clip;
   }
 }
 

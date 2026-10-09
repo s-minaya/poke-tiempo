@@ -10,8 +10,11 @@
   // Tope de la composición: a partir de aquí deja de crecer y queda centrada
   // con el espacio sobrante. Envuelve también a los créditos, que quedan
   // alineados con el resto aunque no formen parte de `<main>`. Más allá del
-  // tope solo llegan, a sangre, los fondos de la lista y la línea del pie
-  // (`_full-bleed.scss`): el contenido no se estira.
+  // tope llegan, a sangre, los fondos de la lista y la línea del pie
+  // (`_full-bleed.scss`); el mapa, hasta el borde derecho, las entradas de la
+  // leyenda partida, hasta el izquierdo, y la lista, ampliada, hasta los dos,
+  // salvo en pantallas anchas (`SpainMap.scss`, `Legend.scss`,
+  // `LocationList.scss`). El contenido no se estira.
   position: relative;
   max-inline-size: bp.$breakpoint-desktop-large;
   margin-inline: auto;
@@ -89,11 +92,26 @@
       // de corte mide al menos el umbral de sus temperaturas.
       grid-template-columns: bp.$legend-column-width minmax(0, 1fr);
 
-      // `stretch` (el valor por defecto de grid): la leyenda rellena su
-      // celda hasta el alto de la fila, el del mapa, y sus entradas se lo
+      // `stretch` (el valor por defecto de grid): las dos celdas miden el
+      // alto de la fila, el del mapa, y las entradas de la leyenda se lo
       // reparten (`Legend.scss`). La fila solo pasa a medir lo que la
-      // leyenda cuando ni con sus entradas juntas cabe junto al mapa.
+      // leyenda cuando ni con sus entradas juntas cabe junto al mapa, y
+      // entonces el mapa se apoya al final de la suya (`SpainMap.scss`).
       align-items: stretch;
+    }
+  }
+
+  // Con la leyenda en una sola columna, la columna del mapa mide lo que el
+  // mapa, con la misma regla que el propio mapa sobre su celda: el resto, el
+  // aire que el mapa no ocupa incluido, es de la leyenda, que lo deja a su
+  // izquierda (`Legend.scss`). La proporción del mapa la pone
+  // `WeatherApp.tsx` en `<main>`. Con la leyenda partida, la columna de la
+  // leyenda no cambia: sus entradas salen hasta el borde (`Legend.scss`).
+  @include bp.respond-legend-column {
+    &__layout {
+      grid-template-columns: minmax(bp.$legend-column-width, 1fr) bp.desktop-map-width(calc(100% - #{bp.$legend-column-width}));
+
+      @include bp.desktop-map-max-block;
     }
   }
 }

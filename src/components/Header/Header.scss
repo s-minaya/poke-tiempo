@@ -13,7 +13,7 @@
 
 // Tamaño de la fecha de la previsión (ver `&__date`), también el de su
 // párrafo (`&__forecast`).
-$forecast-font-size: max(19px, clamp(1.9rem, 0.57vw + 1.72rem, 2.4rem));
+$forecast-font-size: max(19px, clamp(1.9rem, 0.57vw + 2.4rem, 3rem));
 
 .header {
   // Dos custom properties en el bloque raíz, redefinidas por cada
@@ -33,6 +33,15 @@ $forecast-font-size: max(19px, clamp(1.9rem, 0.57vw + 1.72rem, 2.4rem));
   background: vars.$map-sea;
   padding-inline: 2rem;
   display: flex;
+
+  // Con la leyenda en una sola columna, el título se separa del borde lo
+  // mismo que ella (`Legend.scss`): el ancho de su columna que no ocupan ni
+  // el mapa ni la leyenda, calculado como la rejilla (`WeatherApp.scss`).
+  @include bp.respond-legend-column {
+    $free: calc(100% - #{bp.$legend-column-width} - #{bp.desktop-map-width(calc(100% - #{bp.$legend-column-width}))});
+
+    padding-inline-start: calc(2rem + #{bp.legend-inset($free)});
+  }
 
   // Título y previsión comparten fila mientras quepan, y pasan a dos
   // líneas cuando no. Lo decide el contenido, no un punto de corte: el
@@ -95,15 +104,26 @@ $forecast-font-size: max(19px, clamp(1.9rem, 0.57vw + 1.72rem, 2.4rem));
     // que se recalcula con el viewport—, pero esa preferencia sí se
     // perdería. El `max(19px, …)` de fuera es el mismo suelo duro que llevan
     // la previsión y las etiquetas; el contraste del título no lo necesita.
-    // El término fluido en `vw` alcanza el techo justo al entrar en
-    // escritorio.
-    font-size: max(19px, clamp(3.6rem, 1.36vw + 3.16rem, 4.8rem));
+    // El término fluido en `vw` alcanza el techo a 1353px, ya en escritorio.
+    font-size: max(19px, clamp(3.6rem, 1.36vw + 3.16rem, 5rem));
     letter-spacing: 0.05em;
 
     // Poketiempo Unown solo tiene un peso propio (no trae "bold" real):
     // esto es negrita sintética del navegador, más presencia sin comerse
     // los agujeros de los glifos (el "ojo" de cada letra).
     font-weight: 700;
+
+    // Por encima del tope de la composición, más grande, sin que crezca la
+    // cabecera: el mapa, cuyo tope de alto cuenta con ella
+    // (`$desktop-header-block`), no baja. La cabecera alinea el título con la
+    // fecha por la línea base, y Poketiempo Unown sube 0,7em sobre ella y no
+    // baja nada: el alto de la cabecera lo pone la línea del título. Con la de
+    // 6,2rem mide 12,9rem, menos que con el título de 5rem justo por debajo
+    // del tope.
+    @include bp.respond-from(bp.$breakpoint-desktop-large) {
+      font-size: 6.4rem;
+      line-height: 6.2rem;
+    }
   }
 
   // La fecha, su etiqueta, la frase de un día de retraso y la hora de

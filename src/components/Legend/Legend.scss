@@ -1,21 +1,37 @@
+@use 'sass:math';
 @use '../../styles/abstracts/breakpoints' as bp;
 @use '../../styles/abstracts/variables' as vars;
 
+// El relleno de la leyenda y el hueco entre sus entradas en la rejilla.
+$padding: 2rem;
+$list-gap: 1.2rem;
+
 .legend {
   grid-area: legend;
-  padding: 2rem;
+  padding: $padding;
   font-family: vars.$font-body;
 
   // Mismo azul que la cabecera y el mapa (`Header.scss`, `SpainMap.scss`).
   background: vars.$map-sea;
 
   // En dos columnas, la leyenda mide lo que el mapa: la rejilla la estira
-  // hasta el alto de su fila (`WeatherApp.scss`) y sus entradas se reparten
-  // ese alto (`__list`, `__item`). Como columna, la lista ocupa lo que dejan
-  // el encabezado y la indicación.
+  // hasta el alto de su fila (`WeatherApp.scss`) y, en una sola columna, sus
+  // entradas se reparten ese alto (`__list`, `__item`). Como columna, la
+  // lista ocupa lo que dejan el encabezado y la indicación.
   @include bp.respond-from(bp.$breakpoint-desktop-columns) {
     display: flex;
     flex-direction: column;
+  }
+
+  // En una sola columna junto al mapa, mide `$legend-column-width` y se
+  // separa del borde izquierdo lo mismo que el título (`legend-inset()`): su
+  // columna de la rejilla lleva además el ancho que el mapa no ocupa
+  // (`WeatherApp.scss`), y ese aire queda a la izquierda, no entre la
+  // leyenda y el mapa.
+  @include bp.respond-legend-column {
+    justify-self: start;
+    inline-size: bp.$legend-column-width;
+    margin-inline-start: bp.legend-inset(calc(100% - #{bp.$legend-column-width}));
   }
 
   // Mismo mood térmico que la línea de previsión (`Header.scss`): los mismos
@@ -52,8 +68,8 @@
     margin: 0 0 1.6rem;
     font-family: vars.$font-title;
 
-    // Encoge en la misma proporción que el título (`Header.scss`), con el
-    // que comparte familia, y alcanza el techo en el mismo punto.
+    // Encoge con la ventana, como el título (`Header.scss`), con el que
+    // comparte familia, y alcanza su techo al entrar en escritorio.
     font-size: max(19px, clamp(2.4rem, 0.91vw + 2.11rem, 3.2rem));
     letter-spacing: 0.05em;
 
@@ -64,6 +80,13 @@
     // Negrita sintética (Poketiempo Unown solo tiene un peso propio, ver
     // `Header.scss`) — mismo criterio que el título.
     font-weight: 700;
+
+    // Con la leyenda partida, más grande, como el título por encima del
+    // tope (`Header.scss`): junto al mapa sobra alto, que las filas de
+    // entradas absorben (`__list`).
+    @include bp.respond-legend-split {
+      font-size: 4.8rem;
+    }
   }
 
   &__hint {
@@ -74,11 +97,23 @@
     // Tinta de la interfaz, no mood: es una instrucción, no información
     // meteorológica. 11,47:1 contra el mar.
     color: vars.$ui-ink;
+
+    // Con la leyenda partida, más grande, como el encabezado, y en una sola
+    // línea: sale de la columna de la leyenda sobre el mar de la izquierda
+    // del mapa, hasta 2rem antes de él donde el mapa llega más cerca, en
+    // `$breakpoint-legend-split`. Con el espaciado de texto de WCAG 1.4.12,
+    // que no cabe, se parte en dos.
+    @include bp.respond-legend-split {
+      inline-size: max-content;
+      max-inline-size: math.div(bp.$legend-split-width + bp.$legend-column-width, 2) - 2 * $padding;
+      font-size: 1.9rem;
+    }
   }
 
-  // En la composición apilada y en el escritorio compacto, cuántas columnas
-  // caben lo decide el hueco, no un punto de corte: una sola en un móvil
-  // vertical, varias en la banda bajo el mapa a partir de ahí. 26,8rem es lo
+  // En la composición apilada, en el escritorio compacto y con la leyenda
+  // partida, cuántas columnas caben lo decide el hueco, no un punto de corte:
+  // una sola en un móvil vertical, varias en la banda bajo el mapa a partir
+  // de ahí y dos en la leyenda partida. 26,8rem es lo
   // que ocupa una entrada con la palabra más larga de las 25 etiquetas
   // posibles (`POKEMON_LABELS`: «torrenciales», 12rem a 22px), no solo de
   // las que salen hoy: el borde
@@ -91,22 +126,47 @@
   &__list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 26.8rem), 1fr));
-    gap: 1.2rem;
+    gap: $list-gap;
 
-    // En dos columnas, una columna flex que se reparte el alto de la
+    // En dos columnas, la lista ocupa el alto que dejan el encabezado y la
+    // indicación.
+    @include bp.respond-from(bp.$breakpoint-desktop-columns) {
+      flex: 1 1 auto;
+    }
+
+    // En una sola columna, una columna flex que se reparte el alto de la
     // leyenda. Su tamaño propio es la suma de los de partida de sus
     // entradas, el compacto: es lo que aporta a la fila de la rejilla, así
     // que la fila mide lo que el mapa salvo que ni así quepan. El hueco entre
     // entradas es fijo; el resto del aire lo pone cada entrada (`__item`).
-    @include bp.respond-from(bp.$breakpoint-desktop-columns) {
+    @include bp.respond-legend-column {
       display: flex;
-      flex: 1 1 auto;
       flex-direction: column;
       gap: 0.4rem;
     }
+
+    // Partida, la rejilla de arriba en el ancho de dos entradas: dos por
+    // fila. Las filas son iguales y se reparten el alto que deja el mapa, con
+    // cada entrada centrada en la suya (`__item`), así que la última acaba con
+    // el mapa, sin hueco debajo. Su tamaño propio, el de las filas al alto de
+    // su entrada más alta, es lo que aporta a la fila de la rejilla: si ni así
+    // caben junto al mapa, la fila mide lo que la leyenda. La lista sale
+    // del contenido hasta el borde izquierdo de la ventana, como el mapa hasta
+    // el derecho (`SpainMap.scss`): tanto como la ventana pasa del tope por
+    // cada lado, con el relleno de la leyenda entre ella y el borde. El
+    // encabezado y la indicación siguen bajo el título, y ni la rejilla de la
+    // página ni el mapa cambian: la lista ocupa lo que la columna de la
+    // leyenda, el lateral y el mar junto al mapa dejaban libre
+    // (`_breakpoints.scss`). `100vw` incluye la barra clásica: con ella, la
+    // lista empieza media barra más cerca del borde, dentro del relleno.
+    @include bp.respond-legend-split {
+      inline-size: bp.$legend-split-width - 2 * $padding;
+      margin-inline-start: calc((#{bp.$breakpoint-desktop-large} - 100vw) / 2);
+      grid-auto-rows: 1fr;
+    }
   }
 
-  // En dos columnas, cada entrada parte de 5rem —el sprite de 4,4rem y el
+  // En una sola columna, cada entrada parte de 5rem —el sprite de 4,4rem y el
   // borde del botón— y crece con el alto libre hasta 7,8rem: un botón de
   // 7rem más 0,8rem de aire, que con el hueco de `__list` dan la misma
   // separación que la rejilla de la composición apilada. Lo que se reparte
@@ -114,10 +174,26 @@
   // mínimo por contenido de flex, y una etiqueta de dos líneas, que pide
   // más de 5rem, se saldría.
   &__item {
-    @include bp.respond-from(bp.$breakpoint-desktop-columns) {
+    @include bp.respond-legend-column {
       display: flex;
       flex: 1 1 5rem;
       max-block-size: 7.8rem;
+    }
+
+    // Partida, cada entrada mide su fila entera y centra el botón en ella. Con
+    // un número impar de entradas, la columna derecha, que tiene una menos,
+    // baja media fila: cada entrada queda entre dos de la izquierda, en vez de
+    // alineada con las de arriba y con un hueco al final. `nth-child(even)` es
+    // la columna derecha; con `nth-last-child(even)` a la vez, el total es
+    // impar. El orden de lectura y de Tab es el del DOM, en zigzag y siempre
+    // hacia abajo.
+    @include bp.respond-legend-split {
+      display: flex;
+      align-items: center;
+
+      &:nth-child(even):nth-last-child(even) {
+        translate: 0 calc(50% + #{$list-gap * 0.5});
+      }
     }
   }
 
@@ -152,14 +228,19 @@
       background: vars.$color-white;
     }
 
-    // En dos columnas, la columna del sprite a su tamaño de escritorio
+    // En una sola columna, la columna del sprite a su tamaño de escritorio
     // (`__sprite`), y el botón, del alto de su `__item` hasta 7rem, el de la
     // composición apilada, con el contenido centrado y sin relleno vertical.
-    @include bp.respond-from(bp.$breakpoint-desktop-columns) {
+    @include bp.respond-legend-column {
       grid-template-columns: 4.4rem minmax(0, 1fr) 1.6rem;
       min-block-size: 4.4rem;
       max-block-size: 7rem;
       padding-block: 0;
+    }
+
+    // Partida, la columna del sprite a su tamaño (`__sprite`).
+    @include bp.respond-legend-split {
+      grid-template-columns: bp.$legend-split-sprite minmax(0, 1fr) 1.6rem;
     }
   }
 
@@ -175,14 +256,19 @@
     // deforma. `contain` los encaja en el cuadro sin estirarlos.
     object-fit: contain;
 
-    // En dos columnas, 4,4rem, el objetivo de diseño de la 008 para los
-    // marcadores. Fijo e igual en todas las entradas: la leyenda se ajusta al
-    // mapa repartiendo el aire (`__item`). Si siguiera al alto de su entrada,
-    // en una leyenda comprimida los de etiqueta de dos líneas, más altas,
-    // saldrían mayores que el resto.
-    @include bp.respond-from(bp.$breakpoint-desktop-columns) {
+    // En una sola columna, 4,4rem, el objetivo de diseño de la 008 para los
+    // marcadores; partida, `$legend-split-sprite`. Fijo e igual en todas las
+    // entradas: la leyenda se ajusta al mapa repartiendo el aire (`__item`,
+    // `__list`). Si siguiera al alto de su entrada, en una leyenda comprimida
+    // los de etiqueta de dos líneas, más altas, saldrían mayores que el resto.
+    @include bp.respond-legend-column {
       width: 4.4rem;
       height: 4.4rem;
+    }
+
+    @include bp.respond-legend-split {
+      width: bp.$legend-split-sprite;
+      height: bp.$legend-split-sprite;
     }
 
     // Con otra entrada pulsada, silueta: la misma sombra que en el mapa. La
