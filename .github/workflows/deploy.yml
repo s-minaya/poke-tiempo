@@ -18,10 +18,12 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Imagen fijada, no `ubuntu-latest`: el salto a una versión nueva de
+    # Ubuntu se hace a propósito, no cuando GitHub mueve la etiqueta.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -42,7 +44,7 @@ jobs:
       # recuperable como artifact aunque nunca llegue a commitearse.
       - name: Upload raw forecast artifact
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: forecast-json-${{ github.run_id }}-${{ github.run_attempt }}
           path: src/data/forecast.json
@@ -73,7 +75,7 @@ jobs:
       # misma respuesta.
       - name: Upload Oak generation artifact
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: oak-json-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -107,17 +109,17 @@ jobs:
           git diff --staged --quiet || git commit -m "chore(datos): actualizar previsión $FORECAST_DATE"
           git push
 
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
