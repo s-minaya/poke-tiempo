@@ -1,5 +1,12 @@
 [
   {
+    "date": "2026-10-10",
+    "focusPokemonId": "castform-rain",
+    "leitmotifIds": [
+      "gyarados-mar"
+    ]
+  },
+  {
     "date": "2026-10-09",
     "focusPokemonId": null,
     "leitmotifIds": []
@@ -23,11 +30,6 @@
   },
   {
     "date": "2026-10-05",
-    "focusPokemonId": null,
-    "leitmotifIds": []
-  },
-  {
-    "date": "2026-10-03",
     "focusPokemonId": null,
     "leitmotifIds": []
   }

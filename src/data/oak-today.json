@@ -1,27 +1,27 @@
 {
-  "date": "2026-10-09",
-  "generatedAt": "2026-10-08T12:29:31.852Z",
+  "date": "2026-10-10",
+  "generatedAt": "2026-10-09T12:19:39.234Z",
   "source": "ai",
-  "dayMode": "alerta",
-  "serious": true,
+  "dayMode": "invasion",
+  "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... 3 ubicaciones están bajo aviso y 63 presentan lluvia."
+      "text": "Vaya... solo 1 lugar bajo aviso y 62 con lluvia; la previsión es para el sábado."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "consejo",
-      "text": "Aviso oficial naranja por fenómenos costeros afecta a Menorca; se esperan olas de 2,3 m y periodos de 7,6 s."
+      "tone": "epico",
+      "text": "¡Curioso! Castform bajo lluvia moderada se muestra en 62 lugares, como A Coruña, Lugo y Ourense, con 1,5 mm y 30 % de probabilidad."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "neutral",
-      "text": "Castform (Niebla) se observa en 2 lugares: Zamora y Segovia."
+      "tone": "guasa",
+      "text": "Gyarados está en Gijón y Cantabria; mejor observarlo a distancia."
     }
   ]
 }
