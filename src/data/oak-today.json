@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-10",
-  "generatedAt": "2026-10-09T12:19:39.234Z",
+  "date": "2026-10-11",
+  "generatedAt": "2026-10-10T11:37:22.345Z",
   "source": "ai",
   "dayMode": "invasion",
   "serious": false,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... solo 1 lugar bajo aviso y 62 con lluvia; la previsión es para el sábado."
+      "text": "Vaya... 62 de 74 lugares tendrán lluvia. La previsión es para el domingo, fin de semana."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "epico",
-      "text": "¡Curioso! Castform bajo lluvia moderada se muestra en 62 lugares, como A Coruña, Lugo y Ourense, con 1,5 mm y 30 % de probabilidad."
+      "text": "Interesante... Castform bajo lluvia moderada se observa en 60 lugares. En A Coruña, 3,6 mm con 85 % de probabilidad."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "guasa",
-      "text": "Gyarados está en Gijón y Cantabria; mejor observarlo a distancia."
+      "text": "Curioso... Hoppip solo en Huesca; parece que le costará quedarse quieto."
     }
   ]
 }
