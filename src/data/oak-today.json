@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-11",
-  "generatedAt": "2026-10-10T11:37:22.345Z",
+  "date": "2026-10-12",
+  "generatedAt": "2026-10-11T11:50:36.010Z",
   "source": "ai",
   "dayMode": "invasion",
   "serious": false,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... 62 de 74 lugares tendrán lluvia. La previsión es para el domingo, fin de semana."
+      "text": "Vaya... 2 de 74 lugares están bajo algún aviso."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "epico",
-      "text": "Interesante... Castform bajo lluvia moderada se observa en 60 lugares. En A Coruña, 3,6 mm con 85 % de probabilidad."
+      "text": "¡Increíble! Charmander se muestra en 32 lugares, como Ourense, Teruel y Alcañiz."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "guasa",
-      "text": "Curioso... Hoppip solo en Huesca; parece que le costará quedarse quieto."
+      "tone": "neutral",
+      "text": "Curioso, Castform (Niebla) aparece en 2 lugares: Cuenca y Mérida."
     }
   ]
 }
