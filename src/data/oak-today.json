@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-12",
-  "generatedAt": "2026-10-11T11:50:36.010Z",
+  "date": "2026-10-13",
+  "generatedAt": "2026-10-12T13:49:38.834Z",
   "source": "ai",
   "dayMode": "invasion",
   "serious": false,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... 2 de 74 lugares están bajo algún aviso."
+      "text": "Vaya... 3 de 74 lugares tienen lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "epico",
-      "text": "¡Increíble! Charmander se muestra en 32 lugares, como Ourense, Teruel y Alcañiz."
+      "text": "¡Increíble! Charmander aparece en 43 lugares, como Ourense, La Rioja y Navarra."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Curioso, Castform (Niebla) aparece en 2 lugares: Cuenca y Mérida."
+      "text": "Curioso, Castform (Niebla) aparece en 3 sitios: Albacete, Sevilla y Ceuta."
     }
   ]
 }
