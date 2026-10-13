@@ -1,5 +1,12 @@
 [
   {
+    "date": "2026-10-14",
+    "focusPokemonId": "charmander",
+    "leitmotifIds": [
+      "castform-vestuario"
+    ]
+  },
+  {
     "date": "2026-10-13",
     "focusPokemonId": "charmander",
     "leitmotifIds": []
@@ -27,12 +34,5 @@
     "date": "2026-10-09",
     "focusPokemonId": null,
     "leitmotifIds": []
-  },
-  {
-    "date": "2026-10-08",
-    "focusPokemonId": "dragonite",
-    "leitmotifIds": [
-      "castform-vestuario"
-    ]
   }
 ]
