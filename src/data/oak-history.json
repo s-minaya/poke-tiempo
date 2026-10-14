@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-10-15",
+    "focusPokemonId": "charmander",
+    "leitmotifIds": []
+  },
+  {
     "date": "2026-10-14",
     "focusPokemonId": "charmander",
     "leitmotifIds": [
@@ -29,10 +34,5 @@
     "leitmotifIds": [
       "gyarados-mar"
     ]
-  },
-  {
-    "date": "2026-10-09",
-    "focusPokemonId": null,
-    "leitmotifIds": []
   }
 ]
