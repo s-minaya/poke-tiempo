@@ -1,5 +1,12 @@
 [
   {
+    "date": "2026-10-16",
+    "focusPokemonId": "charmander",
+    "leitmotifIds": [
+      "gyarados-mar"
+    ]
+  },
+  {
     "date": "2026-10-15",
     "focusPokemonId": "charmander",
     "leitmotifIds": []
@@ -26,13 +33,6 @@
     "focusPokemonId": "castform-rain",
     "leitmotifIds": [
       "hoppip-vuela"
-    ]
-  },
-  {
-    "date": "2026-10-10",
-    "focusPokemonId": "castform-rain",
-    "leitmotifIds": [
-      "gyarados-mar"
     ]
   }
 ]

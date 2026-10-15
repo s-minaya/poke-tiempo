@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-15",
-  "generatedAt": "2026-10-14T10:52:34.278Z",
+  "date": "2026-10-16",
+  "generatedAt": "2026-10-15T10:36:40.693Z",
   "source": "ai",
   "dayMode": "invasion",
   "serious": false,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... solo 1 sitio bajo aviso y 3 con lluvia."
+      "text": "Vaya... un solo sitio bajo aviso y 16 con lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "epico",
-      "text": "¡Increíble! Charmander se muestra en 38 lugares, entre ellos Lugo, La Rioja y Navarra."
+      "text": "Interesante, Charmander se muestra en 38 lugares, como Ourense, La Rioja y Huesca."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "neutral",
-      "text": "Curioso... Castform (Niebla) está en 6 sitios, como Pontevedra, Oviedo y Gijón."
+      "tone": "guasa",
+      "text": "Gyarados en Porto y Lisboa, mejor observarlo a distancia."
     }
   ]
 }
