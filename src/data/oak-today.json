@@ -1,27 +1,27 @@
 {
-  "date": "2026-10-16",
-  "generatedAt": "2026-10-15T10:36:40.693Z",
-  "source": "ai",
-  "dayMode": "invasion",
-  "serious": false,
+  "date": "2026-10-17",
+  "generatedAt": "2026-10-16T10:24:03.046Z",
+  "source": "fallback",
+  "dayMode": "alerta",
+  "serious": true,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... un solo sitio bajo aviso y 16 con lluvia."
+      "text": "Hay avisos en 24 de los 74 lugares del mapa; además, la previsión es para el sábado, fin de semana. Tomo nota."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "epico",
-      "text": "Interesante, Charmander se muestra en 38 lugares, como Ourense, La Rioja y Huesca."
+      "tone": "consejo",
+      "text": "Un apunte. Tenemos un aviso oficial naranja por lluvia en Barcelona; además, allí se esperan 3,5 mm, con un 75 % de probabilidad. Yo saldría preparado."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "guasa",
-      "text": "Gyarados en Porto y Lisboa, mejor observarlo a distancia."
+      "tone": "neutral",
+      "text": "Mega-Gyarados solo asoma en Gijón."
     }
   ]
 }

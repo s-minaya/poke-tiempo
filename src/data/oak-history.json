@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-10-17",
+    "focusPokemonId": null,
+    "leitmotifIds": []
+  },
+  {
     "date": "2026-10-16",
     "focusPokemonId": "charmander",
     "leitmotifIds": [
@@ -27,12 +32,5 @@
     "date": "2026-10-12",
     "focusPokemonId": "charmander",
     "leitmotifIds": []
-  },
-  {
-    "date": "2026-10-11",
-    "focusPokemonId": "castform-rain",
-    "leitmotifIds": [
-      "hoppip-vuela"
-    ]
   }
 ]
