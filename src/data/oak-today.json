@@ -1,7 +1,7 @@
 {
-  "date": "2026-10-17",
-  "generatedAt": "2026-10-16T10:24:03.046Z",
-  "source": "fallback",
+  "date": "2026-10-18",
+  "generatedAt": "2026-10-17T09:57:46.873Z",
+  "source": "ai",
   "dayMode": "alerta",
   "serious": true,
   "dialogues": [
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Hay avisos en 24 de los 74 lugares del mapa; además, la previsión es para el sábado, fin de semana. Tomo nota."
+      "text": "Vaya... 24 lugares tienen aviso y 53 con lluvia; la previsión es para el domingo."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Un apunte. Tenemos un aviso oficial naranja por lluvia en Barcelona; además, allí se esperan 3,5 mm, con un 75 % de probabilidad. Yo saldría preparado."
+      "text": "En Barcelona hay aviso naranja por lluvia; se esperan 9,5 mm con 100 % de probabilidad."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Mega-Gyarados solo asoma en Gijón."
+      "text": "Zapdos se avista en 14 lugares del mapa, entre ellos Alicante, Tarancón y Plasencia."
     }
   ]
 }
