@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { PokedexId } from '../pokedex.ts'
 import { POKEMON_LABELS } from '../pokemon-labels.ts'
+import type { DayBriefing } from './briefing.ts'
 import type { OakHistoryEntry } from './history.ts'
 import type { LeitmotifId } from './leitmotifs.ts'
 import type { DayPlanInput } from './plan-dialogues.ts'
@@ -18,6 +19,15 @@ import type {
 } from './types.ts'
 
 const TODAY = '2026-09-18' // viernes
+
+/** El parte del día, referencia a hechos sueltos: es lo que manda sobre el reparto. */
+function brief(overview: NarrativeFact, highlight: NarrativeFact, secondary: NarrativeFact): DayBriefing {
+  return {
+    overview: { role: 'overview', fact: overview },
+    highlight: { role: 'highlight', fact: highlight },
+    secondary: { role: 'secondary', fact: secondary },
+  }
+}
 
 function spotlight(pokemonId: PokedexId, locationCount = 4): PokemonSpotlightFact {
   return {
@@ -80,18 +90,29 @@ function entry(date: string, focusPokemonId: PokedexId | null, leitmotifIds: Lei
   return { date, focusPokemonId, leitmotifIds }
 }
 
-/** Día normal: tres protagonistas, algo de lluvia y un extremo térmico. */
+function spotlightsIn(facts: readonly NarrativeFact[]): PokemonSpotlightFact[] {
+  return facts.filter((fact): fact is PokemonSpotlightFact => fact.kind === 'pokemon_spotlight')
+}
+
+/**
+ * Día normal: tres protagonistas, algo de lluvia y un extremo térmico. El
+ * parte reparte `overview` (el recuento del día), `highlight` (la lluvia) y
+ * `secondary` (el extremo térmico).
+ */
 function ordinaryDay(overrides: Partial<DayPlanInput> = {}): DayPlanInput {
   const headline = spotlight('zapdos', 3)
   const spread = spotlight('charmander', 21)
   const rarity = spotlight('cryogonal', 2)
+  const panorama = temperature('sevilla', 'charmander')
+  const highlight = rain('ibiza', 'zapdos', false)
 
   return {
     date: TODAY,
-    facts: [calendar, dayShape, headline, spread, rarity, temperature('sevilla', 'charmander'), rain('ibiza', 'zapdos', false)],
+    facts: [calendar, dayShape, headline, spread, rarity, panorama, highlight],
     protagonists: [protagonist('headline', headline), protagonist('spread', spread), protagonist('rarity', rarity)],
     decision: { mode: 'parte', trigger: null },
     history: [],
+    briefing: brief(dayShape, highlight, panorama),
     ...overrides,
   }
 }
@@ -131,35 +152,57 @@ describe('planDialogues — forma del plan', () => {
 
   it('un día mínimo sigue produciendo tres slots', () => {
     const only = spotlight('castform', 74)
+    const madrid = temperature('madrid', 'castform')
     const plan = planDialogues({
       date: TODAY,
-      facts: [calendar, dayShape, only, temperature('madrid', 'castform')],
+      facts: [calendar, dayShape, only, madrid],
       protagonists: [protagonist('headline', only)],
       decision: { mode: 'parte', trigger: null },
       history: [],
+      briefing: brief(dayShape, madrid, calendar),
     })
 
     expect(plan.dialoguePlan.every((slot) => slot.facts.length >= 1)).toBe(true)
     expect(new Set(allFacts(plan)).size).toBe(allFacts(plan).length)
   })
 
-  it('sin hechos suficientes falla de forma visible, no en silencio', () => {
-    expect(() =>
-      planDialogues({ date: TODAY, facts: [calendar], protagonists: [], decision: { mode: 'parte', trigger: null }, history: [] }),
-    ).toThrow(/Oak no puede/)
+  it('el parte completa un inventario vacío: no hay ningún camino que aborte', () => {
+    const overview = temperature('madrid', 'castform')
+    const highlight = rain('ibiza', 'zapdos')
+    const secondary = temperature('sevilla', 'charmander')
+    const plan = planDialogues({
+      date: TODAY,
+      facts: [],
+      protagonists: [],
+      decision: { mode: 'parte', trigger: null },
+      history: [],
+      briefing: brief(overview, highlight, secondary),
+    })
+
+    expect(plan.dialoguePlan.map((slot) => slot.facts)).toEqual([[overview], [highlight], [secondary]])
   })
 })
 
 describe('planDialogues — apertura', () => {
-  it('sitúa el día con DayShapeFact y no gasta el hecho focal', () => {
+  it('abre con el panorama del parte y no gasta el hecho focal', () => {
     const input = ordinaryDay()
     const [opening] = planDialogues(input).dialoguePlan
 
     expect(opening.facts).toEqual([dayShape])
-    // Neutral siempre: DayShapeFact existe casi a diario y el registro
+    // Neutral siempre: el panorama existe casi a diario y el registro
     // científico se reserva a otros slots.
     expect(opening.tone).toBe('neutral')
     expect(opening.leitmotif).toBeNull()
+  })
+
+  it('con un panorama del parte, no añade el recuento del día como relleno', () => {
+    const input = ordinaryDay({
+      briefing: brief(temperature('madrid', 'castform'), rain('ibiza', 'zapdos'), temperature('sevilla', 'charmander')),
+    })
+    const [opening] = planDialogues(input).dialoguePlan
+
+    expect(opening.facts).toEqual([input.briefing.overview.fact])
+    expect(opening.facts).not.toContain(dayShape)
   })
 
   it('en fin de semana el calendario acompaña', () => {
@@ -167,6 +210,17 @@ describe('planDialogues — apertura', () => {
     const [opening] = planDialogues(input).dialoguePlan
 
     expect(opening.facts).toEqual([dayShape, weekendCalendar])
+  })
+
+  it('si el panorama del parte ya es el calendario, no lo repite', () => {
+    const input = ordinaryDay({
+      date: '2026-09-19',
+      facts: [weekendCalendar, dayShape, ...ordinaryDay().facts.slice(2)],
+      briefing: brief(weekendCalendar, rain('ibiza', 'zapdos'), temperature('sevilla', 'charmander')),
+    })
+    const [opening] = planDialogues(input).dialoguePlan
+
+    expect(opening.facts).toEqual([weekendCalendar])
   })
 
   it('entre semana no menciona el día: la apertura no es un formulario', () => {
@@ -177,9 +231,13 @@ describe('planDialogues — apertura', () => {
 })
 
 describe('planDialogues — foco', () => {
-  it('alerta: el AlertFact exacto del trigger va en el foco', () => {
+  it('alerta: el hecho del parte es el aviso del trigger y va en el foco', () => {
     const trigger = alert('naranja')
-    const input = ordinaryDay({ decision: { mode: 'alerta', trigger }, facts: [...ordinaryDay().facts, trigger] })
+    const input = ordinaryDay({
+      decision: { mode: 'alerta', trigger },
+      facts: [...ordinaryDay().facts, trigger],
+      briefing: brief(dayShape, trigger, temperature('sevilla', 'charmander')),
+    })
     const [, focus] = planDialogues(input).dialoguePlan
 
     expect(focus.facts[0]).toBe(trigger)
@@ -188,7 +246,11 @@ describe('planDialogues — foco', () => {
 
   it('alerta: un aviso rojo sí se cuenta en épico, un naranja no se dramatiza', () => {
     const red = alert('rojo')
-    const input = ordinaryDay({ decision: { mode: 'alerta', trigger: red }, facts: [...ordinaryDay().facts, red] })
+    const input = ordinaryDay({
+      decision: { mode: 'alerta', trigger: red },
+      facts: [...ordinaryDay().facts, red],
+      briefing: brief(dayShape, red, temperature('sevilla', 'charmander')),
+    })
 
     expect(planDialogues(input).dialoguePlan[1].tone).toBe('epico')
   })
@@ -196,7 +258,11 @@ describe('planDialogues — foco', () => {
   it('alerta: añade el hecho del mismo fenómeno y lugar cuando la correspondencia es explícita', () => {
     const trigger = alert('naranja')
     const companion = rain('ibiza', 'castform-rain')
-    const input = ordinaryDay({ decision: { mode: 'alerta', trigger }, facts: [calendar, dayShape, spotlight('zapdos'), trigger, companion] })
+    const input = ordinaryDay({
+      decision: { mode: 'alerta', trigger },
+      facts: [calendar, dayShape, spotlight('zapdos'), trigger, companion],
+      briefing: brief(dayShape, trigger, temperature('sevilla', 'charmander')),
+    })
     const [, focus] = planDialogues(input).dialoguePlan
 
     expect(focus.facts).toEqual([trigger, companion])
@@ -205,7 +271,11 @@ describe('planDialogues — foco', () => {
   it('alerta: no arrastra un hecho de otro lugar aunque sea del mismo fenómeno', () => {
     const trigger = alert('naranja')
     const elsewhere = rain('madrid', 'castform-rain')
-    const input = ordinaryDay({ decision: { mode: 'alerta', trigger }, facts: [calendar, dayShape, spotlight('zapdos'), trigger, elsewhere] })
+    const input = ordinaryDay({
+      decision: { mode: 'alerta', trigger },
+      facts: [calendar, dayShape, spotlight('zapdos'), trigger, elsewhere],
+      briefing: brief(dayShape, trigger, temperature('sevilla', 'charmander')),
+    })
     const [, focus] = planDialogues(input).dialoguePlan
 
     expect(focus.facts).toEqual([trigger])
@@ -214,43 +284,49 @@ describe('planDialogues — foco', () => {
   it('alerta: no arrastra un hecho de otro fenómeno aunque sea del mismo lugar', () => {
     const trigger = alert('naranja', { phenomenon: 'viento', sourcePhenomenon: 'Vientos' })
     const sameLocation = rain('ibiza', 'castform-rain')
-    const input = ordinaryDay({ decision: { mode: 'alerta', trigger }, facts: [calendar, dayShape, spotlight('zapdos'), trigger, sameLocation] })
+    const input = ordinaryDay({
+      decision: { mode: 'alerta', trigger },
+      facts: [calendar, dayShape, spotlight('zapdos'), trigger, sameLocation],
+      briefing: brief(dayShape, trigger, temperature('sevilla', 'charmander')),
+    })
     const [, focus] = planDialogues(input).dialoguePlan
 
     expect(focus.facts).toEqual([trigger])
   })
 
-  it('invasion: el spotlight exacto del trigger va en el foco, en épico', () => {
+  it('invasion: el spotlight del trigger acompaña al hecho del parte, en épico', () => {
     const trigger = spotlight('castform', 30)
     const input = ordinaryDay({
       decision: { mode: 'invasion', trigger },
       facts: [calendar, dayShape, trigger, spotlight('zapdos', 2), temperature('madrid', 'castform')],
       protagonists: [protagonist('headline', spotlight('zapdos', 2))],
+      briefing: brief(dayShape, rain('madrid', 'castform-rain'), temperature('madrid', 'castform')),
     })
     const [, focus] = planDialogues(input).dialoguePlan
 
-    expect(focus.facts[0]).toBe(trigger)
+    expect(focus.facts).toContain(trigger)
     expect(focus.tone).toBe('epico')
   })
 
-  it('avistamiento: el spotlight exacto del trigger va en el foco, en científico', () => {
+  it('avistamiento: el spotlight del trigger acompaña al hecho del parte, en científico', () => {
     const trigger = spotlight('cryogonal', 1)
     const input = ordinaryDay({
       decision: { mode: 'avistamiento', trigger },
       facts: [calendar, dayShape, trigger, spotlight('charmander', 20), temperature('madrid', 'charmander')],
       protagonists: [protagonist('headline', spotlight('charmander', 20))],
+      briefing: brief(dayShape, rain('madrid', 'castform-rain'), temperature('madrid', 'charmander')),
     })
     const [, focus] = planDialogues(input).dialoguePlan
 
-    expect(focus.facts[0]).toBe(trigger)
+    expect(focus.facts).toContain(trigger)
     expect(focus.tone).toBe('cientifico')
   })
 
-  it('parte: headline por defecto, en neutral', () => {
+  it('parte: el protagonista elegido acompaña al hecho del parte, en neutral', () => {
     const input = ordinaryDay()
     const [, focus] = planDialogues(input).dialoguePlan
 
-    expect((focus.facts[0] as PokemonSpotlightFact).pokemonId).toBe('zapdos')
+    expect(focus.facts).toContain(input.protagonists[0].spotlight)
     expect(focus.tone).toBe('neutral')
   })
 
@@ -258,7 +334,6 @@ describe('planDialogues — foco', () => {
     const history = [entry('2026-09-17', 'zapdos'), entry('2026-09-16', 'zapdos'), entry('2026-09-15', 'zapdos')]
     const plan = planDialogues(ordinaryDay({ history }))
 
-    expect((plan.dialoguePlan[1].facts[0] as PokemonSpotlightFact).pokemonId).toBe('charmander')
     expect(plan.focusPokemonId).toBe('charmander')
   })
 
@@ -279,25 +354,30 @@ describe('planDialogues — foco', () => {
 })
 
 describe('planDialogues — cierre', () => {
-  it('usa un hecho distinto, todavía sin consumir', () => {
+  it('empieza con el hecho del parte y añade otro sin consumir', () => {
     const plan = planDialogues(ordinaryDay())
     const [opening, focus, closing] = plan.dialoguePlan
 
-    expect(closing.facts).toHaveLength(1)
-    expect([...opening.facts, ...focus.facts]).not.toContain(closing.facts[0])
+    expect(closing.facts[0]).toBe(plan.briefing.secondary.fact)
+    expect(closing.facts.length).toBeGreaterThanOrEqual(1)
+    for (const fact of closing.facts) {
+      expect([...opening.facts, ...focus.facts]).not.toContain(fact)
+    }
   })
 
-  it('prefiere otro protagonista sin usar', () => {
+  it('prefiere otro protagonista sin usar para acompañar el cierre', () => {
     const [, , closing] = planDialogues(ordinaryDay()).dialoguePlan
 
-    expect(closing.facts[0].kind).toBe('pokemon_spotlight')
+    expect(spotlightsIn(closing.facts)).toHaveLength(1)
   })
 
   it('el leitmotiv va en el cierre, nunca en apertura ni foco', () => {
     const snorunt = spotlight('snorunt', 2)
+    const madrid = temperature('madrid', 'snorunt')
     const input = ordinaryDay({
-      facts: [calendar, dayShape, spotlight('zapdos', 3), snorunt, temperature('madrid', 'snorunt')],
+      facts: [calendar, dayShape, spotlight('zapdos', 3), snorunt, madrid],
       protagonists: [protagonist('headline', spotlight('zapdos', 3)), protagonist('rarity', snorunt)],
+      briefing: brief(dayShape, rain('ibiza', 'zapdos'), madrid),
     })
     const [opening, focus, closing] = planDialogues(input).dialoguePlan
 
@@ -308,35 +388,43 @@ describe('planDialogues — cierre', () => {
 
   it('un cierre con leitmotiv sigue llevando un hecho real', () => {
     const snorunt = spotlight('snorunt', 2)
+    const madrid = temperature('madrid', 'snorunt')
     const input = ordinaryDay({
-      facts: [calendar, dayShape, spotlight('zapdos', 3), snorunt, temperature('madrid', 'snorunt')],
+      facts: [calendar, dayShape, spotlight('zapdos', 3), snorunt, madrid],
       protagonists: [protagonist('headline', spotlight('zapdos', 3)), protagonist('rarity', snorunt)],
+      briefing: brief(dayShape, rain('ibiza', 'zapdos'), madrid),
     })
     const [, , closing] = planDialogues(input).dialoguePlan
 
-    expect(closing.facts).toHaveLength(1)
+    expect(spotlightsIn(closing.facts)).toHaveLength(1)
     expect(closing.tone).toBe('guasa')
   })
 
   it('sin leitmotiv, un hecho accionable se cierra con consejo', () => {
+    const zapdos = spotlight('zapdos', 3)
+    const ibiza = rain('ibiza', 'castform-rain')
     const input = ordinaryDay({
-      facts: [calendar, dayShape, spotlight('zapdos', 3), rain('ibiza', 'castform-rain')],
-      protagonists: [protagonist('headline', spotlight('zapdos', 3))],
+      facts: [calendar, dayShape, zapdos, ibiza],
+      protagonists: [protagonist('headline', zapdos)],
+      briefing: brief(dayShape, temperature('sevilla', 'charmander'), temperature('madrid', 'castform')),
     })
     const [, , closing] = planDialogues(input).dialoguePlan
 
-    expect(closing.facts[0].kind).toBe('rain')
+    expect(closing.facts).toContain(ibiza)
     expect(closing.tone).toBe('consejo')
   })
 
   it('sin leitmotiv ni hecho accionable, cierra en neutral', () => {
+    const zapdos = spotlight('zapdos', 3)
+    const sevilla = temperature('sevilla', 'charmander')
     const input = ordinaryDay({
-      facts: [calendar, dayShape, spotlight('zapdos', 3), temperature('sevilla', 'charmander')],
-      protagonists: [protagonist('headline', spotlight('zapdos', 3))],
+      facts: [calendar, dayShape, zapdos, sevilla],
+      protagonists: [protagonist('headline', zapdos)],
+      briefing: brief(dayShape, rain('ibiza', 'castform-rain'), temperature('madrid', 'castform')),
     })
     const [, , closing] = planDialogues(input).dialoguePlan
 
-    expect(closing.facts[0].kind).toBe('temperature')
+    expect(closing.facts).toContain(sevilla)
     expect(closing.tone).toBe('neutral')
   })
 })
@@ -357,6 +445,7 @@ describe('planDialogues — entrada de historial', () => {
         decision: { mode: 'invasion', trigger: invader },
         facts: [calendar, dayShape, invader, spotlight('zapdos', 2), temperature('madrid', 'castform')],
         protagonists: [protagonist('headline', spotlight('zapdos', 2))],
+        briefing: brief(dayShape, rain('madrid', 'castform-rain'), temperature('madrid', 'castform')),
       }),
     )
 
@@ -365,7 +454,13 @@ describe('planDialogues — entrada de historial', () => {
 
   it('en alerta sin Pokémon acompañante, el foco histórico es null', () => {
     const trigger = alert('naranja', { phenomenon: 'deshielo', sourcePhenomenon: 'Deshielo' })
-    const plan = planDialogues(ordinaryDay({ decision: { mode: 'alerta', trigger }, facts: [...ordinaryDay().facts, trigger] }))
+    const plan = planDialogues(
+      ordinaryDay({
+        decision: { mode: 'alerta', trigger },
+        facts: [...ordinaryDay().facts, trigger],
+        briefing: brief(dayShape, trigger, temperature('sevilla', 'charmander')),
+      }),
+    )
 
     expect(plan.historyEntry.focusPokemonId).toBeNull()
   })
@@ -374,7 +469,11 @@ describe('planDialogues — entrada de historial', () => {
     const trigger = alert('naranja')
     const companion = rain('ibiza', 'castform-rain')
     const plan = planDialogues(
-      ordinaryDay({ decision: { mode: 'alerta', trigger }, facts: [calendar, dayShape, spotlight('zapdos'), trigger, companion] }),
+      ordinaryDay({
+        decision: { mode: 'alerta', trigger },
+        facts: [calendar, dayShape, spotlight('zapdos'), trigger, companion],
+        briefing: brief(dayShape, trigger, temperature('sevilla', 'charmander')),
+      }),
     )
 
     // El RainFact está en el foco y su mapa dibuja Castform, pero el
@@ -390,8 +489,13 @@ describe('planDialogues — entrada de historial', () => {
   it('alerta: el gag que habría encajado no llega a elegirse', () => {
     const trigger = alert('naranja')
     const castform = spotlight('castform-rain', 20)
+    const heat = temperature('sevilla', 'charmander')
     const plan = planDialogues(
-      ordinaryDay({ decision: { mode: 'alerta', trigger }, facts: [calendar, dayShape, castform, trigger, temperature('sevilla', 'charmander')] }),
+      ordinaryDay({
+        decision: { mode: 'alerta', trigger },
+        facts: [calendar, dayShape, castform, trigger, heat],
+        briefing: brief(dayShape, trigger, heat),
+      }),
     )
 
     expect(plan.dialoguePlan[2].leitmotif).toBeNull()
@@ -400,10 +504,12 @@ describe('planDialogues — entrada de historial', () => {
 
   it('el leitmotiv elegido queda registrado para su cooldown', () => {
     const snorunt = spotlight('snorunt', 2)
+    const madrid = temperature('madrid', 'snorunt')
     const plan = planDialogues(
       ordinaryDay({
-        facts: [calendar, dayShape, spotlight('zapdos', 3), snorunt, temperature('madrid', 'snorunt')],
+        facts: [calendar, dayShape, spotlight('zapdos', 3), snorunt, madrid],
         protagonists: [protagonist('headline', spotlight('zapdos', 3)), protagonist('rarity', snorunt)],
+        briefing: brief(dayShape, rain('ibiza', 'zapdos'), madrid),
       }),
     )
 
@@ -420,7 +526,12 @@ describe('planDialogues — el historial nunca toca el modo', () => {
 
   it('alerta sigue siendo alerta tres días seguidos, con su trigger intacto', () => {
     const trigger = alert('naranja')
-    const input = ordinaryDay({ decision: { mode: 'alerta', trigger }, facts: [...ordinaryDay().facts, trigger], history: repeated })
+    const input = ordinaryDay({
+      decision: { mode: 'alerta', trigger },
+      facts: [...ordinaryDay().facts, trigger],
+      briefing: brief(dayShape, trigger, temperature('sevilla', 'charmander')),
+      history: repeated,
+    })
     const plan = planDialogues(input)
 
     expect(plan.dayMode).toBe('alerta')
@@ -434,12 +545,13 @@ describe('planDialogues — el historial nunca toca el modo', () => {
         decision: { mode: 'invasion', trigger },
         facts: [calendar, dayShape, trigger, spotlight('zapdos', 2), temperature('madrid', 'castform')],
         protagonists: [protagonist('headline', spotlight('zapdos', 2))],
+        briefing: brief(dayShape, rain('madrid', 'castform-rain'), temperature('madrid', 'castform')),
         history: repeated,
       }),
     )
 
     expect(plan.dayMode).toBe('invasion')
-    expect(plan.dialoguePlan[1].facts[0]).toBe(trigger)
+    expect(plan.dialoguePlan[1].facts).toContain(trigger)
   })
 
   it('avistamiento tampoco', () => {
@@ -449,12 +561,13 @@ describe('planDialogues — el historial nunca toca el modo', () => {
         decision: { mode: 'avistamiento', trigger },
         facts: [calendar, dayShape, trigger, spotlight('charmander', 20), temperature('madrid', 'charmander')],
         protagonists: [protagonist('headline', spotlight('charmander', 20))],
+        briefing: brief(dayShape, rain('madrid', 'castform-rain'), temperature('madrid', 'charmander')),
         history: [entry('2026-09-17', 'cryogonal'), entry('2026-09-16', 'cryogonal'), entry('2026-09-15', 'cryogonal')],
       }),
     )
 
     expect(plan.dayMode).toBe('avistamiento')
-    expect(plan.dialoguePlan[1].facts[0]).toBe(trigger)
+    expect(plan.dialoguePlan[1].facts).toContain(trigger)
   })
 
   it('una entrada de hoy en el historial no cambia la decisión de hoy', () => {
@@ -475,11 +588,12 @@ describe('planDialogues — el gag va sobre su propio hecho', () => {
       facts: [calendar, dayShape, gyaradosMega, castform, temperature('sevilla', 'charmander')],
       protagonists: [protagonist('headline', gyaradosMega), protagonist('spread', castform)],
       decision: { mode: 'parte', trigger: null },
+      briefing: brief(dayShape, temperature('sevilla', 'charmander'), temperature('madrid', 'castform')),
     })
     const [, , closing] = planDialogues(input).dialoguePlan
 
     expect(closing.leitmotif).toBe('castform-vestuario')
-    expect(closing.facts[0]).toBe(castform)
+    expect(closing.facts).toContain(castform)
   })
 
   it('sin ningún hecho libre del leitmotiv, se cae el gag y no el hecho', () => {
@@ -490,14 +604,53 @@ describe('planDialogues — el gag va sobre su propio hecho', () => {
       facts: [calendar, dayShape, castform, temperature('sevilla', 'charmander')],
       protagonists: [protagonist('headline', castform)],
       decision: { mode: 'parte', trigger: null },
+      briefing: brief(dayShape, temperature('sevilla', 'charmander'), temperature('madrid', 'castform')),
     })
     const plan = planDialogues(input)
     const [, , closing] = plan.dialoguePlan
 
     expect(closing.leitmotif).toBeNull()
-    expect(closing.facts).toHaveLength(1)
+    // El cierre sigue llevando el hecho del parte aunque el gag se caiga.
+    expect(closing.facts[0]).toBe(plan.briefing.secondary.fact)
     // Un gag que no se cuenta tampoco consume su cooldown.
     expect(plan.historyEntry.leitmotifIds).toEqual([])
+  })
+})
+
+describe('planDialogues — el parte manda sobre el reparto', () => {
+  it('cada hueco contiene el hecho de su rol, por identidad', () => {
+    const input = ordinaryDay()
+    const plan = planDialogues(input)
+
+    expect(plan.dialoguePlan[0].facts).toContain(input.briefing.overview.fact)
+    expect(plan.dialoguePlan[1].facts).toContain(input.briefing.highlight.fact)
+    expect(plan.dialoguePlan[2].facts).toContain(input.briefing.secondary.fact)
+  })
+
+  it('el hecho de un rol no se repite en otro hueco', () => {
+    const plan = planDialogues(ordinaryDay())
+    const facts = allFacts(plan)
+
+    expect(new Set(facts).size).toBe(facts.length)
+  })
+
+  it('un protagonista, un modo y un leitmotiv añaden texto pero no eliminan el parte', () => {
+    const castform = spotlight('castform-rain', 20)
+    const snorunt = spotlight('snorunt', 2)
+    const heat = temperature('sevilla', 'charmander')
+    const input = ordinaryDay({
+      facts: [calendar, dayShape, castform, snorunt, heat],
+      protagonists: [protagonist('headline', castform)],
+      decision: { mode: 'invasion', trigger: castform },
+      briefing: brief(dayShape, rain('madrid', 'castform-rain'), heat),
+    })
+    const plan = planDialogues(input)
+    const facts = allFacts(plan)
+
+    for (const role of ['overview', 'highlight', 'secondary'] as const) {
+      expect(facts).toContain(input.briefing[role].fact)
+    }
+    expect(plan.leitmotif).not.toBeNull()
   })
 })
 
@@ -512,9 +665,11 @@ describe('planDialogues — días serios', () => {
 
   function alertDay(level: AlertFact['level'], overrides: Partial<DayPlanInput> = {}): DayPlanInput {
     const trigger = alert(level)
+    const heat = temperature('sevilla', 'charmander')
     return ordinaryDay({
       decision: { mode: 'alerta', trigger },
-      facts: [calendar, dayShape, castform, trigger, temperature('sevilla', 'charmander')],
+      facts: [calendar, dayShape, castform, trigger, heat],
+      briefing: brief(dayShape, trigger, heat),
       ...overrides,
     })
   }
@@ -545,16 +700,18 @@ describe('planDialogues — días serios', () => {
   it('el gag que no se contó sigue disponible al día siguiente', () => {
     const serious = planDialogues(alertDay('naranja'))
     const headline = spotlight('zapdos', 3)
+    const heat = temperature('sevilla', 'charmander')
     // El día siguiente hereda el historial del día serio: si aquel hubiera
     // gastado el gag, este no podría contarlo. El foco se lo lleva Zapdos
     // para que el hecho de Castform llegue libre al cierre.
     const next = planDialogues(
       ordinaryDay({
         date: '2026-09-19',
-        facts: [calendar, dayShape, headline, castform, temperature('sevilla', 'charmander')],
+        facts: [calendar, dayShape, headline, castform, heat],
         protagonists: [protagonist('headline', headline), protagonist('spread', castform)],
         decision: { mode: 'parte', trigger: null },
         history: [serious.historyEntry],
+        briefing: brief(dayShape, heat, temperature('madrid', 'castform')),
       }),
     )
 
@@ -573,6 +730,7 @@ describe('planDialogues — días serios', () => {
   })
 
   it('los demás modos siguen pudiendo llevar gag y no son serios', () => {
+    const heat = temperature('sevilla', 'charmander')
     const modes: DayPlanInput['decision'][] = [
       { mode: 'parte', trigger: null },
       { mode: 'invasion', trigger: castform },
@@ -582,9 +740,10 @@ describe('planDialogues — días serios', () => {
     for (const decision of modes) {
       const plan = planDialogues(
         ordinaryDay({
-          facts: [calendar, dayShape, castform, spotlight('snorunt', 2), temperature('sevilla', 'charmander')],
+          facts: [calendar, dayShape, castform, spotlight('snorunt', 2), heat],
           protagonists: [protagonist('headline', castform)],
           decision,
+          briefing: brief(dayShape, rain('madrid', 'castform-rain'), heat),
         }),
       )
 

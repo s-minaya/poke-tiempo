@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import { POKEMON_LABELS } from '../pokemon-labels.ts'
 import { buildDayClaims, extractNumbers } from './claims.ts'
+import { PARENT_SCOPE } from './editorial-regions.ts'
 import { findRelativeTimeExpression } from './relative-time-expressions.ts'
 import type { DayPlan, DialoguePlan, DialogueSlot, Tone } from './plan-dialogues.ts'
-import type { NarrativeFact, TemperatureRole } from './types.ts'
+import type { NarrativeFact, PatternCondition, PatternScope, TemperatureRole } from './types.ts'
 
 /**
  * Los claims son la frontera entre nuestro modelo de dominio y quien redacta
@@ -27,6 +28,11 @@ function planWith(...slots: DialogueSlot[]): DayPlan {
     date: '2026-09-23',
     dayMode: 'parte',
     serious: false,
+    briefing: {
+      overview: { role: 'overview', fact: dialoguePlan[0].facts[0] },
+      highlight: { role: 'highlight', fact: dialoguePlan[1].facts[0] },
+      secondary: { role: 'secondary', fact: dialoguePlan[2].facts[0] },
+    },
     focusPokemonId: null,
     leitmotif: null,
     dialoguePlan,
@@ -80,6 +86,26 @@ function alert(affected: string[], affectedLocationCount: number): NarrativeFact
     source: 'aemet',
     affectedLocations: affected.map((name) => ({ locationId: name.toLowerCase(), locationName: name })),
     affectedLocationCount,
+  }
+}
+
+const PRESENT_FOG: PatternCondition = { family: 'occurrence', phenomenon: 'niebla', polarity: 'presente' }
+
+function pattern(
+  condition: PatternCondition,
+  scope: PatternScope = 'region:northwest',
+  counts: { eligible: number; affected: number } = { eligible: 6, affected: 5 },
+): NarrativeFact {
+  return {
+    kind: 'pattern',
+    scope,
+    parentScope: PARENT_SCOPE[scope],
+    scopeSize: 6,
+    condition,
+    eligibleCount: counts.eligible,
+    affectedCount: counts.affected,
+    affectedLocations: [],
+    measures: { prevalenceInternal: 0, prevalenceRest: 0, contrast: 0, concentration: 0, overRepresentation: 0 },
   }
 }
 
@@ -344,6 +370,113 @@ describe('el encargo completo', () => {
 
   it('es determinista: el mismo plan da el mismo encargo', () => {
     expect(buildDayClaims(plan)).toEqual(buildDayClaims(plan))
+  })
+})
+
+describe('patrón: un hecho agregado, no un punto', () => {
+  it('la ocurrencia presente se afirma con su ámbito', () => {
+    expect(claimsOf([pattern(PRESENT_FOG)])[0]).toBe('En el noroeste hay niebla.')
+  })
+
+  it('la nieve ausente se dice sin acumulación, no sin nieve', () => {
+    const text = claimsOf([pattern({ family: 'occurrence', phenomenon: 'nieve', polarity: 'ausente' })])[0]
+
+    expect(text).toBe('Sin acumulación de nieve en el noroeste.')
+    expect(text).not.toContain('sin nieve')
+  })
+
+  it('viento y olas tienen su propia forma, no un "hay"', () => {
+    expect(claimsOf([pattern({ family: 'occurrence', phenomenon: 'viento', polarity: 'presente' })])[0]).toBe(
+      'El viento gana protagonismo en el noroeste.',
+    )
+    expect(claimsOf([pattern({ family: 'occurrence', phenomenon: 'olas', polarity: 'presente' })])[0]).toBe(
+      'El oleaje destaca en el noroeste.',
+    )
+  })
+
+  it('el cielo se afirma sobre el ámbito', () => {
+    expect(claimsOf([pattern({ family: 'sky', value: 'cubierto' }, 'map')])[0]).toBe('En el mapa domina el cielo cubierto.')
+  })
+
+  it('la banda térmica no se nombra: ni el corte ni un adjetivo de intensidad', () => {
+    const highest = claimsOf([pattern({ family: 'temperature', extreme: 'highest' }, 'region:southwest')])[0]
+    const lowest = claimsOf([pattern({ family: 'temperature', extreme: 'lowest' }, 'region:southwest')])[0]
+
+    expect(highest).toBe('En el suroeste se concentran las máximas más altas.')
+    expect(lowest).toBe('En el suroeste se concentran las máximas más bajas.')
+  })
+
+  it('Portugal no generaliza y el obligatorio no fuerza un N', () => {
+    const { required } = buildDayClaims(planWith(slot([pattern(PRESENT_FOG, 'region:portugal')]))).dialogues[0]
+
+    expect(required).toEqual(['Entre los lugares de Portugal representados en el mapa hay niebla.'])
+    expect(extractNumbers(required[0])).toEqual([])
+  })
+})
+
+describe('patrón: el recuento es apoyo opcional', () => {
+  it('con una fracción, el apoyo lleva el N/M y el obligatorio se queda sin cifras', () => {
+    const { claims, required } = buildDayClaims(planWith(slot([pattern(PRESENT_FOG)]))).dialogues[0]
+
+    expect(claims).toHaveLength(2)
+    expect(claims[1]).toBe('Hay niebla en 5 de los 6 lugares con dato del noroeste.')
+    expect(required).toEqual(['En el noroeste hay niebla.'])
+  })
+
+  it('con la presencia uniforme no hay nada que contar', () => {
+    const { claims } = buildDayClaims(planWith(slot([pattern(PRESENT_FOG, 'region:northwest', { eligible: 6, affected: 6 })]))).dialogues[0]
+
+    expect(claims).toEqual(['En el noroeste hay niebla.'])
+  })
+
+  it('la nieve ausente también admite apoyo', () => {
+    const { claims } = buildDayClaims(
+      planWith(slot([pattern({ family: 'occurrence', phenomenon: 'nieve', polarity: 'ausente' }, 'region:northwest', { eligible: 6, affected: 2 })])),
+    ).dialogues[0]
+
+    expect(claims[1]).toBe('Sin acumulación de nieve en 2 de los 6 lugares con dato del noroeste.')
+  })
+
+  it('el cielo con fracción lleva su apoyo', () => {
+    const { claims } = buildDayClaims(planWith(slot([pattern({ family: 'sky', value: 'cubierto' }, 'map', { eligible: 74, affected: 40 })]))).dialogues[0]
+
+    expect(claims[1]).toBe('Hay cielo cubierto en 40 de los 74 lugares con dato del mapa.')
+  })
+
+  it('la banda térmica no tiene apoyo: contarla obligaría a nombrar el corte', () => {
+    const { claims } = buildDayClaims(
+      planWith(slot([pattern({ family: 'temperature', extreme: 'highest' }, 'region:southwest', { eligible: 10, affected: 4 })])),
+    ).dialogues[0]
+
+    expect(claims).toHaveLength(1)
+  })
+
+  it('las cifras del apoyo quedan autorizadas sin acumularlas a mano', () => {
+    const { allowed } = buildDayClaims(planWith(slot([pattern(PRESENT_FOG)]))).dialogues[0]
+
+    expect(allowed.numbers).toEqual([5, 6])
+  })
+})
+
+describe('obligatorios: solo el hecho que ocupa el rol del parte', () => {
+  it('el hecho del rol queda marcado como obligatorio', () => {
+    const { claims, required } = buildDayClaims(planWith(slot([dayShape(7, 2)]))).dialogues[0]
+
+    expect(required).toEqual(claims)
+  })
+
+  it('con un patrón, solo el claim mínimo es obligatorio y el apoyo no', () => {
+    const { claims, required } = buildDayClaims(planWith(slot([pattern(PRESENT_FOG)]))).dialogues[0]
+
+    expect(required).toEqual([claims[0]])
+    expect(required).not.toContain(claims[1])
+  })
+
+  it('los hechos de relleno del hueco no son obligatorios', () => {
+    const { claims, required } = buildDayClaims(planWith(slot([pattern(PRESENT_FOG), dayShape(7, 2)]))).dialogues[0]
+
+    expect(claims).toHaveLength(3)
+    expect(required).toEqual([claims[0]])
   })
 })
 

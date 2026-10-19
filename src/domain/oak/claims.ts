@@ -1,6 +1,8 @@
 import { POKEMON_NAMES, displayPokemonName } from '../pokemon-names.ts'
-import type { AlertLevel, AlertPhenomenon } from '../types.ts'
+import type { AlertLevel, AlertPhenomenon, SkyCondition } from '../types.ts'
+import type { DayBriefing } from './briefing.ts'
 import type { DayMode } from './day-mode.ts'
+import { scopeLabel } from './editorial-regions.ts'
 import type { LeitmotifId } from './leitmotifs.ts'
 import type { DayPlan, DialogueId, DialogueRole, DialogueSlot, Tone } from './plan-dialogues.ts'
 import type {
@@ -11,6 +13,9 @@ import type {
   FogFact,
   MarineFact,
   NarrativeFact,
+  OccurrencePhenomenon,
+  PatternFact,
+  PatternScope,
   PokemonSpotlightFact,
   RainFact,
   SnowFact,
@@ -107,6 +112,43 @@ const PHENOMENON_TEXT: Record<AlertPhenomenon, string> = {
   desconocido: 'un fenómeno sin clasificar',
 }
 
+/**
+ * Cómo se lee la ocurrencia de un fenómeno del parte. `viento` y `olas` no
+ * salen de aquí: su afirmación tiene forma propia (gana protagonismo /
+ * destaca), no un simple "hay".
+ */
+const OCCURRENCE_TEXT: Record<OccurrencePhenomenon, string> = {
+  lluvia: 'lluvia',
+  nieve: 'nieve',
+  viento: 'viento',
+  tormenta: 'tormentas',
+  niebla: 'niebla',
+  calima: 'calima',
+  olas: 'oleaje',
+}
+
+/**
+ * La ocurrencia **ausente**. La nieve dice "sin acumulación de nieve" porque
+ * por debajo del umbral de la 003 puede estar nevando sin acumular: decir
+ * "sin nieve" sería falso.
+ */
+const ABSENCE_TEXT: Record<OccurrencePhenomenon, string> = {
+  lluvia: 'lluvia',
+  nieve: 'acumulación de nieve',
+  viento: 'viento',
+  tormenta: 'tormentas',
+  niebla: 'niebla',
+  calima: 'calima',
+  olas: 'oleaje',
+}
+
+const SKY_TEXT: Record<SkyCondition, string> = {
+  despejado: 'despejado',
+  poco_nuboso: 'poco nuboso',
+  nuboso: 'nuboso',
+  cubierto: 'cubierto',
+}
+
 // ---------------------------------------------------------------------------
 // Contrato
 // ---------------------------------------------------------------------------
@@ -131,6 +173,12 @@ export interface DialogueClaims {
   tone: Tone
   leitmotif: LeitmotifId | null
   claims: string[]
+  /**
+   * El subconjunto de `claims` que **debe** aparecer: el hecho del parte que
+   * ocupa el rol de este hueco. Es texto plano —ninguna sintaxis de marcador—:
+   * convertir estos claims en tokens es cosa de la frontera con la IA.
+   */
+  required: string[]
   allowed: AllowedEntities
 }
 
@@ -144,13 +192,21 @@ export interface DayClaims {
 /** Lo que aporta un hecho: la afirmación y las entidades que quedan autorizadas al decirla. */
 interface ClaimSet {
   claims: string[]
+  /** La parte de `claims` que es obligatoria; el resto es material autorizado y opcional. */
+  required: string[]
   places: string[]
   pokemon: string[]
   alertLevels: AlertLevel[]
 }
 
-function claim(text: string, parts: Partial<Omit<ClaimSet, 'claims'>> = {}): ClaimSet {
-  return { claims: [text], places: parts.places ?? [], pokemon: parts.pokemon ?? [], alertLevels: parts.alertLevels ?? [] }
+function claim(text: string, parts: Partial<Omit<ClaimSet, 'claims' | 'required'>> = {}): ClaimSet {
+  return {
+    claims: [text],
+    required: [text],
+    places: parts.places ?? [],
+    pokemon: parts.pokemon ?? [],
+    alertLevels: parts.alertLevels ?? [],
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -302,6 +358,78 @@ function calendarClaims(fact: CalendarFact): ClaimSet {
   return claim(fact.weekend ? `La previsión es para el ${weekday}, fin de semana.` : `La previsión es para el ${weekday}.`)
 }
 
+/**
+ * El ámbito dentro de una frase. Portugal nunca se generaliza: entra como
+ * "los lugares de Portugal representados en el mapa" —la misma etiqueta única
+ * de `editorial-regions.ts`— y con "entre", no con "en".
+ */
+function inScope(scope: PatternScope): string {
+  return scope === 'region:portugal' ? `entre ${scopeLabel(scope)}` : `en ${scopeLabel(scope)}`
+}
+
+function scopeHeading(scope: PatternScope): string {
+  const phrase = inScope(scope)
+  return `${phrase[0].toUpperCase()}${phrase.slice(1)}`
+}
+
+/** "el noroeste" → "del noroeste"; "España" → "de España". */
+function deScope(scope: PatternScope): string {
+  const label = scopeLabel(scope)
+  return label.startsWith('el ') ? `del ${label.slice(3)}` : `de ${label}`
+}
+
+/**
+ * La afirmación mínima que preserva el significado de un patrón, en sus tres
+ * familias. La banda térmica nunca se nombra —ni el corte, ni un adjetivo de
+ * intensidad— y el recuento no se fuerza: solo el `N/M`, cuando aporta, vive
+ * en el claim de apoyo.
+ */
+function patternRequiredClaim(fact: PatternFact): string {
+  const { condition, scope } = fact
+
+  if (condition.family === 'occurrence') {
+    if (condition.polarity === 'ausente') return `Sin ${ABSENCE_TEXT[condition.phenomenon]} ${inScope(scope)}.`
+    if (condition.phenomenon === 'viento') return `El viento gana protagonismo ${inScope(scope)}.`
+    if (condition.phenomenon === 'olas') return `El oleaje destaca ${inScope(scope)}.`
+    return `${scopeHeading(scope)} hay ${OCCURRENCE_TEXT[condition.phenomenon]}.`
+  }
+
+  if (condition.family === 'sky') return `${scopeHeading(scope)} domina el cielo ${SKY_TEXT[condition.value]}.`
+
+  return condition.extreme === 'highest'
+    ? `${scopeHeading(scope)} se concentran las máximas más altas.`
+    : `${scopeHeading(scope)} se concentran las máximas más bajas.`
+}
+
+/**
+ * El recuento como apoyo **opcional**: solo cuando hay una fracción que
+ * contar —ni todos ni ninguno, que repetirían el obligatorio—. La banda
+ * térmica no lo tiene: contar lugares obligaría a nombrar el corte.
+ */
+function patternSupportClaim(fact: PatternFact): string | null {
+  const { condition, scope, eligibleCount, affectedCount } = fact
+  if (condition.family === 'temperature') return null
+  if (eligibleCount === 0 || affectedCount === 0 || affectedCount === eligibleCount) return null
+
+  const data = `${whole(affectedCount)} de los ${whole(eligibleCount)} lugares con dato ${deScope(scope)}`
+  if (condition.family === 'sky') return `Hay cielo ${SKY_TEXT[condition.value]} en ${data}.`
+  if (condition.polarity === 'ausente') return `Sin ${ABSENCE_TEXT[condition.phenomenon]} en ${data}.`
+  return `Hay ${OCCURRENCE_TEXT[condition.phenomenon]} en ${data}.`
+}
+
+function patternClaims(fact: PatternFact): ClaimSet {
+  const required = patternRequiredClaim(fact)
+  const support = patternSupportClaim(fact)
+
+  return {
+    claims: support === null ? [required] : [required, support],
+    required: [required],
+    places: [],
+    pokemon: [],
+    alertLevels: [],
+  }
+}
+
 function claimsFor(fact: NarrativeFact): ClaimSet {
   switch (fact.kind) {
     case 'temperature':
@@ -328,6 +456,8 @@ function claimsFor(fact: NarrativeFact): ClaimSet {
       return dayShapeClaims(fact)
     case 'calendar':
       return calendarClaims(fact)
+    case 'pattern':
+      return patternClaims(fact)
   }
 }
 
@@ -350,9 +480,21 @@ function unique(values: readonly string[]): string[] {
   return [...new Set(values)]
 }
 
-function toDialogueClaims(slot: DialogueSlot): DialogueClaims {
-  const sets = slot.facts.map(claimsFor)
-  const claims = sets.flatMap((set) => set.claims)
+/**
+ * El hecho del parte que ocupa cada rol. La identidad de objeto —no la
+ * igualdad de campos— es lo que lo liga a su hueco: el mismo hecho que el
+ * `DayPlan` colocó como `overview`/`highlight`/`secondary`.
+ */
+function briefingFactForRole(briefing: DayBriefing, role: DialogueRole): NarrativeFact {
+  if (role === 'apertura') return briefing.overview.fact
+  if (role === 'foco') return briefing.highlight.fact
+  return briefing.secondary.fact
+}
+
+function toDialogueClaims(slot: DialogueSlot, requiredFact: NarrativeFact | null): DialogueClaims {
+  const sets = slot.facts.map((fact) => ({ fact, set: claimsFor(fact) }))
+  const claims = sets.flatMap(({ set }) => set.claims)
+  const required = requiredFact === null ? [] : sets.filter(({ fact }) => fact === requiredFact).flatMap(({ set }) => set.required)
 
   return {
     id: slot.id,
@@ -360,11 +502,12 @@ function toDialogueClaims(slot: DialogueSlot): DialogueClaims {
     tone: slot.tone,
     leitmotif: slot.leitmotif,
     claims,
+    required,
     allowed: {
       numbers: [...new Set(claims.flatMap(extractNumbers))],
-      places: unique(sets.flatMap((set) => set.places)),
-      pokemon: unique(sets.flatMap((set) => set.pokemon)),
-      alertLevels: [...new Set(sets.flatMap((set) => set.alertLevels))],
+      places: unique(sets.flatMap(({ set }) => set.places)),
+      pokemon: unique(sets.flatMap(({ set }) => set.pokemon)),
+      alertLevels: [...new Set(sets.flatMap(({ set }) => set.alertLevels))],
     },
   }
 }
@@ -373,13 +516,16 @@ function toDialogueClaims(slot: DialogueSlot): DialogueClaims {
  * El encargo del día: los mismos tres huecos del `DialoguePlan`, con sus
  * hechos ya convertidos en afirmaciones. No decide nada — ni protagonista,
  * ni modo, ni gag, ni qué hecho va en qué hueco: todo eso venía decidido en
- * el `DayPlan`.
+ * el `DayPlan`. Lo único que marca es cuál de los claims es obligatorio: el
+ * que sale del hecho que ocupa el rol del parte en ese hueco.
  */
 export function buildDayClaims(dayPlan: DayPlan): DayClaims {
   return {
     dayMode: dayPlan.dayMode,
     serious: dayPlan.serious,
-    dialogues: dayPlan.dialoguePlan.map(toDialogueClaims) as [DialogueClaims, DialogueClaims, DialogueClaims],
+    dialogues: dayPlan.dialoguePlan.map((slot) =>
+      toDialogueClaims(slot, briefingFactForRole(dayPlan.briefing, slot.role)),
+    ) as [DialogueClaims, DialogueClaims, DialogueClaims],
   }
 }
 

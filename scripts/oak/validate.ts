@@ -1,6 +1,7 @@
 import type { OakToday } from '../../src/domain/oak/oak-today.ts'
 import type { DialogueId, OakDialogues } from '../../src/domain/oak/plan-dialogues.ts'
 import { DIALOGUE_MAX_LENGTH, DIALOGUE_MIN_LENGTH } from '../../src/domain/oak/plan-dialogues.ts'
+import { findEmoji } from './factual-guard.ts'
 
 /**
  * La aduana antes de publicar. Dos controles distintos con dos respuestas
@@ -23,16 +24,30 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function checkText(text: unknown, id: string): string | null {
+function checkText(text: unknown, id: string, checkLength: boolean): string | null {
   if (typeof text !== 'string') return `${id}: text no es una cadena`
   if (text.trim() === '') return `${id}: text vacío`
+  if (!checkLength) return null
   if (text.length < DIALOGUE_MIN_LENGTH) return `${id}: ${text.length} caracteres, por debajo de ${DIALOGUE_MIN_LENGTH}`
   if (text.length > DIALOGUE_MAX_LENGTH) return `${id}: ${text.length} caracteres, por encima de ${DIALOGUE_MAX_LENGTH}`
   return null
 }
 
-/** Exactamente `{ dialogues: [{id, text} × 3] }`, en orden y sin nada más. */
-export function validateDialogues(value: unknown): DialoguesCheck {
+export interface DialoguesCheckOptions {
+  /** La longitud se mide sobre el texto **final**, tras expandir los tokens. */
+  checkLength?: boolean
+}
+
+/**
+ * Exactamente `{ dialogues: [{id, text} × 3] }`, en orden y sin nada más.
+ *
+ * La longitud se puede aplazar (`checkLength: false`) porque la respuesta del
+ * proveedor trae tokens dentro del texto: medir antes de expandir mediría lo
+ * que no se publica. La mide `checkDialogueLengths` sobre el texto final.
+ */
+export function validateDialogues(value: unknown, options: DialoguesCheckOptions = {}): DialoguesCheck {
+  const checkLength = options.checkLength ?? true
+
   if (!isPlainObject(value)) return { ok: false, reason: 'la respuesta no es un objeto' }
 
   const extraRoot = Object.keys(value).filter((key) => key !== 'dialogues')
@@ -51,11 +66,22 @@ export function validateDialogues(value: unknown): DialoguesCheck {
 
     if (dialogue.id !== expectedId) return { ok: false, reason: `en la posición ${index} llega ${JSON.stringify(dialogue.id)} y tocaba ${expectedId}` }
 
-    const textProblem = checkText(dialogue.text, expectedId)
+    const textProblem = checkText(dialogue.text, expectedId, checkLength)
     if (textProblem) return { ok: false, reason: textProblem }
   }
 
   return { ok: true, dialogues: dialogues as OakDialogues }
+}
+
+export type LengthCheck = { ok: true } | { ok: false; reason: string }
+
+/** Los límites 20–160 sobre el texto ya expandido. */
+export function checkDialogueLengths(dialogues: OakDialogues): LengthCheck {
+  for (const dialogue of dialogues) {
+    const problem = checkText(dialogue.text, dialogue.id, true)
+    if (problem) return { ok: false, reason: problem }
+  }
+  return { ok: true }
 }
 
 /** Lo que estamos a punto de escribir. Un fallo aquí es nuestro, no del proveedor. */
@@ -73,8 +99,12 @@ export function assertValidOakToday(today: OakToday, expectedDate: string): void
     if (dialogue.id !== expectedId) problems.push(`posición ${index}: id ${dialogue.id}`)
     if (dialogue.role === undefined) problems.push(`${expectedId}: sin role`)
     if (dialogue.tone === undefined) problems.push(`${expectedId}: sin tone`)
-    const textProblem = checkText(dialogue.text, expectedId)
+    const textProblem = checkText(dialogue.text, expectedId, true)
     if (textProblem) problems.push(textProblem)
+    // El fallback también debe estar libre de emojis: un emoji en lo nuestro
+    // es un fallo propio y no se publica.
+    const emoji = findEmoji(dialogue.text)
+    if (emoji !== null) problems.push(`${expectedId}: contiene el emoji «${emoji}»`)
   }
 
   if (problems.length > 0) {

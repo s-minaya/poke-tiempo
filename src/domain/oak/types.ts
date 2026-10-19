@@ -1,5 +1,5 @@
 import type { PokedexId } from '../pokedex.ts'
-import type { AlertLevel, AlertPhenomenon } from '../types.ts'
+import type { AlertLevel, AlertPhenomenon, SkyCondition } from '../types.ts'
 
 /**
  * Los hechos que el Profesor Oak puede narrar (`007-plan.md`). Cada hecho es
@@ -150,6 +150,71 @@ export interface CalendarFact {
   weekend: boolean
 }
 
+/**
+ * Geografía editorial del parte (`013-spec.md`). Las siete regiones explícitas
+ * son solapables; Canarias, Baleares y Portugal no se declaran como tabla y
+ * salen de `Location.zone`/`Location.country`.
+ */
+export type EditorialRegionId =
+  | 'northwest'
+  | 'north'
+  | 'northeast'
+  | 'meseta'
+  | 'southwest'
+  | 'southeast'
+  | 'mediterranean'
+
+export type DerivedRegionId = 'canarias' | 'baleares' | 'portugal'
+
+export type RegionId = EditorialRegionId | DerivedRegionId
+
+/** Los ámbitos sobre los que afirma el parte: los tres globales y las diez regiones. */
+export type PatternScope = 'map' | 'spain' | 'iberian-peninsula' | `region:${RegionId}`
+
+/** Los fenómenos ocasionales de los que un patrón puede hablar. */
+export type OccurrencePhenomenon = 'lluvia' | 'nieve' | 'viento' | 'tormenta' | 'niebla' | 'calima' | 'olas'
+
+export type OccurrencePolarity = 'presente' | 'ausente'
+
+/**
+ * La condición concreta que mide un patrón, en sus tres familias reales:
+ * la ocurrencia de un fenómeno, una de las cuatro categorías de cielo, o una
+ * de las dos bandas térmicas (la más alta o la más baja realmente ocupadas).
+ * La banda se identifica internamente por el `PokedexId` de
+ * `assignByTemperature` y nunca viaja al texto ni al payload.
+ */
+export type PatternCondition =
+  | { family: 'occurrence'; phenomenon: OccurrencePhenomenon; polarity: OccurrencePolarity }
+  | { family: 'sky'; value: SkyCondition }
+  | { family: 'temperature'; extreme: 'highest' | 'lowest' }
+
+/** Las cinco medidas, sobre recuentos exactos de lugares y contra el ámbito padre. */
+export interface PatternMeasures {
+  prevalenceInternal: number
+  prevalenceRest: number
+  contrast: number
+  concentration: number
+  overRepresentation: number
+}
+
+/**
+ * Un patrón agregado: "en el ámbito, N de M lugares elegibles cumplen la
+ * condición". Es un hecho más, con el mismo respaldo que los suyos —conjunto
+ * afectado, denominador elegible y recuento—, pero **no** lleva `locationId`
+ * ni `mapPokemonId`: no es un punto, es un ámbito.
+ */
+export interface PatternFact {
+  kind: 'pattern'
+  scope: PatternScope
+  parentScope: PatternScope | null
+  scopeSize: number
+  condition: PatternCondition
+  eligibleCount: number
+  affectedCount: number
+  affectedLocations: FactLocation[]
+  measures: PatternMeasures
+}
+
 export type NarrativeFact =
   | TemperatureFact
   | RainFact
@@ -163,3 +228,4 @@ export type NarrativeFact =
   | PokemonSpotlightFact
   | DayShapeFact
   | CalendarFact
+  | PatternFact

@@ -1,5 +1,6 @@
 import { POKEMON_NAMES, displayPokemonName, hasSharedName } from '../pokemon-names.ts'
-import type { AlertPhenomenon } from '../types.ts'
+import type { AlertPhenomenon, SkyCondition } from '../types.ts'
+import { scopeLabel } from './editorial-regions.ts'
 import type { LeitmotifId } from './leitmotifs.ts'
 import { DIALOGUE_MAX_LENGTH, DIALOGUE_MIN_LENGTH } from './plan-dialogues.ts'
 import type { DayPlan, DialogueSlot, OakDialogue, OakDialogues, Tone } from './plan-dialogues.ts'
@@ -11,6 +12,9 @@ import type {
   FogFact,
   MarineFact,
   NarrativeFact,
+  OccurrencePhenomenon,
+  PatternFact,
+  PatternScope,
   PokemonSpotlightFact,
   RainFact,
   SnowFact,
@@ -409,6 +413,88 @@ function calendarClause(fact: CalendarFact, context: ClauseContext): Clause {
   return { fragment: pick([`la previsión es para el ${weekday}`, `el mapa es del ${weekday}`], parts) }
 }
 
+/**
+ * Cómo se lee la ocurrencia de un patrón. `viento` y `olas` tienen forma
+ * propia ("gana protagonismo" / "destaca"), no un "hay" a secas, igual que sus
+ * claims. La ausencia de nieve se dice "sin acumulación de nieve": por debajo
+ * del umbral de la 003 puede estar nevando sin acumular.
+ */
+const PATTERN_OCCURRENCE_TEXT: Record<OccurrencePhenomenon, string> = {
+  lluvia: 'lluvia',
+  nieve: 'nieve',
+  viento: 'viento',
+  tormenta: 'tormentas',
+  niebla: 'niebla',
+  calima: 'calima',
+  olas: 'oleaje',
+}
+
+const PATTERN_ABSENCE_TEXT: Record<OccurrencePhenomenon, string> = {
+  lluvia: 'lluvia',
+  nieve: 'acumulación de nieve',
+  viento: 'viento',
+  tormenta: 'tormentas',
+  niebla: 'niebla',
+  calima: 'calima',
+  olas: 'oleaje',
+}
+
+const PATTERN_SKY_TEXT: Record<SkyCondition, string> = {
+  despejado: 'despejado',
+  poco_nuboso: 'poco nuboso',
+  nuboso: 'nuboso',
+  cubierto: 'cubierto',
+}
+
+/** Portugal nunca se generaliza: entra como "entre los lugares de Portugal representados en el mapa". */
+function patternWhere(scope: PatternScope): string {
+  return scope === 'region:portugal' ? `entre ${scopeLabel(scope)}` : `en ${scopeLabel(scope)}`
+}
+
+/**
+ * Un patrón agregado, en sus tres familias. Es un hecho más del hueco y se
+ * verbaliza como los demás: la banda térmica nunca se nombra —ni el corte, ni
+ * un adjetivo de intensidad, ni su `PokedexId`— y el recuento no se fuerza
+ * (vive opcional en el claim de apoyo de la vía IA, y aquí no hace falta).
+ */
+function patternClause(fact: PatternFact, context: ClauseContext): Clause {
+  const { condition } = fact
+  const parts = [...context.parts, 'pattern', fact.scope, condition.family]
+  const where = patternWhere(fact.scope)
+
+  if (condition.family === 'occurrence') {
+    const phenomenon = PATTERN_OCCURRENCE_TEXT[condition.phenomenon]
+
+    if (condition.polarity === 'ausente') {
+      const absence = PATTERN_ABSENCE_TEXT[condition.phenomenon]
+      return { fragment: pick([`sin ${absence} ${where}`, `${where} se queda sin ${absence}`], parts) }
+    }
+
+    if (condition.phenomenon === 'viento') {
+      if (context.compact) return { fragment: `viento ${where}` }
+      return { fragment: pick([`el viento gana protagonismo ${where}`, `el viento se hace notar ${where}`], parts) }
+    }
+
+    if (condition.phenomenon === 'olas') {
+      if (context.compact) return { fragment: `oleaje ${where}` }
+      return { fragment: pick([`el oleaje destaca ${where}`, `el oleaje se hace notar ${where}`], parts) }
+    }
+
+    if (context.compact) return { fragment: `hay ${phenomenon} ${where}` }
+    return { fragment: pick([`hay ${phenomenon} ${where}`, `${where} hay ${phenomenon}`], parts) }
+  }
+
+  if (condition.family === 'sky') {
+    const sky = PATTERN_SKY_TEXT[condition.value]
+    if (context.compact) return { fragment: `cielo ${sky} ${where}` }
+    return { fragment: pick([`${where} domina el cielo ${sky}`, `el cielo está ${sky} ${where}`], parts) }
+  }
+
+  const band = condition.extreme === 'highest' ? 'las máximas más altas' : 'las máximas más bajas'
+  if (context.compact) return { fragment: `${band} ${where}` }
+  return { fragment: pick([`${where} se concentran ${band}`, `${band} se concentran ${where}`], parts) }
+}
+
 function clauseFor(fact: NarrativeFact, context: ClauseContext): Clause {
   switch (fact.kind) {
     case 'temperature':
@@ -435,6 +521,8 @@ function clauseFor(fact: NarrativeFact, context: ClauseContext): Clause {
       return dayShapeClause(fact, context)
     case 'calendar':
       return calendarClause(fact, context)
+    case 'pattern':
+      return patternClause(fact, context)
   }
 }
 
@@ -464,10 +552,9 @@ const TAILS: Record<Tone, readonly string[]> = {
 }
 
 /**
- * Las redacciones de los cinco gags. El Bloque 3 ya ha comprobado que existe
- * un hecho que los sostiene, así que aquí no se vuelve a comprobar nada ni
- * se cambia de gag. Ninguna de estas frases aporta un dato: la broma se hace
- * con lo que ya hay.
+ * Las redacciones de los cinco gags. El reparto garantiza que existe un hecho
+ * que los sostiene, así que aquí no se comprueba nada ni se cambia de gag.
+ * Ninguna de estas frases aporta un dato: la broma se hace con lo que ya hay.
  */
 const LEITMOTIF_LINES: Record<LeitmotifId, readonly string[]> = {
   'hoppip-vuela': [
@@ -534,7 +621,7 @@ function joinerFor(facts: readonly NarrativeFact[], first: string, parts: readon
 function placeNamesOf(fact: NarrativeFact): string[] {
   if (fact.kind === 'alert') return fact.affectedLocations.map((place) => place.locationName)
   if (fact.kind === 'pokemon_spotlight') return fact.locations.map((place) => place.locationName)
-  if (fact.kind === 'day_shape' || fact.kind === 'calendar') return []
+  if (fact.kind === 'day_shape' || fact.kind === 'calendar' || fact.kind === 'pattern') return []
   return [fact.locationName]
 }
 

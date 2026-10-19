@@ -1,9 +1,11 @@
 import type { DayClaims, DialogueClaims } from '../../src/domain/oak/claims.ts'
 import { buildDayClaims } from '../../src/domain/oak/claims.ts'
 import type { DayPlan, OakDialogues } from '../../src/domain/oak/plan-dialogues.ts'
+import type { RequiredClaim } from './claim-tokens.ts'
+import { buildRequiredClaims, checkTokens, expandTokens } from './claim-tokens.ts'
 import { checkFactualFit } from './factual-guard.ts'
 import { LEITMOTIF_DIRECTIONS, SYSTEM_PROMPT } from './oak-prompt.ts'
-import { DIALOGUE_IDS, validateDialogues } from './validate.ts'
+import { DIALOGUE_IDS, checkDialogueLengths, validateDialogues } from './validate.ts'
 
 /**
  * La única frontera con la IA. `src/domain/oak/` no sabe que Groq existe:
@@ -61,7 +63,10 @@ export interface PromptSlot {
   id: string
   role: string
   tone: string
+  /** Todo el material autorizado: obligatorio y opcional, mezclados. */
   claims: string[]
+  /** El subconjunto obligatorio, cada uno con su token. */
+  requiredClaims: RequiredClaim[]
   leitmotif: PromptLeitmotif | null
 }
 
@@ -76,21 +81,24 @@ export interface PromptPayload {
   dialogues: PromptSlot[]
 }
 
-function toPromptSlot(slot: DialogueClaims): PromptSlot {
+function toPromptSlot(slot: DialogueClaims, requiredClaims: RequiredClaim[]): PromptSlot {
   return {
     id: slot.id,
     role: slot.role,
     tone: slot.tone,
     claims: slot.claims,
+    requiredClaims,
     leitmotif: slot.leitmotif === null ? null : { id: slot.leitmotif, direction: LEITMOTIF_DIRECTIONS[slot.leitmotif] },
   }
 }
 
 export function buildPromptPayload(claims: DayClaims): PromptPayload {
+  const required = buildRequiredClaims(claims)
+
   return {
     dayMode: claims.dayMode,
     seriousDay: claims.serious,
-    dialogues: claims.dialogues.map(toPromptSlot),
+    dialogues: claims.dialogues.map((slot) => toPromptSlot(slot, required[slot.id])),
   }
 }
 
@@ -173,6 +181,7 @@ export async function generateOakDialogues(dayPlan: DayPlan): Promise<OakDialogu
   // El mismo encargo sirve dos veces: es lo que se manda y es contra lo que
   // se comprueba la respuesta. Construirlo dos veces sería poder discrepar.
   const claims = buildDayClaims(dayPlan)
+  const required = buildRequiredClaims(claims)
   const body = buildRequestBody(buildPromptPayload(claims), model)
 
   let response: Response
@@ -208,13 +217,26 @@ export async function generateOakDialogues(dayPlan: DayPlan): Promise<OakDialogu
     return unavailable('content no es JSON')
   }
 
-  const check = validateDialogues(parsed)
-  if (!check.ok) return unavailable(check.reason)
+  // La forma, pero sin medir longitud: el texto trae tokens que aún no se han
+  // expandido, y lo que se mide al final es el texto que se publica.
+  const shape = validateDialogues(parsed, { checkLength: false })
+  if (!shape.ok) return unavailable(shape.reason)
 
-  // La forma estaba bien; ahora, si ha metido una entidad que nadie le
-  // autorizó, también es una respuesta inválida.
-  const factual = checkFactualFit(check.dialogues, claims.dialogues)
+  // Los tokens obligatorios, antes de tocar el contenido: cada uno una vez en
+  // su hueco, ninguno ausente, repetido, desconocido ni a medias.
+  const tokens = checkTokens(shape.dialogues, required)
+  if (!tokens.ok) return unavailable(tokens.reason)
+
+  // Ya son frases enteras: es lo que el modelo debía decir, con su voz.
+  const expanded = expandTokens(shape.dialogues, required)
+
+  // Sobre el texto final: primero las entidades que nadie autorizó, después
+  // los límites 20–160.
+  const factual = checkFactualFit(expanded, claims.dialogues)
   if (!factual.ok) return unavailable(factual.reason)
 
-  return check.dialogues
+  const length = checkDialogueLengths(expanded)
+  if (!length.ok) return unavailable(length.reason)
+
+  return expanded
 }

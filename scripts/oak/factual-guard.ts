@@ -55,6 +55,50 @@ const SENTENCE_END = '.!?…'
  */
 const MASK = '·'
 
+/**
+ * Las frases de ámbito prohibidas (`013-spec.md` → Ámbitos): prometen
+ * superficie o son ambiguas entre dos países, y nuestros recuentos no miden
+ * superficie. Se buscan sobre el texto normalizado —sin tildes, en minúsculas
+ * y con los espacios de más reducidos—, la misma normalización de la guarda
+ * temporal.
+ */
+const FORBIDDEN_SCOPE_PHRASES = ['gran parte del territorio', 'gran parte del país', 'el país'] as const
+
+function normalizeText(text: string): string {
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/gu, ' ')
+}
+
+/** Palabra o frase completa: ni pegada a una letra o cifra por delante, ni por detrás. */
+function wholeTerm(source: string): RegExp {
+  return new RegExp(`(?<![\\p{L}\\p{N}])${source}(?![\\p{L}\\p{N}])`, 'u')
+}
+
+const SCOPE_PHRASE_PATTERNS = FORBIDDEN_SCOPE_PHRASES.map((phrase) => ({ phrase, pattern: wholeTerm(normalizeText(phrase)) }))
+
+function foreignScopePhrase(text: string): string | null {
+  const normalized = normalizeText(text)
+
+  for (const { phrase, pattern } of SCOPE_PHRASE_PATTERNS) {
+    if (pattern.test(normalized)) return phrase
+  }
+  return null
+}
+
+/**
+ * Un emoji, con los casos que la spec obliga a cubrir: el pictográfico
+ * simple, el símbolo meteorológico (`☀ ☁ ☔`), la secuencia ZWJ, el tono de
+ * piel, la bandera y el keycap. `Extended_Pictographic` cubre los
+ * pictográficos y los símbolos; los indicadores regionales (banderas), los
+ * modificadores de tono, el ZWJ y el carácter de keycap entran por rango. Una
+ * sola expresión: la detección no se convierte en una subarquitectura.
+ */
+const EMOJI_PATTERN = /\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]|[\u{1F3FB}-\u{1F3FF}]|\u{200D}|\u{20E3}|\u{FE0F}/u
+
+export function findEmoji(text: string): string | null {
+  const match = EMOJI_PATTERN.exec(text)
+  return match === null ? null : match[0]
+}
+
 const CAPITALIZED = /\p{Lu}[\p{L}\p{M}'’-]*/gu
 
 /**
@@ -150,6 +194,12 @@ function checkOne(text: string, slot: DialogueClaims, known: readonly string[]):
   // (`relative-time-expressions.ts`, el mismo contrato que el prompt).
   const relative = findRelativeTimeExpression(text)
   if (relative !== null) return `dice «${relative.expression}», que depende del momento de lectura`
+
+  const scope = foreignScopePhrase(text)
+  if (scope !== null) return `dice «${scope}», una generalización de ámbito prohibida`
+
+  const emoji = findEmoji(text)
+  if (emoji !== null) return `usa el emoji «${emoji}», prohibido en los diálogos`
 
   const number = extractNumbers(text).find((value) => !slot.allowed.numbers.includes(value))
   if (number !== undefined) return `cifra ${number} que no está en sus claims`

@@ -29,7 +29,7 @@ cron diario (GitHub Actions)
    → script Node lee AEMET_API_KEY de GitHub Secrets
    → descarga la previsión de los 74 lugares (AEMET / IPMA / Open-Meteo según la zona)
    → normaliza cada fuente al vocabulario propio del dominio y escribe src/data/forecast.json
-   → genera los diálogos del día (dominio puro → claims → Groq o fallback local)
+   → genera los diálogos del día (dominio puro → parte → claims → Groq o fallback local)
      y escribe src/data/oak-today.json y src/data/oak-history.json
    → npm run build  (Vite empaqueta los JSON)
    → deploy a GitHub Pages

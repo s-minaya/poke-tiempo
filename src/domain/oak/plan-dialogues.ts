@@ -1,6 +1,7 @@
 import { MAP_PRIORITY } from '../map-priority.ts'
 import type { PokedexId } from '../pokedex.ts'
 import type { AlertPhenomenon } from '../types.ts'
+import type { DayBriefing } from './briefing.ts'
 import type { DayMode, DayModeDecision } from './day-mode.ts'
 import type { OakHistoryEntry } from './history.ts'
 import { recentHistory, resolveFocusSpotlight } from './history.ts'
@@ -12,11 +13,13 @@ import type { AlertFact, CalendarFact, NarrativeFact, PokemonSpotlightFact } fro
 
 /**
  * El guion factual del día (`007-plan.md`): tres bocadillos, cada uno con los
- * hechos que le tocan y una instrucción de tono. Aquí no se redacta nada —
- * las frases son del Bloque 4 y de la IA.
+ * hechos que le tocan y una instrucción de tono. Aquí no se redacta nada:
+ * las frases las ponen `claims.ts`, el fallback y la IA.
  *
- * Todo sale de los hechos del Bloque 1 y de la decisión del Bloque 2: este
- * módulo no vuelve al `LocationForecast` ni reinterpreta ningún dato.
+ * El parte (`briefing.ts`) manda sobre el reparto: el hecho de cada rol entra
+ * siempre en su hueco, y lo narrativo —protagonista, modo, leitmotiv, tono—
+ * solo ocupa lo que sobra. Todo sale del parte y de los hechos: este módulo no
+ * vuelve al `LocationForecast` ni reinterpreta ningún dato.
  */
 
 /** Instrucción de redacción, no un hecho meteorológico. */
@@ -61,11 +64,14 @@ export interface DayPlanInput {
   protagonists: readonly Protagonist[]
   decision: DayModeDecision
   history: readonly OakHistoryEntry[]
+  briefing: DayBriefing
 }
 
 export interface DayPlan {
   date: string
   dayMode: DayMode
+  /** El parte que manda sobre el reparto; cada rol tiene su hueco. */
+  briefing: DayBriefing
   /**
    * Día sin humor. Lo decide `serious-day.ts` y viaja resuelto para que
    * nadie vuelva a preguntárselo: la respuesta es la misma para el fallback,
@@ -125,20 +131,19 @@ function take(
   return found ?? null
 }
 
-function countUnused(facts: readonly NarrativeFact[], used: Set<NarrativeFact>): number {
-  return facts.reduce((total, fact) => (used.has(fact) ? total : total + 1), 0)
-}
-
 /**
- * Sitúa el día sin gastar el hecho focal: la forma agregada de la jornada y,
- * solo en fin de semana, el calendario. Nombrar el día de la semana a diario
- * convierte la apertura en un formulario.
+ * La apertura empieza con el panorama del parte (`overview`). El recuento del
+ * día (`DayShapeFact`) ya no se añade como relleno: el parte trae el panorama
+ * y volver a contarlo justo después sería decir dos veces lo mismo.
+ *
+ * Solo el calendario de fin de semana puede acompañar, y solo si no es ya el
+ * propio hecho del rol. Nombrar el día de la semana a diario convertiría la
+ * apertura en un formulario.
  */
-function buildOpening(facts: readonly NarrativeFact[], used: Set<NarrativeFact>): DialogueSlot {
-  const slotFacts: NarrativeFact[] = []
-
-  const dayShape = take(facts, used, (fact) => fact.kind === 'day_shape')
-  if (dayShape) slotFacts.push(dayShape)
+function buildOpening(facts: readonly NarrativeFact[], used: Set<NarrativeFact>, briefing: DayBriefing): DialogueSlot {
+  const overview = briefing.overview.fact
+  used.add(overview)
+  const slotFacts: NarrativeFact[] = [overview]
 
   const calendar = facts.find((fact): fact is CalendarFact => fact.kind === 'calendar')
   if (calendar && !used.has(calendar) && calendar.weekend && slotFacts.length < 2) {
@@ -146,14 +151,8 @@ function buildOpening(facts: readonly NarrativeFact[], used: Set<NarrativeFact>)
     slotFacts.push(calendar)
   }
 
-  if (slotFacts.length === 0) {
-    const fallback = take(facts, used, () => true)
-    if (!fallback) throw new Error('Oak no puede abrir el día: no hay ningún hecho disponible.')
-    slotFacts.push(fallback)
-  }
-
-  // Siempre neutral: `DayShapeFact` existe casi todos los días, así que
-  // atarle el registro científico volvería científica casi toda apertura.
+  // Siempre neutral: el panorama existe casi todos los días, así que atarle el
+  // registro científico volvería científica casi toda apertura.
   return { id: 'dialogue-1', role: 'apertura', tone: 'neutral', facts: slotFacts, leitmotif: null }
 }
 
@@ -173,33 +172,24 @@ function alertCompanion(alert: AlertFact, facts: readonly NarrativeFact[], used:
 }
 
 /**
- * Un hecho del mismo Pokémon que protagoniza, y cuyo eje además coincide con
- * el sprite visible: le da a Oak una cifra concreta sin inventar ninguna
- * relación. Solo se coge si queda algo para el cierre.
+ * El foco empieza con el hecho de `highlight`. En `alerta` ese hecho es el
+ * propio `trigger` del modo, así que no se duplica. Un protagonista o el
+ * acompañante del aviso solo añaden material: nunca desplazan lo que el parte
+ * decidió contar.
  */
-function spotlightCompanion(
-  spotlight: PokemonSpotlightFact,
-  facts: readonly NarrativeFact[],
-  used: Set<NarrativeFact>,
-): NarrativeFact | null {
-  if (countUnused(facts, used) <= 1) return null
-  return take(facts, used, (fact) => isRepresentable(fact) && fact.mapRepresentsFact && fact.mapPokemonId === spotlight.pokemonId)
-}
-
-/** El motivo principal del día. El `trigger` del modo entra siempre, tal cual. */
 function buildFocus(
   decision: DayModeDecision,
   focusSpotlight: PokemonSpotlightFact | null,
   facts: readonly NarrativeFact[],
   used: Set<NarrativeFact>,
+  briefing: DayBriefing,
 ): DialogueSlot {
-  const slotFacts: NarrativeFact[] = []
+  const highlight = briefing.highlight.fact
+  used.add(highlight)
+  const slotFacts: NarrativeFact[] = [highlight]
   let tone: Tone = 'neutral'
 
   if (decision.mode === 'alerta') {
-    used.add(decision.trigger)
-    slotFacts.push(decision.trigger)
-
     const companion = alertCompanion(decision.trigger, facts, used)
     if (companion) slotFacts.push(companion)
 
@@ -207,22 +197,13 @@ function buildFocus(
     // que es el único nivel que de verdad lo justifica.
     tone = decision.trigger.level === 'rojo' ? 'epico' : 'consejo'
   } else {
-    if (focusSpotlight) {
+    if (focusSpotlight && !used.has(focusSpotlight)) {
       used.add(focusSpotlight)
       slotFacts.push(focusSpotlight)
-
-      const companion = spotlightCompanion(focusSpotlight, facts, used)
-      if (companion) slotFacts.push(companion)
     }
 
     if (decision.mode === 'invasion') tone = 'epico'
     else if (decision.mode === 'avistamiento') tone = 'cientifico'
-  }
-
-  if (slotFacts.length === 0) {
-    const fallback = take(facts, used, () => true)
-    if (!fallback) throw new Error('Oak no puede construir el foco del día: no queda ningún hecho disponible.')
-    slotFacts.push(fallback)
   }
 
   return { id: 'dialogue-2', role: 'foco', tone, facts: slotFacts, leitmotif: null }
@@ -278,7 +259,8 @@ function pickLeitmotifFact(
 }
 
 /**
- * Otro dato, un consejo o el gag del día — pero siempre sobre un hecho real.
+ * El cierre empieza con el hecho de `secondary`; encima va otro dato, un
+ * consejo o el gag del día — pero siempre sobre un hecho real.
  *
  * Un leitmotiv solo sobrevive si queda un hecho **suyo** con el que
  * sostenerlo: contar el chiste de Castform mientras se señala a Mega Gyarados
@@ -289,24 +271,31 @@ function buildClosing(
   protagonists: readonly Protagonist[],
   used: Set<NarrativeFact>,
   candidates: readonly LeitmotifId[],
+  briefing: DayBriefing,
 ): DialogueSlot {
+  const secondary = briefing.secondary.fact
+  used.add(secondary)
+
   for (const candidate of candidates) {
     const supported = pickLeitmotifFact(facts, protagonists, used, candidate)
     if (!supported) continue
 
     used.add(supported)
-    return { id: 'dialogue-3', role: 'cierre', tone: 'guasa', facts: [supported], leitmotif: candidate }
+    return { id: 'dialogue-3', role: 'cierre', tone: 'guasa', facts: [secondary, supported], leitmotif: candidate }
   }
 
   const closing = pickClosingFact(facts, protagonists, used)
-  if (!closing) throw new Error('Oak no puede cerrar el día: no queda ningún hecho sin usar.')
-  used.add(closing)
+  if (closing) used.add(closing)
+
+  const slotFacts: NarrativeFact[] = closing ? [secondary, closing] : [secondary]
+  // El tono describe el material narrativo del remate; sin él, el hecho del rol.
+  const toneFact = closing ?? secondary
 
   return {
     id: 'dialogue-3',
     role: 'cierre',
-    tone: ADVICE_KINDS.has(closing.kind) ? 'consejo' : 'neutral',
-    facts: [closing],
+    tone: ADVICE_KINDS.has(toneFact.kind) ? 'consejo' : 'neutral',
+    facts: slotFacts,
     leitmotif: null,
   }
 }
@@ -339,7 +328,7 @@ function assertNoHumour(dialoguePlan: DialoguePlan): void {
 }
 
 export function planDialogues(input: DayPlanInput): DayPlan {
-  const { date, facts, protagonists, decision, history } = input
+  const { date, facts, protagonists, decision, history, briefing } = input
 
   const recent = recentHistory(history, date)
   const focusSpotlight = resolveFocusSpotlight(decision, protagonists, recent)
@@ -349,9 +338,9 @@ export function planDialogues(input: DayPlanInput): DayPlan {
   const leitmotifCandidates = serious ? [] : orderedLeitmotifs(facts, recent, date)
 
   const used = new Set<NarrativeFact>()
-  const opening = buildOpening(facts, used)
-  const focus = buildFocus(decision, focusSpotlight, facts, used)
-  const closing = buildClosing(facts, protagonists, used, leitmotifCandidates)
+  const opening = buildOpening(facts, used, briefing)
+  const focus = buildFocus(decision, focusSpotlight, facts, used, briefing)
+  const closing = buildClosing(facts, protagonists, used, leitmotifCandidates, briefing)
 
   const dialoguePlan: DialoguePlan = [opening, focus, closing]
   if (serious) assertNoHumour(dialoguePlan)
@@ -365,6 +354,7 @@ export function planDialogues(input: DayPlanInput): DayPlan {
     date,
     dayMode: decision.mode,
     serious,
+    briefing,
     focusPokemonId,
     leitmotif: usedLeitmotif,
     dialoguePlan,

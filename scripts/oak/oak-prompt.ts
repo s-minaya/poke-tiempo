@@ -1,7 +1,13 @@
 import type { LeitmotifId } from '../../src/domain/oak/leitmotifs.ts'
 import type { Tone } from '../../src/domain/oak/plan-dialogues.ts'
 import { DIALOGUE_MAX_LENGTH, DIALOGUE_MIN_LENGTH } from '../../src/domain/oak/plan-dialogues.ts'
-import { READING_DATE_RULE, RELATIVE_DAY_WORDS, RELATIVE_TIME_PHRASES } from '../../src/domain/oak/relative-time-expressions.ts'
+import {
+  READING_DATE_RULE,
+  RELATIVE_DAY_WORDS,
+  RELATIVE_PERIOD_PHRASES,
+  RELATIVE_SHIFT_PHRASES,
+  RELATIVE_TIME_PHRASES,
+} from '../../src/domain/oak/relative-time-expressions.ts'
 
 /**
  * Lo único que se le pide a la IA: una voz.
@@ -72,7 +78,7 @@ const quoted = (items: readonly string[]) => items.map((item) => `«${item}»`).
 const READING_MOMENT = [
   'CUÁNDO SE LEE',
   'El mapa se publica la víspera y puede leerse cualquier día después: no sabes cuándo se leerá tu texto.',
-  `No uses expresiones cuyo significado dependa del momento de lectura: ni las palabras ${quoted(RELATIVE_DAY_WORDS)}, ni las frases ${quoted(RELATIVE_TIME_PHRASES)}, ni ${READING_DATE_RULE}.`,
+  `No uses expresiones cuyo significado dependa del momento de lectura: ni las palabras ${quoted(RELATIVE_DAY_WORDS)}, ni las frases ${quoted(RELATIVE_TIME_PHRASES)}, ni las que hablan de periodos (${quoted(RELATIVE_PERIOD_PHRASES)}) o de desplazamientos (${quoted(RELATIVE_SHIFT_PHRASES)}), ni ${READING_DATE_RULE}.`,
   '«Mañana» tampoco vale como franja del día.',
   'Para situar el día, usa su nombre como lo trae el claim, o formas ancladas a él: «el lunes», «durante la tarde del lunes», «la noche del lunes».',
 ].join('\n')
@@ -141,6 +147,13 @@ const TASK = [
   'No nombres ningún lugar ni ningún Pokémon que no aparezca en los claims de ese diálogo.',
   'Puedes reordenar, resumir y cambiar la sintaxis; lo que no puede cambiar es el significado. Si el claim presenta unos lugares como ejemplos, siguen siendo ejemplos: nunca los conviertas en un recorrido ("desde X hasta Y") ni en una lista completa.',
   'No describas los lugares por lo que te sugieran sus nombres: si el claim dice lugares, son lugares, no costas, zonas, regiones ni provincias.',
+  '',
+  'MARCAS OBLIGATORIAS',
+  'Cada diálogo trae requiredClaims: los claims que ese diálogo debe contener, cada uno con su marca [[…]].',
+  'En el texto de cada diálogo, cada una de esas marcas debe aparecer, a nivel de frase, exactamente una vez, y no puedes inventarte ninguna otra marca.',
+  'Escribe la voz de Oak alrededor de la marca, sin sustituirla ni parafrasearla, y sin negar, invertir ni matizar lo que afirma.',
+  'La marca se expande por el claim entero: la frase tiene que seguir teniendo sentido con ese texto en su lugar.',
+  'El resto de los claims de la entrada son material autorizado, pero opcional: puedes usarlos o ignorarlos.',
   '',
   'Respeta el role y el tone de cada diálogo.',
   'Si un diálogo trae leitmotif, su direction es orientación de personalidad, nunca permiso para inventar hechos.',

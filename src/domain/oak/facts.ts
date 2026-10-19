@@ -65,7 +65,7 @@ const SPOTLIGHT_LOCATION_LIMIT = 3
 const WEEKDAYS: readonly Weekday[] = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
 
 /** Un lugar con previsión, ya resuelto a su Pokémon visible. */
-interface LocationEntry {
+export interface LocationEntry {
   location: Location
   forecast: LocationForecast
   mapLocation: MapFactLocation
@@ -82,7 +82,7 @@ function plainLocation(entry: LocationEntry): FactLocation {
  * para saber qué Pokémon se ve en un lugar. Un lugar sin previsión, o del que
  * `assignPokemon` no saque nada, simplemente no genera hechos.
  */
-function buildEntries(locations: readonly Location[], forecast: Forecast): LocationEntry[] {
+export function buildEntries(locations: readonly Location[], forecast: Forecast): LocationEntry[] {
   const forecastByLocationId = new Map(forecast.locations.map((locationForecast) => [locationForecast.locationId, locationForecast]))
 
   const entries: LocationEntry[] = []

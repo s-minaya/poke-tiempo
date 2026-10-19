@@ -4,8 +4,9 @@ import { join } from 'node:path'
 import { locations } from '../../src/data/locations.ts'
 import { computeTargetDate } from '../../src/domain/target-date.ts'
 import type { Forecast } from '../../src/domain/types.ts'
+import { buildBriefing } from '../../src/domain/oak/briefing.ts'
 import { resolveDayMode } from '../../src/domain/oak/day-mode.ts'
-import { collectFacts } from '../../src/domain/oak/facts.ts'
+import { buildEntries, collectFacts } from '../../src/domain/oak/facts.ts'
 import type { OakHistoryEntry } from '../../src/domain/oak/history.ts'
 import type { DayPlan } from '../../src/domain/oak/plan-dialogues.ts'
 import { planDialogues } from '../../src/domain/oak/plan-dialogues.ts'
@@ -64,13 +65,19 @@ export async function buildDayPlan({ dataDir, now }: DayPlanSources): Promise<Bu
 
   const history = await readHistory(join(directory, HISTORY_FILE), targetDate)
 
+  // El mismo universo que los hechos: un lugar con previsión y Pokémon visible.
+  const entries = buildEntries(locations, forecast)
   const facts = collectFacts(locations, forecast)
+  const decision = resolveDayMode(facts)
+  const briefing = buildBriefing({ source: { entries, date: forecast.date }, facts, decision })
+
   const dayPlan = planDialogues({
     date: forecast.date,
     facts,
     protagonists: selectProtagonists(facts),
-    decision: resolveDayMode(facts),
+    decision,
     history,
+    briefing,
   })
 
   return { dayPlan, history }

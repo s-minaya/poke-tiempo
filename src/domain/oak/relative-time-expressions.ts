@@ -17,6 +17,65 @@ export const RELATIVE_DAY_WORDS = ['hoy', 'mañana', 'ayer', 'anoche', 'anteayer
 export const RELATIVE_TIME_PHRASES = ['esta mañana', 'esta tarde', 'esta noche', 'esta madrugada'] as const
 
 /**
+ * Las familias que amplían la restricción (`013-spec.md` → Restricciones
+ * temporales). Es una lista **cerrada**: no hay que detectar equivalentes que
+ * no estén enumerados. «Fin de semana» suelto no aparece en ninguna: describir
+ * que la fecha de previsión cae en fin de semana sigue permitido, lo que se
+ * prohíbe son las cuatro formulaciones que lo tratan como periodo.
+ */
+export const RELATIVE_WEEK_PHRASES = ['esta semana', 'la próxima semana', 'la semana que viene', 'la semana pasada'] as const
+
+export const RELATIVE_MONTH_PHRASES = ['este mes', 'el próximo mes', 'el mes que viene', 'el mes pasado'] as const
+
+export const RELATIVE_DAYS_PHRASES = [
+  'los próximos días',
+  'en los próximos días',
+  'durante los próximos días',
+  'los siguientes días',
+  'en los siguientes días',
+  'los últimos días',
+] as const
+
+/**
+ * Los desplazamientos relativos. La `N` es variable, así que se resuelven con
+ * un patrón cerrado y no enumerando números: «dentro de unos días» es la única
+ * forma sin cifra.
+ */
+export const RELATIVE_SHIFT_PHRASES = ['dentro de N días', 'en N días', 'hace N días', 'dentro de unos días'] as const
+
+export const RELATIVE_SEASON_PHRASES = ['esta temporada', 'la próxima temporada', 'la temporada que viene', 'la temporada pasada'] as const
+
+export const RELATIVE_STATION_PHRASES = [
+  'esta primavera',
+  'este verano',
+  'este otoño',
+  'este invierno',
+  'la próxima primavera',
+  'el próximo verano',
+  'el próximo otoño',
+  'el próximo invierno',
+  'la primavera pasada',
+  'el verano pasado',
+  'el otoño pasado',
+  'el invierno pasado',
+] as const
+
+export const RELATIVE_WEEKEND_PERIOD_PHRASES = ['este fin de semana', 'el próximo fin de semana', 'el fin de semana que viene', 'el fin de semana pasado'] as const
+
+export const RELATIVE_OTHER_PHRASES = ['más adelante', 'en adelante'] as const
+
+/** Las familias anteriores en una sola lista, para el matcher. Sin las cuatro frases ya existentes. */
+export const RELATIVE_PERIOD_PHRASES = [
+  ...RELATIVE_WEEK_PHRASES,
+  ...RELATIVE_MONTH_PHRASES,
+  ...RELATIVE_DAYS_PHRASES,
+  ...RELATIVE_SEASON_PHRASES,
+  ...RELATIVE_STATION_PHRASES,
+  ...RELATIVE_WEEKEND_PERIOD_PHRASES,
+  ...RELATIVE_OTHER_PHRASES,
+] as const
+
+/**
  * «Estamos a» solo cuando sitúa el momento de lectura: seguido de un día de
  * la semana («estamos a lunes») o de una fecha («estamos a 5 de octubre»).
  * Suelto no se rechaza: «estamos a 30 grados» o «estamos a 1000 metros» no
@@ -49,7 +108,21 @@ function wholeTerm(source: string): RegExp {
 }
 
 const WORD_PATTERNS = RELATIVE_DAY_WORDS.map((word) => ({ expression: word, pattern: wholeTerm(normalize(word)) }))
-const PHRASE_PATTERNS = RELATIVE_TIME_PHRASES.map((phrase) => ({ expression: phrase, pattern: wholeTerm(normalize(phrase)) }))
+
+/**
+ * Las frases se ordenan de más larga a más corta para que gane la más
+ * específica: «durante los próximos días» se informa como tal, no como el
+ * trozo «los próximos días» que contiene. Las cuatro frases de la 010 van
+ * primero por si alguna compartiera texto con las nuevas.
+ */
+const PHRASE_PATTERNS = [
+  ...RELATIVE_TIME_PHRASES,
+  ...[...RELATIVE_PERIOD_PHRASES].sort((first, second) => second.length - first.length),
+].map((phrase) => ({ expression: phrase, pattern: wholeTerm(normalize(phrase)) }))
+
+const SHIFT_SOURCE = '(?:dentro de (?:\\d{1,3}|unos) días|en \\d{1,3} días|hace \\d{1,3} días)'
+const SHIFT_PATTERN = wholeTerm(normalize(SHIFT_SOURCE))
+
 const READING_DATE_PATTERN = wholeTerm(
   `estamos a (?:${WEEKDAYS.map(normalize).join('|')}|\\d{1,2} de (?:${MONTHS.join('|')}))`,
 )
@@ -65,6 +138,9 @@ export function findRelativeTimeExpression(text: string): RelativeTimeMatch | nu
   for (const { expression, pattern } of PHRASE_PATTERNS) {
     if (pattern.test(normalized)) return { kind: 'phrase', expression }
   }
+
+  const shift = SHIFT_PATTERN.exec(normalized)
+  if (shift) return { kind: 'phrase', expression: shift[0] }
 
   const readingDate = READING_DATE_PATTERN.exec(normalized)
   if (readingDate) return { kind: 'reading-date', expression: readingDate[0] }

@@ -324,6 +324,17 @@ describe('escritura segura', () => {
   })
 })
 
+describe('el fallback no deja marcadores', () => {
+  it('sin IA, ningún texto ni el JSON publicado llevan tokens', async () => {
+    const { today } = await generateOak({ dataDir, now: NOW, generateDialogues: noAi })
+    const raw = await readFile(join(dataDir, 'oak-today.json'), 'utf-8')
+
+    expect(today.source).toBe('fallback')
+    for (const dialogue of today.dialogues) expect(dialogue.text).not.toContain('[[')
+    expect(raw).not.toContain('[[CLAIM_')
+  })
+})
+
 describe('el plan no se recalcula en el script', () => {
   it('la IA recibe el mismo DayPlan que usaría el fallback', async () => {
     const seen: DayPlan[] = []

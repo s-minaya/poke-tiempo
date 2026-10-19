@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest'
 
-import { RELATIVE_DAY_WORDS, RELATIVE_TIME_PHRASES, findRelativeTimeExpression } from './relative-time-expressions.ts'
+import {
+  RELATIVE_DAYS_PHRASES,
+  RELATIVE_DAY_WORDS,
+  RELATIVE_MONTH_PHRASES,
+  RELATIVE_OTHER_PHRASES,
+  RELATIVE_PERIOD_PHRASES,
+  RELATIVE_SEASON_PHRASES,
+  RELATIVE_STATION_PHRASES,
+  RELATIVE_TIME_PHRASES,
+  RELATIVE_WEEK_PHRASES,
+  RELATIVE_WEEKEND_PERIOD_PHRASES,
+  findRelativeTimeExpression,
+} from './relative-time-expressions.ts'
 
 describe('las listas del contrato', () => {
   it('cinco palabras, exactamente', () => {
@@ -40,6 +52,68 @@ describe('findRelativeTimeExpression — frases', () => {
     { text: 'Atención:\testa\nnoche refresca.', expression: 'esta noche' },
   ])('«$text» → $expression', ({ text, expression }) => {
     expect(findRelativeTimeExpression(text)).toEqual({ kind: 'phrase', expression })
+  })
+})
+
+describe('las familias nuevas', () => {
+  const families: readonly (readonly string[])[] = [
+    RELATIVE_WEEK_PHRASES,
+    RELATIVE_MONTH_PHRASES,
+    RELATIVE_DAYS_PHRASES,
+    RELATIVE_SEASON_PHRASES,
+    RELATIVE_STATION_PHRASES,
+    RELATIVE_WEEKEND_PERIOD_PHRASES,
+    RELATIVE_OTHER_PHRASES,
+  ]
+
+  it.each(families.flatMap((family) => family.map((phrase) => ({ phrase }))))('«$phrase» → frase relativa', ({ phrase }) => {
+    expect(findRelativeTimeExpression(`En el mapa, ${phrase}.`)).toEqual({ kind: 'phrase', expression: phrase })
+  })
+
+  it('la lista combinada no repite ninguna entrada', () => {
+    expect(new Set(RELATIVE_PERIOD_PHRASES).size).toBe(RELATIVE_PERIOD_PHRASES.length)
+  })
+
+  it('no duplica ninguna entrada ya existente de la 010', () => {
+    const existing = new Set<string>([...RELATIVE_DAY_WORDS, ...RELATIVE_TIME_PHRASES])
+
+    for (const phrase of RELATIVE_PERIOD_PHRASES) expect(existing.has(phrase)).toBe(false)
+  })
+
+  it('las frases más específicas ganan a los trozos que contienen', () => {
+    expect(findRelativeTimeExpression('Durante los próximos días refresca.')).toEqual({ kind: 'phrase', expression: 'durante los próximos días' })
+    expect(findRelativeTimeExpression('Llueve en los próximos días.')).toEqual({ kind: 'phrase', expression: 'en los próximos días' })
+  })
+})
+
+describe('las familias nuevas — desplazamientos con patrón cerrado', () => {
+  it.each([
+    { text: 'Refresca dentro de 5 días.', expression: 'dentro de 5 dias' },
+    { text: 'Lloverá en 3 días.', expression: 'en 3 dias' },
+    { text: 'Hace 2 días nevó.', expression: 'hace 2 dias' },
+    { text: 'Dentro de unos días llega el frío.', expression: 'dentro de unos dias' },
+  ])('«$text» → $expression', ({ text, expression }) => {
+    expect(findRelativeTimeExpression(text)).toEqual({ kind: 'phrase', expression })
+  })
+})
+
+describe('las familias nuevas — «fin de semana» suelto sigue permitido', () => {
+  it.each([
+    'La previsión es para el sábado, fin de semana.',
+    'El fin de semana se anuncia tranquilo.',
+    'Este sábado, fin de semana, hay niebla en Ourense.',
+    'El mesón del pueblo está lleno.',
+    'Una temporada tranquila en el laboratorio.',
+    'Las estaciones del año no se narran aquí.',
+    'Un paseo por los montes.',
+  ])('«%s»', (text) => {
+    expect(findRelativeTimeExpression(text)).toBeNull()
+  })
+
+  it('pero las cuatro formulaciones de periodo sí se rechazan', () => {
+    for (const phrase of RELATIVE_WEEKEND_PERIOD_PHRASES) {
+      expect(findRelativeTimeExpression(`En el mapa, ${phrase}.`)).toEqual({ kind: 'phrase', expression: phrase })
+    }
   })
 })
 

@@ -8,7 +8,18 @@ import type { LeitmotifId } from './leitmotifs.ts'
 import { LEITMOTIFS } from './leitmotifs.ts'
 import { findRelativeTimeExpression } from './relative-time-expressions.ts'
 import type { DayPlan, DialoguePlan, DialogueSlot, Tone } from './plan-dialogues.ts'
-import type { AlertFact, CalendarFact, DayShapeFact, NarrativeFact, PokemonSpotlightFact } from './types.ts'
+import type {
+  AlertFact,
+  CalendarFact,
+  DayShapeFact,
+  NarrativeFact,
+  OccurrencePhenomenon,
+  OccurrencePolarity,
+  PatternCondition,
+  PatternFact,
+  PatternScope,
+  PokemonSpotlightFact,
+} from './types.ts'
 
 const TODAY = '2026-09-18'
 const MIN = 20
@@ -72,8 +83,8 @@ function alert(level: AlertFact['level'], overrides: Partial<AlertFact> = {}): A
   }
 }
 
-/** Un hecho de cada uno de los doce `kind`, para poder recorrerlos todos. */
-const ONE_PER_KIND: Record<NarrativeFact['kind'], NarrativeFact> = {
+/** Un hecho de cada uno de los doce `kind` con cláusula; el patrón agregado tiene sus propias pruebas. */
+const ONE_PER_KIND: Record<Exclude<NarrativeFact['kind'], 'pattern'>, NarrativeFact> = {
   temperature: { kind: 'temperature', ...mapPlace('Sevilla', 'charmander'), mapRepresentsFact: true, role: 'hottest', maxC: 33.2, minC: 21 },
   rain: rain(7.6, 100),
   snow: { kind: 'snow', ...mapPlace('Benasque', 'cryogonal'), mapRepresentsFact: true, cm: 12.5 },
@@ -99,6 +110,11 @@ function dayPlan(dialoguePlan: DialoguePlan, date = TODAY): DayPlan {
     date,
     dayMode: 'parte',
     serious: false,
+    briefing: {
+      overview: { role: 'overview', fact: dialoguePlan[0].facts[0] },
+      highlight: { role: 'highlight', fact: dialoguePlan[1].facts[0] },
+      secondary: { role: 'secondary', fact: dialoguePlan[2].facts[0] },
+    },
     focusPokemonId: null,
     leitmotif: dialoguePlan[2].leitmotif,
     dialoguePlan,
@@ -180,7 +196,7 @@ describe('determinismo', () => {
 // --- las doce cláusulas ----------------------------------------------------
 
 describe('los doce kind', () => {
-  const kinds = Object.keys(ONE_PER_KIND) as NarrativeFact['kind'][]
+  const kinds = Object.keys(ONE_PER_KIND) as Exclude<NarrativeFact['kind'], 'pattern'>[]
 
   it('son doce, ni uno más: no han vuelto sky ni contrast', () => {
     expect(kinds).toHaveLength(12)
@@ -743,6 +759,142 @@ describe('voz', () => {
     const text = render([ONE_PER_KIND.temperature, rain(4.2, 60)]).toLowerCase()
 
     expect(text).not.toMatch(/tercio norte|cota de nieve|se esperan precipitaciones en|litoral peninsular/)
+  })
+})
+
+describe('patrón agregado', () => {
+  function pattern(condition: PatternCondition, scope: PatternScope = 'region:northwest'): PatternFact {
+    return {
+      kind: 'pattern',
+      scope,
+      parentScope: 'spain',
+      scopeSize: 6,
+      condition,
+      eligibleCount: 6,
+      affectedCount: 4,
+      affectedLocations: [place('A Coruña'), place('Lugo')],
+      measures: { prevalenceInternal: 4 / 6, prevalenceRest: 0.1, contrast: 0.5, concentration: 0.5, overRepresentation: 2.2 },
+    }
+  }
+
+  const occurrence = (phenomenon: OccurrencePhenomenon, polarity: OccurrencePolarity = 'presente'): PatternCondition => ({
+    family: 'occurrence',
+    phenomenon,
+    polarity,
+  })
+
+  const CONDITIONS: PatternCondition[] = [
+    occurrence('niebla'),
+    occurrence('nieve', 'ausente'),
+    occurrence('viento'),
+    occurrence('olas'),
+    { family: 'sky', value: 'cubierto' },
+    { family: 'temperature', extreme: 'highest' },
+    { family: 'temperature', extreme: 'lowest' },
+  ]
+
+  it('una ocurrencia presente dice el fenómeno y el ámbito', () => {
+    const text = render([pattern(occurrence('niebla'))])
+
+    expect(text).toContain('niebla')
+    expect(text.toLowerCase()).toContain('noroeste')
+  })
+
+  it('la nieve ausente se dice "sin acumulación de nieve", nunca "sin nieve"', () => {
+    const text = render([pattern(occurrence('nieve', 'ausente'))]).toLowerCase()
+
+    expect(text).toContain('sin acumulación de nieve')
+    expect(text).not.toMatch(/sin nieve\b/)
+  })
+
+  it('viento y olas tienen forma propia, no un simple "hay"', () => {
+    expect(render([pattern(occurrence('viento'))]).toLowerCase()).toContain('viento')
+    expect(render([pattern(occurrence('viento'))]).toLowerCase()).not.toMatch(/hay viento/)
+    expect(render([pattern(occurrence('olas'))]).toLowerCase()).toContain('oleaje')
+  })
+
+  it('el cielo dice su categoría y el ámbito', () => {
+    const text = render([pattern({ family: 'sky', value: 'cubierto' })]).toLowerCase()
+
+    expect(text).toContain('cielo')
+    expect(text).toContain('cubierto')
+    expect(text).toContain('noroeste')
+  })
+
+  it('la banda más alta habla de las máximas más altas', () => {
+    expect(render([pattern({ family: 'temperature', extreme: 'highest' })])).toContain('las máximas más altas')
+  })
+
+  it('la banda más baja habla de las máximas más bajas, nunca de las mínimas', () => {
+    const text = render([pattern({ family: 'temperature', extreme: 'lowest' })])
+
+    expect(text).toContain('las máximas más bajas')
+    expect(text).not.toContain('mínimas')
+  })
+
+  it('Portugal nunca se generaliza: "entre los lugares de Portugal representados en el mapa"', () => {
+    const text = render([pattern(occurrence('niebla'), 'region:portugal')])
+
+    expect(text.toLowerCase()).toContain('entre los lugares de portugal representados en el mapa')
+  })
+
+  it('no publica ni el id de banda ni el recuento', () => {
+    const text = render([pattern({ family: 'temperature', extreme: 'lowest' })])
+
+    expect(text).not.toMatch(/snorunt|solrock|groudon|charmander/i)
+    expect(text).not.toMatch(/4 de los 6/)
+  })
+
+  it('el patrón aparece junto a un hecho de relleno sin que ninguno desaparezca', () => {
+    const text = render([pattern(occurrence('niebla')), spotlight('hoppip', 6)])
+
+    expect(text.toLowerCase()).toContain('niebla')
+    expect(text).toContain('Hoppip')
+  })
+
+  it('se verbaliza en su hueco sea cual sea el rol del parte', () => {
+    const overview = pattern(occurrence('niebla'))
+    const highlight = pattern({ family: 'sky', value: 'cubierto' })
+    const secondary = pattern(occurrence('tormenta'), 'region:meseta')
+    const plan: DayPlan = {
+      date: TODAY,
+      dayMode: 'parte',
+      serious: false,
+      briefing: {
+        overview: { role: 'overview', fact: overview },
+        highlight: { role: 'highlight', fact: highlight },
+        secondary: { role: 'secondary', fact: secondary },
+      },
+      focusPokemonId: null,
+      leitmotif: null,
+      dialoguePlan: [
+        slot('dialogue-1', 'apertura', [overview, dayShape]),
+        slot('dialogue-2', 'foco', [highlight]),
+        slot('dialogue-3', 'cierre', [secondary]),
+      ],
+      historyEntry: { date: TODAY, focusPokemonId: null, leitmotifIds: [] },
+    }
+    const texts = generateFallbackDialogues(plan).map((dialogue) => dialogue.text)
+
+    expect(texts[0].toLowerCase()).toContain('niebla')
+    expect(texts[1].toLowerCase()).toContain('cubierto')
+    expect(texts[2].toLowerCase()).toContain('tormenta')
+  })
+
+  it('el fallback no usa tokens ni deja marcadores', () => {
+    for (const condition of CONDITIONS) {
+      expect(render([pattern(condition)])).not.toContain('[[')
+    }
+  })
+
+  it('todas las familias caben en 20–160 y no dicen expresiones relativas', () => {
+    for (const condition of CONDITIONS) {
+      const text = render([pattern(condition)])
+
+      expect(text.length).toBeGreaterThanOrEqual(MIN)
+      expect(text.length).toBeLessThanOrEqual(MAX)
+      expect(findRelativeTimeExpression(text)).toBeNull()
+    }
   })
 })
 

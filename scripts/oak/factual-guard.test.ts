@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import type { DialogueClaims } from '../../src/domain/oak/claims.ts'
 import type { OakDialogues } from '../../src/domain/oak/plan-dialogues.ts'
-import { RELATIVE_DAY_WORDS, RELATIVE_TIME_PHRASES } from '../../src/domain/oak/relative-time-expressions.ts'
-import { checkFactualFit } from './factual-guard.ts'
+import { RELATIVE_DAY_WORDS, RELATIVE_PERIOD_PHRASES, RELATIVE_TIME_PHRASES } from '../../src/domain/oak/relative-time-expressions.ts'
+import { checkFactualFit, findEmoji } from './factual-guard.ts'
 
 /**
  * El encargo real del 2026-09-23, que es el día del que salieron las
@@ -17,6 +17,7 @@ const BRIEF: DialogueClaims[] = [
     tone: 'neutral',
     leitmotif: null,
     claims: ['Hay 7 lugares del mapa bajo algún aviso y 2 con lluvia.'],
+    required: [],
     allowed: { numbers: [7, 2], places: [], pokemon: [], alertLevels: [] },
   },
   {
@@ -28,6 +29,7 @@ const BRIEF: DialogueClaims[] = [
       'Charmeleon aparece en 35 lugares del mapa. La Rioja, Navarra y Huesca son algunos ejemplos.',
       'En Benasque, la mínima nocturna baja hasta 10 °C.',
     ],
+    required: [],
     allowed: {
       numbers: [35, 10],
       places: ['La Rioja', 'Navarra', 'Huesca', 'Benasque'],
@@ -41,6 +43,7 @@ const BRIEF: DialogueClaims[] = [
     tone: 'guasa',
     leitmotif: 'gyarados-mar',
     claims: ['Gyarados aparece en 6 lugares del mapa. A Coruña, Pontevedra y Gijón son algunos ejemplos.'],
+    required: [],
     allowed: { numbers: [6], places: ['A Coruña', 'Pontevedra', 'Gijón'], pokemon: ['Gyarados'], alertLevels: [] },
   },
 ]
@@ -188,12 +191,63 @@ describe('expresiones relativas al momento de lectura', () => {
     expect(check(0, 'Esta   tarde hay 7 lugares bajo aviso y 2 con lluvia.').ok).toBe(false)
   })
 
+  it.each(RELATIVE_PERIOD_PHRASES.map((phrase) => ({ phrase })))('rechaza la familia nueva «$phrase»', ({ phrase }) => {
+    expect(check(0, `Veamos... ${phrase} hay 7 lugares bajo aviso y 2 con lluvia.`)).toEqual({
+      ok: false,
+      reason: `dialogue-1: dice «${phrase}», que depende del momento de lectura`,
+    })
+  })
+
   it.each([
     'Veamos... el lunes hay 7 lugares bajo aviso y 2 con lluvia.',
     'Durante la tarde del lunes, 7 lugares bajo aviso y 2 con lluvia.',
     'La noche del lunes deja 7 lugares bajo aviso y 2 con lluvia.',
   ])('acepta las formas ancladas a la fecha: «%s»', (text) => {
     expect(check(0, text).ok).toBe(true)
+  })
+})
+
+describe('frases de ámbito prohibidas', () => {
+  it.each(['gran parte del territorio', 'el país', 'gran parte del país'])('rechaza «%s»', (phrase) => {
+    expect(check(0, `Veamos... ${phrase} tiene 7 lugares bajo aviso.`)).toEqual({
+      ok: false,
+      reason: `dialogue-1: dice «${phrase}», una generalización de ámbito prohibida`,
+    })
+  })
+
+  it('también sin tildes y en mayúsculas', () => {
+    expect(check(0, 'Veamos... GRAN PARTE DEL PAIS tiene 7 lugares bajo aviso.').ok).toBe(false)
+  })
+
+  it('un texto limpio sin esas frases se acepta', () => {
+    expect(check(0, 'Veamos... el mapa tiene 7 lugares bajo aviso y 2 con lluvia.').ok).toBe(true)
+  })
+})
+
+describe('emojis', () => {
+  it.each([
+    { name: 'pictográfico simple', emoji: '😀' },
+    { name: 'símbolo meteorológico de sol', emoji: '☀' },
+    { name: 'símbolo meteorológico de nube', emoji: '☁' },
+    { name: 'símbolo meteorológico de lluvia', emoji: '☔' },
+    { name: 'secuencia ZWJ', emoji: '👨‍👩‍👧' },
+    { name: 'tono de piel', emoji: '👍🏽' },
+    { name: 'bandera', emoji: '🇪🇸' },
+    { name: 'keycap', emoji: '1️⃣' },
+  ])('detecta el $name', ({ emoji }) => {
+    expect(findEmoji(`Veamos... ${emoji} hay 7 lugares bajo aviso.`)).not.toBeNull()
+  })
+
+  it('un emoji en el texto del proveedor invalida la respuesta', () => {
+    expect(check(0, 'Veamos... hay 7 lugares bajo aviso 😀 y 2 con lluvia.')).toEqual({
+      ok: false,
+      reason: 'dialogue-1: usa el emoji «😀», prohibido en los diálogos',
+    })
+  })
+
+  it('no confunde el símbolo de grados ni un texto limpio con un emoji', () => {
+    expect(findEmoji('En Sevilla, 33 °C.')).toBeNull()
+    expect(findEmoji('Veamos... 7 lugares bajo aviso y 2 con lluvia.')).toBeNull()
   })
 })
 

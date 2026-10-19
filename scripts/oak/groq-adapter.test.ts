@@ -53,16 +53,36 @@ const dayPlan: DayPlan = {
   date: TODAY,
   dayMode: 'parte',
   serious: false,
+  briefing: {
+    overview: { role: 'overview', fact: dialoguePlan[0].facts[0] },
+    highlight: { role: 'highlight', fact: dialoguePlan[1].facts[0] },
+    secondary: { role: 'secondary', fact: dialoguePlan[2].facts[0] },
+  },
   focusPokemonId: null,
   leitmotif: 'gyarados-mar',
   dialoguePlan,
   historyEntry: { date: TODAY, focusPokemonId: null, leitmotifIds: ['gyarados-mar'] },
 }
 
-const VALID_TEXTS = [
-  'Bien. Hay 6 lugares bajo aviso y 23 con lluvia. Seguimos observando.',
-  'Tenemos un aviso naranja por lluvia en Ibiza, y allí se esperan 7,6 mm.',
-  'Yo miraría el mar desde una distancia prudente. Mega-Gyarados anda por Gijón.',
+// Los tres claims obligatorios del plan de más arriba: es lo que expanden los
+// tokens y lo que tiene que acabar publicado.
+const REQUIRED_TEXTS = [
+  'Hay 6 lugares del mapa bajo algún aviso y 23 con lluvia.',
+  'Hay un aviso oficial naranja por lluvia que afecta a nuestro lugar de Ibiza.',
+  'Mega-Gyarados aparece en 2 lugares del mapa. Gijón es uno de ellos.',
+]
+
+// Lo que devuelve el modelo: la voz de Oak alrededor de cada token.
+const TOKEN_TEXTS = [
+  'Bien. [[CLAIM_D1_1]] Seguimos observando.',
+  'Veamos qué dicen los datos. [[CLAIM_D2_1]]',
+  'Yo miraría el mar desde una distancia prudente. [[CLAIM_D3_1]]',
+]
+
+const EXPANDED_TEXTS = [
+  `Bien. ${REQUIRED_TEXTS[0]} Seguimos observando.`,
+  `Veamos qué dicen los datos. ${REQUIRED_TEXTS[1]}`,
+  `Yo miraría el mar desde una distancia prudente. ${REQUIRED_TEXTS[2]}`,
 ]
 
 function completion(content: unknown, status = 200): Response {
@@ -74,7 +94,7 @@ function completion(content: unknown, status = 200): Response {
 }
 
 function validPayload() {
-  return { dialogues: VALID_TEXTS.map((text, index) => ({ id: `dialogue-${index + 1}`, text })) }
+  return { dialogues: TOKEN_TEXTS.map((text, index) => ({ id: `dialogue-${index + 1}`, text })) }
 }
 
 /** La misma respuesta válida con un solo texto cambiado. */
@@ -120,6 +140,16 @@ describe('payload enviado a la IA', () => {
     expect(payload.dialogues[2]).toMatchObject({ id: 'dialogue-3', role: 'cierre', tone: 'guasa' })
     expect(payload.dialogues[2].claims[0]).toContain('Mega-Gyarados aparece en 2 lugares del mapa')
     expect(serialized).not.toContain('"kind"')
+  })
+
+  it('cada hueco distingue su obligatorio, con token, de su material autorizado', () => {
+    expect(payload.dialogues.map((slot) => slot.requiredClaims.map((entry) => entry.token))).toEqual([
+      ['[[CLAIM_D1_1]]'],
+      ['[[CLAIM_D2_1]]'],
+      ['[[CLAIM_D3_1]]'],
+    ])
+    expect(payload.dialogues[0].requiredClaims[0].claim).toBe(REQUIRED_TEXTS[0])
+    expect(payload.dialogues[0].claims).toContain(REQUIRED_TEXTS[0])
   })
 
   it('el leitmotiv viaja con su dirección editorial, no como un identificador suelto', () => {
@@ -247,18 +277,34 @@ describe('petición', () => {
 })
 
 describe('respuesta válida', () => {
-  it('devuelve los tres textos exactos y en orden', async () => {
+  it('devuelve los tres textos expandidos y en orden', async () => {
     mockFetch(() => completion(validPayload()))
     const dialogues = await generateOakDialogues(dayPlan)
 
     expect(dialogues?.map((dialogue) => dialogue.id)).toEqual(['dialogue-1', 'dialogue-2', 'dialogue-3'])
-    expect(dialogues?.map((dialogue) => dialogue.text)).toEqual(VALID_TEXTS)
+    expect(dialogues?.map((dialogue) => dialogue.text)).toEqual(EXPANDED_TEXTS)
+  })
+
+  it('mide la longitud sobre el texto expandido, no sobre el token: un token suelto vale', async () => {
+    // Crudo, cada texto mide 15 caracteres; expandido, supera el mínimo.
+    mockFetch(() =>
+      completion({
+        dialogues: [
+          { id: 'dialogue-1', text: '[[CLAIM_D1_1]]' },
+          { id: 'dialogue-2', text: '[[CLAIM_D2_1]]' },
+          { id: 'dialogue-3', text: '[[CLAIM_D3_1]]' },
+        ],
+      }),
+    )
+
+    const dialogues = await generateOakDialogues(dayPlan)
+    expect(dialogues?.map((dialogue) => dialogue.text)).toEqual(REQUIRED_TEXTS)
   })
 })
 
 describe('todo lo que cae al fallback', () => {
-  const tooShort = { dialogues: validPayload().dialogues.map((dialogue, index) => (index === 0 ? { ...dialogue, text: 'Hola.' } : dialogue)) }
-  const tooLong = { dialogues: validPayload().dialogues.map((dialogue, index) => (index === 1 ? { ...dialogue, text: 'x'.repeat(161) } : dialogue)) }
+  const missing = { dialogues: validPayload().dialogues.map((dialogue, index) => (index === 0 ? { ...dialogue, text: 'Bien. Seguimos observando.' } : dialogue)) }
+  const tooLong = { dialogues: validPayload().dialogues.map((dialogue, index) => (index === 1 ? { ...dialogue, text: `[[CLAIM_D2_1]] ${'x'.repeat(200)}` } : dialogue)) }
   const reversed = { dialogues: [...validPayload().dialogues].reverse() }
   const extraField = { dialogues: validPayload().dialogues.map((dialogue) => ({ ...dialogue, mode: 'alerta' })) }
   const extraRoot = { ...validPayload(), reasoning: 'porque sí' }
@@ -281,19 +327,26 @@ describe('todo lo que cae al fallback', () => {
     { name: 'content que no es JSON', respond: () => completion('esto no es json') },
     { name: 'dos diálogos en vez de tres', respond: () => completion({ dialogues: validPayload().dialogues.slice(0, 2) }) },
     { name: 'ids en orden invertido', respond: () => completion(reversed) },
-    { name: 'texto demasiado corto', respond: () => completion(tooShort) },
-    { name: 'texto demasiado largo', respond: () => completion(tooLong) },
+    { name: 'falta el token obligatorio', respond: () => completion(missing) },
+    { name: 'texto final demasiado largo', respond: () => completion(tooLong) },
     { name: 'campo extra en un diálogo', respond: () => completion(extraField) },
     { name: 'campo extra en la raíz', respond: () => completion(extraRoot) },
     { name: 'texto vacío', respond: () => completion({ dialogues: validPayload().dialogues.map((d) => ({ ...d, text: '' })) }) },
     { name: 'text que no es cadena', respond: () => completion({ dialogues: validPayload().dialogues.map((d) => ({ ...d, text: 42 })) }) },
-    // La forma es correcta y el contenido no: una respuesta que se inventa
-    // una entidad es tan inválida como una que llega torcida.
-    { name: 'una cifra que no estaba en los claims', respond: () => completion(replacing(0, 'Bien. Hay 6 lugares bajo aviso y 40 con lluvia. Seguimos observando.')) },
-    { name: 'un lugar que no estaba en los claims', respond: () => completion(replacing(1, 'Tenemos un aviso naranja por lluvia en Ibiza, y en Teruel se esperan 7,6 mm.')) },
-    { name: 'un Pokémon que no estaba en los claims', respond: () => completion(replacing(2, 'Yo miraría el mar desde lejos. Snorunt anda por Gijón, como siempre.')) },
-    { name: 'un nivel de aviso que no estaba en los claims', respond: () => completion(replacing(1, 'Tenemos un aviso rojo por lluvia en Ibiza, y allí se esperan 7,6 mm.')) },
-    { name: 'una expresión que depende del momento de lectura', respond: () => completion(replacing(0, 'Bien. Esta tarde hay 6 lugares bajo aviso y 23 con lluvia. Seguimos observando.')) },
+    // Los tokens obligatorios, antes de tocar el contenido.
+    { name: 'un token obligatorio repetido', respond: () => completion(replacing(0, '[[CLAIM_D1_1]] y [[CLAIM_D1_1]]')) },
+    { name: 'un token desconocido', respond: () => completion(replacing(0, '[[CLAIM_D1_1]] y [[CLAIM_D2_1]]')) },
+    { name: 'restos de sintaxis de marcador', respond: () => completion(replacing(0, '[[CLAIM_D1_1]] y [[ roto')) },
+    // La forma y los tokens están bien y el contenido no: una respuesta que se
+    // inventa una entidad es tan inválida como una que llega torcida.
+    { name: 'una cifra que no estaba en los claims', respond: () => completion(replacing(0, 'Bien. [[CLAIM_D1_1]] Hay 40 con lluvia.')) },
+    { name: 'un lugar que no estaba en los claims', respond: () => completion(replacing(1, '[[CLAIM_D2_1]] En Teruel se esperan 7,6 mm.')) },
+    { name: 'un Pokémon que no estaba en los claims', respond: () => completion(replacing(2, '[[CLAIM_D3_1]] Snorunt anda por Gijón.')) },
+    { name: 'un nivel de aviso que no estaba en los claims', respond: () => completion(replacing(1, '[[CLAIM_D2_1]] Tenemos un aviso rojo por lluvia en Ibiza.')) },
+    { name: 'una expresión que depende del momento de lectura', respond: () => completion(replacing(0, 'Bien. [[CLAIM_D1_1]] Esta tarde seguimos observando.')) },
+    // Un texto contrario sin el token obligatorio es tan inválido como uno que
+    // se inventa la entidad: falta el claim del parte.
+    { name: 'un texto contrario al obligatorio y sin su token', respond: () => completion(replacing(0, 'Bien. No hay ningún aviso ni lluvia en el mapa.')) },
   ]
 
   it.each(cases)('$name → null', async ({ respond }) => {
