@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-18",
-  "generatedAt": "2026-10-17T09:57:46.873Z",
+  "date": "2026-10-20",
+  "generatedAt": "2026-10-19T11:32:31.918Z",
   "source": "ai",
   "dayMode": "alerta",
   "serious": true,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... 24 lugares tienen aviso y 53 con lluvia; la previsión es para el domingo."
+      "text": "Vaya... hay 8 lugares bajo algún aviso y 26 con lluvia en el mapa."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "En Barcelona hay aviso naranja por lluvia; se esperan 9,5 mm con 100 % de probabilidad."
+      "text": "Se emite aviso oficial naranja por lluvia para 2 lugares, ambos Barcelona. Se esperan 7,1 mm con 90 % de probabilidad."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Zapdos se avista en 14 lugares del mapa, entre ellos Alicante, Tarancón y Plasencia."
+      "text": "Zapdos se registra en 1 lugar del mapa: Girona."
     }
   ]
 }
