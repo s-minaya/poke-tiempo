@@ -1,7 +1,7 @@
 {
-  "date": "2026-10-20",
-  "generatedAt": "2026-10-19T11:32:31.918Z",
-  "source": "ai",
+  "date": "2026-10-22",
+  "generatedAt": "2026-10-21T10:51:33.404Z",
+  "source": "fallback",
   "dayMode": "alerta",
   "serious": true,
   "dialogues": [
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... hay 8 lugares bajo algún aviso y 26 con lluvia en el mapa."
+      "text": "Bien. En el mapa domina el cielo poco nuboso."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Se emite aviso oficial naranja por lluvia para 2 lugares, ambos Barcelona. Se esperan 7,1 mm con 90 % de probabilidad."
+      "text": "Tenemos un aviso oficial naranja por lluvia en La Palma y La Palma. Yo saldría preparado."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Zapdos se registra en 1 lugar del mapa: Girona."
+      "text": "Veamos. Hay lluvia en el noroeste; además, Mega-Gyarados se deja ver en 4 lugares, entre ellos A Coruña, Gijón y Cantabria."
     }
   ]
 }
