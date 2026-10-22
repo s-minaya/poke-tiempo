@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-22",
-  "generatedAt": "2026-10-21T10:51:33.404Z",
+  "date": "2026-10-23",
+  "generatedAt": "2026-10-22T10:53:36.961Z",
   "source": "fallback",
   "dayMode": "alerta",
   "serious": true,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Bien. En el mapa domina el cielo poco nuboso."
+      "text": "En el mapa domina el cielo poco nuboso. Seguimos observando."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Tenemos un aviso oficial naranja por lluvia en La Palma y La Palma. Yo saldría preparado."
+      "text": "Atención un momento. Tenemos un aviso oficial naranja por fenómenos costeros en A Coruña y allí el mar levanta 4,2 m de ola, con periodos de 13,2 s."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Veamos. Hay lluvia en el noroeste; además, Mega-Gyarados se deja ver en 4 lugares, entre ellos A Coruña, Gijón y Cantabria."
+      "text": "En Canarias se concentran las máximas más altas y Mega-Gyarados se deja ver en 7 lugares, entre ellos A Coruña, Pontevedra y Gijón. Tomo nota."
     }
   ]
 }
