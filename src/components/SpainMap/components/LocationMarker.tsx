@@ -1,7 +1,6 @@
 import { memo, useCallback, useRef } from 'react'
 import type { KeyboardEvent } from 'react'
 
-import { useRevealWhenSelected } from '../../LocationCard/use-reveal-when-selected.ts'
 import { classifyMarkerTemperature } from './marker-temperature.ts'
 import { SPRITE_SIZE } from './marker-size.ts'
 
@@ -31,8 +30,8 @@ interface LocationMarkerProps {
   maxC?: number | null
   /** Es el lugar que muestra ahora la tarjeta. */
   selected?: boolean
-  /** Clic, toque, Intro o Espacio. */
-  onActivate?: (id: string) => void
+  /** Clic, toque, Intro o Espacio. `keyboard` dice si fue con Intro o Espacio. */
+  onActivate?: (id: string, keyboard: boolean) => void
   /** Escape: cerrar la tarjeta sin mover el foco de aquí. */
   onDismiss?: () => void
   /** Para que el mapa pueda devolverle el foco al cerrar la tarjeta desde ella. */
@@ -98,11 +97,8 @@ function LocationMarker({ id, x, y, name, minC, maxC, selected = false, onActiva
     [id, register],
   )
 
-  const markActivated = useRevealWhenSelected(element, selected)
-
-  function activate() {
-    markActivated()
-    onActivate?.(id)
+  function activate(keyboard: boolean) {
+    onActivate?.(id, keyboard)
   }
 
   function handleKeyDown(event: KeyboardEvent<SVGGElement>) {
@@ -110,7 +106,7 @@ function LocationMarker({ id, x, y, name, minC, maxC, selected = false, onActiva
       // Espacio desplazaría la página, como haría un botón nativo si no.
       event.preventDefault()
       // Mantener la tecla pulsada no puede abrir y cerrar la tarjeta en bucle.
-      if (!event.repeat) activate()
+      if (!event.repeat) activate(true)
     } else if (event.key === 'Escape') {
       onDismiss?.()
     }
@@ -125,7 +121,7 @@ function LocationMarker({ id, x, y, name, minC, maxC, selected = false, onActiva
       tabIndex={0}
       aria-label={accessibleName(name, roundedMinC, roundedMaxC)}
       aria-pressed={selected}
-      onClick={activate}
+      onClick={() => activate(false)}
       onKeyDown={handleKeyDown}
     >
       {/* El `aria-label` es lo que expone el nombre (y la temperatura) de

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import type { LocationView } from '../../../domain/location-views.ts'
 import MarkerLayers from './MarkerLayers.tsx'
@@ -122,5 +122,76 @@ describe('MarkerLayers en sombra', () => {
     expect(registerMarker).toHaveBeenCalledTimes(1)
     expect(registerMarker).toHaveBeenCalledWith('granada', expect.any(SVGGElement))
     expect(screen.getByRole('button', { name: /^Granada/ })).toBeInTheDocument()
+  })
+})
+
+// Dos causas distintas dan la misma silueta: estar en sombra por los filtros
+// (sin marcador) y no ser el lugar seleccionado (con marcador operable).
+describe('MarkerLayers — silueta por selección', () => {
+  type Props = Partial<Parameters<typeof MarkerLayers>[0]>
+
+  const SILHOUETTE = 'url(#location-marker-silhouette)'
+  const GRANADA = 'Granada, mínima 8 grados, máxima 23 grados'
+  const MADRID = 'Madrid, mínima 11 grados, máxima 20 grados'
+  const GIJON = 'Gijón'
+
+  // El filtro de los dos sprites que hay (Gijón no tiene Pokémon), en el orden de los lugares.
+  const filters = (container: HTMLElement) => sprites(container).map((sprite) => sprite.getAttribute('filter'))
+  const buttons = () => screen.getAllByRole('button').map((marker) => marker.getAttribute('aria-label'))
+
+  it.each<[string, Props, (string | null)[], string[]]>([
+    ['sin selección ni filtros, todos en color', {}, [null, null], [GRANADA, MADRID, GIJON]],
+    ['el seleccionado conserva el color y el resto va en silueta', { selectedLocationId: 'granada' }, [null, SILHOUETTE], [GRANADA, MADRID, GIJON]],
+    ['si el seleccionado es otro, esos dos pasan a silueta', { selectedLocationId: 'gijon' }, [SILHOUETTE, SILHOUETTE], [GRANADA, MADRID, GIJON]],
+    ['excluido por los filtros, silueta y sin marcador', { matchingIds: new Set(['madrid', 'gijon']) }, [SILHOUETTE, null], [MADRID, GIJON]],
+    [
+      'excluido con otro seleccionado, ambos en silueta y solo el excluido sin marcador',
+      { matchingIds: new Set(['madrid', 'gijon']), selectedLocationId: 'gijon' },
+      [SILHOUETTE, SILHOUETTE],
+      [MADRID, GIJON],
+    ],
+  ])('%s', (_name, props, expectedFilters, expectedButtons) => {
+    const { container } = layers(props)
+
+    expect(filters(container)).toEqual(expectedFilters)
+    expect(buttons()).toEqual(expectedButtons)
+  })
+
+  it('un lugar en silueta por la selección sigue con su marcador, enfocable y operable', () => {
+    const onActivateLocation = vi.fn()
+    const { container } = layers({ selectedLocationId: 'granada', onActivateLocation })
+    expect(filters(container)).toEqual([null, SILHOUETTE])
+
+    const madrid = screen.getByRole('button', { name: MADRID })
+    expect(madrid).toHaveAttribute('tabindex', '0')
+    madrid.focus()
+    expect(madrid).toHaveFocus()
+
+    fireEvent.click(madrid)
+    fireEvent.keyDown(madrid, { key: 'Enter' })
+
+    expect(onActivateLocation.mock.calls).toEqual([
+      ['madrid', false],
+      ['madrid', true],
+    ])
+  })
+
+  it('cambiar de lugar intercambia color y silueta, y cerrar los devuelve salvo a los excluidos', () => {
+    const { container, rerender } = layers()
+    const steps: [Props, (string | null)[]][] = [
+      [{ selectedLocationId: 'granada' }, [null, SILHOUETTE]],
+      [{ selectedLocationId: 'madrid' }, [SILHOUETTE, null]],
+      [{ selectedLocationId: null }, [null, null]],
+      [{ selectedLocationId: null, matchingIds: new Set(['madrid', 'gijon']) }, [SILHOUETTE, null]],
+    ]
+
+    for (const [props, expected] of steps) {
+      rerender(
+        <svg>
+          <MarkerLayers locations={LOCATIONS} {...props} />
+        </svg>,
+      )
+      expect(filters(container)).toEqual(expected)
+    }
   })
 })

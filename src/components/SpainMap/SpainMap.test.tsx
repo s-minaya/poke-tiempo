@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 
 import type { Forecast, LocationForecast } from '../../domain/types.ts'
+import type { SelectionOrigin } from '../WeatherApp/location-filters.ts'
 import { buildLocationViews } from '../../domain/location-views.ts'
 
 import SpainMap from './SpainMap.tsx'
@@ -139,7 +140,7 @@ describe('SpainMap — selección de un lugar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Gijón' }))
 
-    expect(onToggleLocation).toHaveBeenCalledWith('gijon')
+    expect(onToggleLocation).toHaveBeenCalledWith('gijon', false)
   })
 
   it('solo el lugar seleccionado se anuncia como pulsado', () => {
@@ -197,6 +198,367 @@ describe('SpainMap — selección de un lugar', () => {
 
     expect(onClearLocation).toHaveBeenCalledTimes(1)
     expect(screen.getByRole('button', { name: 'Gijón' })).toHaveFocus()
+  })
+
+  describe('cerrar desde la tarjeta vuelve al origen', () => {
+    function renderFrom(origin: { via: 'map' | 'list'; keyboard: boolean }, rowPresent = true) {
+      const onClearLocation = vi.fn()
+      render(
+        <>
+          <SpainMap
+            forecast={forecast([])}
+            selectedLocationId="gijon"
+            selectionOrigin={origin}
+            findRow={() => (rowPresent ? screen.getByRole('button', { name: 'Fila de Gijón' }) : null)}
+            onClearLocation={onClearLocation}
+          />
+          <button type="button">Fila de Gijón</button>
+        </>,
+      )
+      const close = screen.getByRole('button', { name: 'Cerrar' })
+      close.focus()
+      return { close, onClearLocation }
+    }
+
+    it('abierta desde la lista, el foco vuelve a su fila', () => {
+      const { close, onClearLocation } = renderFrom({ via: 'list', keyboard: false })
+      fireEvent.click(close)
+
+      expect(onClearLocation).toHaveBeenCalledTimes(1)
+      expect(screen.getByRole('button', { name: 'Fila de Gijón' })).toHaveFocus()
+    })
+
+    it('abierta desde el mapa, vuelve al marcador aunque haya una fila', () => {
+      const { close } = renderFrom({ via: 'map', keyboard: false })
+      fireEvent.click(close)
+
+      expect(screen.getByRole('button', { name: 'Gijón' })).toHaveFocus()
+    })
+
+    it('abierta desde la lista pero sin fila —un filtro la quitó—, vuelve al marcador', () => {
+      const { close } = renderFrom({ via: 'list', keyboard: false }, false)
+      fireEvent.click(close)
+
+      expect(screen.getByRole('button', { name: 'Gijón' })).toHaveFocus()
+    })
+
+    it('con la tarjeta en el flujo, devolver el foco no desplaza: de eso se ocupa la vuelta', () => {
+      const focus = vi.spyOn(HTMLElement.prototype, 'focus')
+      const { close } = renderFrom({ via: 'list', keyboard: false })
+      focus.mockClear()
+      fireEvent.click(close)
+
+      expect(focus).toHaveBeenCalledWith({ preventScroll: true })
+    })
+
+    it('con la tarjeta anclada, el foco vuelve desplazando como siempre', () => {
+      const anchored = document.head.appendChild(document.createElement('style'))
+      anchored.textContent = '.location-card { position: absolute; }'
+      try {
+        const focus = vi.spyOn(HTMLElement.prototype, 'focus')
+        const { close } = renderFrom({ via: 'list', keyboard: false })
+        focus.mockClear()
+        fireEvent.click(close)
+
+        expect(focus).toHaveBeenCalledWith({ preventScroll: false })
+      } finally {
+        anchored.remove()
+      }
+    })
+  })
+
+  // Con la tarjeta en el flujo, abrirla con teclado lleva el foco a Cerrar: se
+  // quedaría en el origen, fuera de la vista. Con puntero, toque o tecnología de
+  // asistencia no se mueve, y la tarjeta anclada junto al marcador tampoco lo
+  // recibe.
+  describe('abrirla con teclado lleva el foco a Cerrar', () => {
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    /** Ancla la tarjeta junto a su marcador, como en escritorio. Devuelve cómo quitarlo. */
+    function anchorCard() {
+      const style = document.head.appendChild(document.createElement('style'))
+      style.textContent = '.location-card { position: absolute; }'
+      return () => style.remove()
+    }
+
+    /** Con el foco en el marcador de Gijón, abre su tarjeta como se indica. */
+    function open(origin: SelectionOrigin) {
+      const view = render(<SpainMap forecast={forecast([])} />)
+      const marker = screen.getByRole('button', { name: 'Gijón' })
+      marker.focus()
+      view.rerender(<SpainMap forecast={forecast([])} selectedLocationId="gijon" selectionOrigin={origin} />)
+      return { view, marker, close: screen.getByRole('button', { name: 'Cerrar' }) }
+    }
+
+    it.each([
+      ['desde el mapa', { via: 'map', keyboard: true }],
+      ['desde la lista', { via: 'list', keyboard: true }],
+    ] as const)('con teclado, %s, el foco pasa a Cerrar', (_via, origin) => {
+      const { close } = open(origin)
+
+      expect(close).toHaveFocus()
+    })
+
+    it.each([
+      ['desde el mapa', { via: 'map', keyboard: false }],
+      ['desde la lista', { via: 'list', keyboard: false }],
+    ] as const)('con puntero, toque o tecnología de asistencia, %s, el foco se queda donde estaba', (_via, origin) => {
+      const { marker, close } = open(origin)
+
+      expect(marker).toHaveFocus()
+      expect(close).not.toHaveFocus()
+    })
+
+    it('el foco llega sin desplazar: la vista ya está en el detalle', () => {
+      const focus = vi.spyOn(HTMLElement.prototype, 'focus')
+      const { close } = open({ via: 'map', keyboard: true })
+
+      const call = focus.mock.contexts.indexOf(close)
+      expect(call).toBeGreaterThanOrEqual(0)
+      expect(focus.mock.calls[call]).toEqual([{ preventScroll: true }])
+    })
+
+    it('con la tarjeta anclada junto a su marcador, el foco no se mueve aunque se abra con teclado', () => {
+      const unanchor = anchorCard()
+      try {
+        const { marker, close } = open({ via: 'map', keyboard: true })
+
+        expect(marker).toHaveFocus()
+        expect(close).not.toHaveFocus()
+      } finally {
+        unanchor()
+      }
+    })
+
+    it('al cambiar de lugar con teclado, el foco pasa a Cerrar del nuevo; con puntero, no', () => {
+      const { view, marker } = open({ via: 'map', keyboard: false })
+      expect(marker).toHaveFocus()
+
+      screen.getByRole('button', { name: 'Jaca' }).focus()
+      view.rerender(<SpainMap forecast={forecast([])} selectedLocationId="jaca" selectionOrigin={{ via: 'map', keyboard: true }} />)
+      expect(screen.getByRole('button', { name: 'Cerrar' })).toHaveFocus()
+
+      marker.focus()
+      view.rerender(<SpainMap forecast={forecast([])} selectedLocationId="gijon" selectionOrigin={{ via: 'map', keyboard: false }} />)
+      expect(marker).toHaveFocus()
+    })
+
+    it('un cambio de origen sin cambio de selección no vuelve a llevar el foco', () => {
+      const { view, marker } = open({ via: 'map', keyboard: false })
+      marker.focus()
+
+      view.rerender(<SpainMap forecast={forecast([])} selectedLocationId="gijon" selectionOrigin={{ via: 'list', keyboard: true }} />)
+
+      expect(marker).toHaveFocus()
+    })
+  })
+
+  // Al abrir, la página va al comienzo del detalle: desde el mapa, el mínimo
+  // (`nearest`); desde la lista, alineando su borde superior (`start`), para que
+  // una tarjeta más alta que la ventana visual no pierda su comienzo.
+  describe('abrirla lleva la vista al comienzo del detalle', () => {
+    let scrolled: { element: Element; options?: ScrollIntoViewOptions }[]
+    const original = Element.prototype.scrollIntoView
+
+    beforeEach(() => {
+      scrolled = []
+      Element.prototype.scrollIntoView = function (this: Element, options?: boolean | ScrollIntoViewOptions) {
+        scrolled.push({ element: this, options: options as ScrollIntoViewOptions })
+      }
+    })
+
+    afterEach(() => {
+      Element.prototype.scrollIntoView = original
+    })
+
+    it.each([
+      ['desde el mapa', { via: 'map', keyboard: false }, 'nearest'],
+      ['desde el mapa, con teclado', { via: 'map', keyboard: true }, 'nearest'],
+      ['desde la lista', { via: 'list', keyboard: false }, 'start'],
+      ['desde la lista, con teclado', { via: 'list', keyboard: true }, 'start'],
+    ] as const)('%s, una sola vez y con la alineación de su origen', (_via, origin, block) => {
+      const view = render(<SpainMap forecast={forecast([])} />)
+
+      view.rerender(<SpainMap forecast={forecast([])} selectedLocationId="gijon" selectionOrigin={origin} />)
+
+      expect(scrolled).toEqual([{ element: screen.getByRole('region', { name: 'Gijón' }), options: { block, inline: 'start' } }])
+    })
+
+    it('un cambio de origen sin cambio de selección no vuelve a desplazar', () => {
+      const view = render(<SpainMap forecast={forecast([])} selectedLocationId="gijon" selectionOrigin={{ via: 'map', keyboard: false }} />)
+      scrolled.length = 0
+
+      view.rerender(<SpainMap forecast={forecast([])} selectedLocationId="gijon" selectionOrigin={{ via: 'list', keyboard: false }} />)
+
+      expect(scrolled).toEqual([])
+    })
+
+    it('con la tarjeta anclada junto a su marcador no desplaza, venga de donde venga', () => {
+      const style = document.head.appendChild(document.createElement('style'))
+      style.textContent = '.location-card { position: absolute; }'
+      try {
+        const view = render(<SpainMap forecast={forecast([])} />)
+
+        view.rerender(<SpainMap forecast={forecast([])} selectedLocationId="gijon" selectionOrigin={{ via: 'list', keyboard: false }} />)
+
+        expect(scrolled).toEqual([])
+      } finally {
+        style.remove()
+      }
+    })
+  })
+
+  // Escape (o Intro) en la fila con el detalle abierto lo cierra y deja el foco
+  // en ella; Escape en el marcador, en él. Si la vista quedó lejos al ir al
+  // detalle, se lleva a la vista; si no, no se mueve nada. Con la tarjeta
+  // anclada no se toca.
+  describe('cerrarla sin volver al origen deja a la vista lo que conserva el foco', () => {
+    const VIEWPORT_HEIGHT = 800
+    let scrolled: { element: Element; options?: ScrollIntoViewOptions }[]
+    const original = Element.prototype.scrollIntoView
+
+    beforeEach(() => {
+      scrolled = []
+      Element.prototype.scrollIntoView = function (this: Element, options?: boolean | ScrollIntoViewOptions) {
+        scrolled.push({ element: this, options: options as ScrollIntoViewOptions })
+      }
+      Object.defineProperty(document.documentElement, 'clientHeight', { configurable: true, value: VIEWPORT_HEIGHT })
+    })
+
+    afterEach(() => {
+      Element.prototype.scrollIntoView = original
+      Reflect.deleteProperty(document.documentElement, 'clientHeight')
+      vi.restoreAllMocks()
+    })
+
+    function closeWith({ top, bottom, focusRow = true, anchored = false }: { top: number; bottom: number; focusRow?: boolean; anchored?: boolean }) {
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+        const [from, to] = this.id === 'row-gijon' ? [top, bottom] : [0, 0]
+        return { top: from, y: from, bottom: to, left: 0, x: 0, right: 0, width: 0, height: to - from, toJSON: () => ({}) }
+      })
+      const style = document.head.appendChild(document.createElement('style'))
+      if (anchored) style.textContent = '.location-card { position: absolute; }'
+
+      const page = (selected: string | null) => (
+        <>
+          <SpainMap
+            forecast={forecast([])}
+            selectedLocationId={selected}
+            selectionOrigin={{ via: 'list', keyboard: false }}
+            findRow={() => screen.getByRole('button', { name: 'Fila de Gijón' })}
+          />
+          <button type="button" id="row-gijon">
+            Fila de Gijón
+          </button>
+        </>
+      )
+      const view = render(page('gijon'))
+      const row = screen.getByRole('button', { name: 'Fila de Gijón' })
+      if (focusRow) row.focus()
+      else screen.getByRole('button', { name: 'Gijón' }).focus()
+      scrolled.length = 0
+
+      view.rerender(page(null))
+      style.remove()
+      return row
+    }
+
+    it.each([
+      ['entera fuera de la vista, por arriba', { top: -900, bottom: -850 }],
+      ['entera fuera de la vista, por abajo', { top: 900, bottom: 950 }],
+      ['cortada por el borde de arriba', { top: -20, bottom: 30 }],
+      ['cortada por el borde de abajo', { top: 770, bottom: 820 }],
+    ])('la fila que conserva el foco, %s, se lleva a la vista', (_where, box) => {
+      const row = closeWith(box)
+
+      expect(scrolled).toEqual([{ element: row, options: { block: 'center', inline: 'start' } }])
+      expect(row).toHaveFocus()
+    })
+
+    it('la fila que ya se ve, entera, no se mueve', () => {
+      closeWith({ top: 100, bottom: 150 })
+
+      expect(scrolled).toEqual([])
+    })
+
+    it('si el foco no está en la fila, no se va a ella', () => {
+      closeWith({ top: -900, bottom: -850, focusRow: false })
+
+      expect(scrolled).toEqual([])
+    })
+
+    it('con la tarjeta anclada junto a su marcador no se mueve nada', () => {
+      closeWith({ top: -900, bottom: -850, anchored: true })
+
+      expect(scrolled).toEqual([])
+    })
+
+    // El marcador solo se lleva a la vista si el cierre fue con Escape en él.
+    function closeFromMarker({ top, bottom, how, focused = true, anchored = false }: { top: number; bottom: number; how: 'Escape' | 'Enter' | 'filtro'; focused?: boolean; anchored?: boolean }) {
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+        const [from, to] = this.classList.contains('location-marker') && this.getAttribute('aria-label') === 'Gijón' ? [top, bottom] : [0, 0]
+        return { top: from, y: from, bottom: to, left: 0, x: 0, right: 0, width: 0, height: to - from, toJSON: () => ({}) }
+      })
+      const style = document.head.appendChild(document.createElement('style'))
+      if (anchored) style.textContent = '.location-card { position: absolute; }'
+
+      const view = render(<SpainMap forecast={forecast([])} selectedLocationId="gijon" />)
+      const marker = screen.getByRole('button', { name: 'Gijón' })
+      if (focused) marker.focus()
+      scrolled.length = 0
+
+      if (how !== 'filtro') fireEvent.keyDown(marker, { key: how })
+      view.rerender(<SpainMap forecast={forecast([])} selectedLocationId={null} />)
+      style.remove()
+      return marker
+    }
+
+    it.each([
+      ['entero fuera de la vista, por arriba', { top: -900, bottom: -850 }],
+      ['entero fuera de la vista, por abajo', { top: 900, bottom: 950 }],
+      ['cortado por el borde de arriba', { top: -20, bottom: 30 }],
+      ['cortado por el borde de abajo', { top: 770, bottom: 820 }],
+    ])('Escape en el marcador, %s: se lleva a la vista y conserva el foco', (_where, box) => {
+      const marker = closeFromMarker({ ...box, how: 'Escape' })
+
+      expect(scrolled).toEqual([{ element: marker, options: { block: 'center', inline: 'center' } }])
+      expect(marker).toHaveFocus()
+    })
+
+    it('Escape en el marcador que ya se ve, entero, no lo mueve', () => {
+      closeFromMarker({ top: 100, bottom: 150, how: 'Escape' })
+
+      expect(scrolled).toEqual([])
+    })
+
+    it.each([
+      ['Intro en el marcador', { how: 'Enter' }],
+      ['un cierre que no pasa por el marcador (un filtro)', { how: 'filtro' }],
+      ['Escape con el foco fuera del marcador', { how: 'Escape', focused: false }],
+      ['Escape con la tarjeta anclada junto a su marcador', { how: 'Escape', anchored: true }],
+    ] as const)('%s no lleva el marcador a la vista', (_how, options) => {
+      closeFromMarker({ top: -900, bottom: -850, ...options })
+
+      expect(scrolled).toEqual([])
+    })
+
+    it('un Escape que no llegó a cerrar nada no se arrastra al siguiente cierre', () => {
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({ top: -900, y: -900, bottom: -850, left: 0, x: 0, right: 0, width: 0, height: 50, toJSON: () => ({}) })
+      const view = render(<SpainMap forecast={forecast([])} selectedLocationId="gijon" />)
+      const gijon = screen.getByRole('button', { name: 'Gijón' })
+      gijon.focus()
+      // Quien aloja el mapa no cierra: la selección sigue, y después cambia de lugar.
+      fireEvent.keyDown(gijon, { key: 'Escape' })
+      view.rerender(<SpainMap forecast={forecast([])} selectedLocationId="jaca" />)
+      screen.getByRole('button', { name: 'Jaca' }).focus()
+      scrolled.length = 0
+
+      view.rerender(<SpainMap forecast={forecast([])} selectedLocationId={null} />)
+
+      expect(scrolled).toEqual([])
+    })
   })
 
   it('cerrar con un toque que no enfoca el botón no mueve el foco', () => {
@@ -434,5 +796,21 @@ describe('SpainMap — filtros', () => {
 
     expect(within(container).getByRole('button', { name: /^Madrid,/ })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('region', { name: 'Madrid' })).toBeInTheDocument()
+  })
+
+  // La selección llega a las dos capas de sprites, la del mapa y la del
+  // recuadro de Canarias, y no desmonta ningún marcador.
+  it.each([
+    ['en el mapa principal', 'madrid'],
+    ['en el recuadro de Canarias', views.find((view) => view.region === 'canary' && view.pokemonId !== null)!.id],
+  ])('con un lugar seleccionado %s, solo su sprite conserva el color y los 74 marcadores siguen montados', (_where, selectedId) => {
+    const { container } = render(<SpainMap forecast={today} selectedLocationId={selectedId} />)
+
+    const selected = views.find((view) => view.id === selectedId)!
+    const inColor = sprites(container).filter((sprite) => !sprite.silhouette)
+    expect(inColor).toHaveLength(1)
+    expect(inColor[0].place).toContain(`translate(${selected.x}, ${selected.y})`)
+    expect(sprites(container).filter((sprite) => sprite.silhouette)).toHaveLength(withSprite(ALL) - 1)
+    expect(container.querySelectorAll('.location-marker')).toHaveLength(74)
   })
 })

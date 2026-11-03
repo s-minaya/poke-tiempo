@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import type { CSSProperties } from 'react'
 
+import type { SelectionOrigin } from '../WeatherApp/location-filters.ts'
 import type { LocationView } from '../../domain/location-views.ts'
 import type { Forecast } from '../../domain/types.ts'
 
@@ -28,10 +29,16 @@ interface SpainMapProps {
    * pasa a sombra. `null`, sin filtros: los 74 como siempre.
    */
   matchingIds?: ReadonlySet<string> | null
-  /** Activar un marcador: lo selecciona, o cierra la tarjeta si ya lo estaba. */
-  onToggleLocation?: (id: string) => void
+  /** Activar un marcador: lo selecciona, o cierra la tarjeta si ya lo estaba. `keyboard` dice si fue con Intro o Espacio. */
+  onToggleLocation?: (id: string, keyboard: boolean) => void
   onClearLocation?: () => void
+  /** Por dónde se abrió la tarjeta (`WeatherApp`): adónde vuelven la vista y el foco al cerrarla desde ella. */
+  selectionOrigin?: SelectionOrigin
+  /** La fila de un lugar en «Todos los lugares», si está en la lista. */
+  findRow?: (id: string) => HTMLElement | null
 }
+
+const ORIGIN_MAP: SelectionOrigin = { via: 'map', keyboard: false }
 
 // España, Baleares, Ceuta y Melilla comparten el mismo color (son España);
 // Portugal y Andorra llevan el suyo propio (005-plan.md → punto 3). Cada
@@ -80,7 +87,31 @@ function anchorOf(view: LocationView): { x: number; y: number } {
   return { x: (x - ROOT_VIEW_BOX.x) / ROOT_VIEW_BOX.width, y: (y - ROOT_VIEW_BOX.y) / MAP_SEA_BOTTOM }
 }
 
-function SpainMap({ forecast, selectedLocationId = null, matchingIds = null, onToggleLocation, onClearLocation }: SpainMapProps) {
+/**
+ * Si la tarjeta está en el flujo del documento (composición apilada) o anclada
+ * junto a su marcador (escritorio). Lo decide el CSS; aquí solo se lee para
+ * saber si tiene sentido desplazar la página hasta ella, porque la anclada ya
+ * se ve donde está su marcador.
+ */
+function isInFlow(card: HTMLElement | null): boolean {
+  return card !== null && getComputedStyle(card).position !== 'absolute'
+}
+
+/** Si el elemento está entero dentro de la ventana, sin tener que desplazarse a él. */
+function isWithinViewport(element: Element): boolean {
+  const box = element.getBoundingClientRect()
+  return box.top >= 0 && box.bottom <= document.documentElement.clientHeight
+}
+
+function SpainMap({
+  forecast,
+  selectedLocationId = null,
+  matchingIds = null,
+  onToggleLocation,
+  onClearLocation,
+  selectionOrigin = ORIGIN_MAP,
+  findRow,
+}: SpainMapProps) {
   const views = useMemo(() => buildLocationViews(locations, forecast), [forecast])
   const locationsByRegion = useMemo(
     () => ({
@@ -94,36 +125,117 @@ function SpainMap({ forecast, selectedLocationId = null, matchingIds = null, onT
   const summary = selectedView ? summarizeView(selectedView) : null
   const anchor = selectedView ? anchorOf(selectedView) : null
 
-  // Los 74 marcadores se registran aquí: son el sitio al que devolver el
-  // foco cuando no se sabe quién abrió la tarjeta.
+  // Los 74 marcadores se registran aquí: son el sitio al que vuelven la vista y
+  // el foco cuando la tarjeta se abrió desde el mapa.
   const markers = useRef(new Map<string, SVGGElement>())
   const registerMarker = useCallback((id: string, element: SVGGElement | null) => {
     if (element) markers.current.set(id, element)
     else markers.current.delete(id)
   }, [])
 
-  // Quién abrió la tarjeta: el marcador o la fila de la lista que tenía el
-  // foco al activarse. Seleccionar no mueve el foco, así que al terminar el
-  // render sigue ahí.
   const card = useRef<HTMLElement | null>(null)
-  const opener = useRef<Element | null>(null)
-  useEffect(() => {
-    opener.current = selectedLocationId ? document.activeElement : null
+  const closeButton = useRef<HTMLButtonElement | null>(null)
+  const attribution = useRef<HTMLParagraphElement | null>(null)
+
+  // Adónde vuelve la vista al cerrar desde la tarjeta: la fila o el marcador
+  // desde el que se abrió.
+  const returnTo = useRef<{ element: Element; inline: ScrollLogicalPosition } | null>(null)
+  // Dónde estaba la atribución, que va justo debajo de la tarjeta, cuando se
+  // quitó la tarjeta sin volver a ningún sitio.
+  const belowBefore = useRef<number | null>(null)
+  // El lugar cuyo detalle se mostró por última vez, y si iba en el flujo.
+  const shown = useRef<{ id: string; inFlow: boolean } | null>(null)
+  // Si el detalle se cerró con Escape en un marcador, que conserva el foco.
+  const escapedFromMarker = useRef(false)
+  const dismissFromMarker = useCallback(() => {
+    if (shown.current) escapedFromMarker.current = true
+    onClearLocation?.()
+  }, [onClearLocation])
+
+  // El efecto de la selección solo debe repetirse cuando cambia la selección:
+  // el origen y la búsqueda de filas, que lo acompañan, se leen aquí.
+  const host = useRef({ origin: selectionOrigin, findRow })
+  useLayoutEffect(() => {
+    host.current = { origin: selectionOrigin, findRow }
+  })
+
+  // En la composición apilada la tarjeta está en el flujo: al seleccionar, la
+  // página se desplaza hasta su comienzo, desde el mapa y desde la lista, sin
+  // tocar el zoom. Desde el mapa, que está encima, basta el mínimo
+  // (`nearest`). Desde la lista, que está debajo, `nearest` alinea el borde
+  // inferior si la tarjeta es más alta que la ventana visual (pinch alto en una
+  // pantalla pequeña) y recorta su comienzo: se alinea siempre el superior
+  // (`start`). Si se abrió con teclado, el foco va a Cerrar: se quedaría en
+  // el origen, fuera de la vista. Con puntero, toque o tecnología de asistencia
+  // no se mueve. Al cerrarla desde la propia tarjeta, la vista y el foco
+  // vuelven al origen. Si se cierra desde otro sitio (pulsar otra vez la fila,
+  // Escape, un filtro) no hay vuelta, pero lo que había debajo de la tarjeta
+  // sube lo que ella medía: se compensa para que lo que el usuario mira no se
+  // mueva.
+  useLayoutEffect(() => {
+    const { origin, findRow: rowOf } = host.current
+
+    if (selectedLocationId) {
+      belowBefore.current = null
+      escapedFromMarker.current = false
+      const inFlow = isInFlow(card.current)
+      shown.current = { id: selectedLocationId, inFlow }
+      if (inFlow) {
+        card.current?.scrollIntoView?.({ block: origin.via === 'list' ? 'start' : 'nearest', inline: 'start' })
+        if (origin.keyboard) closeButton.current?.focus({ preventScroll: true })
+      }
+      return
+    }
+
+    const closed = shown.current
+    const back = returnTo.current
+    const before = belowBefore.current
+    const escaped = escapedFromMarker.current
+    shown.current = null
+    returnTo.current = null
+    belowBefore.current = null
+    escapedFromMarker.current = false
+
+    if (back) {
+      if (back.element.isConnected) back.element.scrollIntoView?.({ block: 'center', inline: back.inline })
+      return
+    }
+    const now = attribution.current?.getBoundingClientRect().top
+    if (before !== null && now !== undefined && Math.abs(now - before) > 0.5) window.scrollBy(0, now - before)
+
+    // Escape (o Intro) en la fila con el detalle abierto lo cierra y deja el
+    // foco en ella, que pudo quedar lejos de la vista al ir al detalle: se
+    // lleva a la vista, ya compensado lo de debajo. Lo mismo con Escape en el
+    // marcador; otros cierres desde el marcador no se mueven.
+    const row = closed?.inFlow ? rowOf?.(closed.id) : null
+    if (row && row === document.activeElement && !isWithinViewport(row)) row.scrollIntoView?.({ block: 'center', inline: 'start' })
+    const marker = escaped && closed?.inFlow ? markers.current.get(closed.id) : null
+    if (marker && marker === document.activeElement && !isWithinViewport(marker)) marker.scrollIntoView?.({ block: 'center', inline: 'center' })
   }, [selectedLocationId])
+
+  // La tarjeta avisa justo antes de salir del DOM, cuando aún se puede medir.
+  // Solo hace falta compensar si empezaba por encima de lo que se ve.
+  const rememberBelow = useCallback(() => {
+    const node = card.current
+    if (!node || !isInFlow(node) || node.getBoundingClientRect().top >= 0) return
+    belowBefore.current = attribution.current?.getBoundingClientRect().top ?? null
+  }, [])
 
   // Si el foco estaba dentro de la tarjeta, caería al `<body>` al
   // desmontarse: vuelve a quien la abrió —la fila, si se abrió desde la
-  // lista; saltar al mapa haría perder el sitio— o, si no se sabe, a su
-  // marcador. Si el foco estaba fuera (un toque que no enfoca el botón), no
-  // se mueve nada.
+  // lista; saltar al mapa haría perder el sitio— o, si no, a su marcador. Si
+  // el foco estaba fuera (un toque que no enfoca el botón), no se mueve nada.
+  // Con la tarjeta en el flujo, enfocar no desplaza: de eso se ocupa la vuelta.
   const closeCard = useCallback(() => {
-    if (selectedLocationId && card.current?.contains(document.activeElement)) {
-      const target = opener.current
-      if ((target instanceof HTMLElement || target instanceof SVGElement) && target !== document.body && target.isConnected) target.focus()
-      else markers.current.get(selectedLocationId)?.focus()
-    }
+    const row = selectionOrigin.via === 'list' && selectedLocationId ? findRow?.(selectedLocationId) : null
+    const marker = selectedLocationId ? markers.current.get(selectedLocationId) : undefined
+    const back: HTMLElement | SVGElement | null = row ?? marker ?? null
+    const inFlow = isInFlow(card.current)
+
+    if (back && inFlow) returnTo.current = { element: back, inline: row ? 'start' : 'center' }
+    if (card.current?.contains(document.activeElement)) back?.focus({ preventScroll: inFlow })
     onClearLocation?.()
-  }, [selectedLocationId, onClearLocation])
+  }, [selectedLocationId, selectionOrigin, findRow, onClearLocation])
 
   // El envoltorio es quien lleva `grid-area` y quien se dimensiona: el
   // `<svg>` solo rellena lo que le den. Expone su relación de aspecto real
@@ -137,10 +249,8 @@ function SpainMap({ forecast, selectedLocationId = null, matchingIds = null, onT
         {/* El dibujo y su tarjeta, en la caja en la que la tarjeta se ancla:
             mide lo que el dibujo, sin la atribución de debajo. */}
         <div className="spain-map__drawing">
-          {/* El contenedor de consulta va aquí y no en `.spain-map`: un
-              contenedor de consulta es también contenedor de los elementos
-              `position: fixed` de dentro, y la tarjeta necesita escapar de él
-              para ser hoja inferior en la composición apilada. */}
+          {/* El contenedor de consulta es solo el dibujo (`SpainMap.scss`): la
+              tarjeta y la región viva, que son sus hermanas, quedan fuera. */}
           <div className="spain-map__viewport">
             <svg
               className="spain-map__canvas"
@@ -208,7 +318,7 @@ function SpainMap({ forecast, selectedLocationId = null, matchingIds = null, onT
                 selectedLocationId={selectedLocationId}
                 matchingIds={matchingIds}
                 onActivateLocation={onToggleLocation}
-                onDismissLocation={onClearLocation}
+                onDismissLocation={dismissFromMarker}
                 registerMarker={registerMarker}
               />
               <TerritoryInset
@@ -219,7 +329,7 @@ function SpainMap({ forecast, selectedLocationId = null, matchingIds = null, onT
                 selectedLocationId={selectedLocationId}
                 matchingIds={matchingIds}
                 onActivateLocation={onToggleLocation}
-                onDismissLocation={onClearLocation}
+                onDismissLocation={dismissFromMarker}
                 registerMarker={registerMarker}
               />
             </svg>
@@ -227,10 +337,12 @@ function SpainMap({ forecast, selectedLocationId = null, matchingIds = null, onT
           {summary && anchor && (
             <LocationCard
               ref={card}
+              closeRef={closeButton}
               summary={summary}
               side={anchor.x < 0.5 ? 'east' : 'west'}
               style={{ '--anchor-x': anchor.x, '--anchor-y': anchor.y, '--anchor-clearance': ANCHOR_CLEARANCE } as CSSProperties}
               onClose={closeCard}
+              onRemove={rememberBelow}
             />
           )}
           {/* Siempre montada, vacía cuando no hay selección: una región viva
@@ -243,7 +355,7 @@ function SpainMap({ forecast, selectedLocationId = null, matchingIds = null, onT
             leyenda, la tarjeta, la lista y Oak: una sola, junto al mapa, que
             es donde se muestran los de todos los lugares a la vez
             (`tech-stack.md` → Legal). */}
-        <p className="spain-map__attribution">
+        <p ref={attribution} className="spain-map__attribution">
           Datos meteorológicos: AEMET · IPMA ·{' '}
           <a className="spain-map__attribution-link" href="https://open-meteo.com/">
             Open-Meteo.com

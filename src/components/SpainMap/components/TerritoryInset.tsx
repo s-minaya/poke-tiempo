@@ -31,7 +31,7 @@ interface TerritoryInsetProps {
   selectedLocationId?: string | null
   /** Los lugares que cumplen los filtros, o `null` sin filtros (`SpainMap.tsx`). */
   matchingIds?: ReadonlySet<string> | null
-  onActivateLocation?: (id: string) => void
+  onActivateLocation?: (id: string, keyboard: boolean) => void
   onDismissLocation?: () => void
   registerMarker?: (id: string, element: SVGGElement | null) => void
 }

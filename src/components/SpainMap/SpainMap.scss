@@ -86,10 +86,8 @@
 
   // Contenedor de consulta del propio mapa: sus temperaturas por marcador
   // dependen de lo que mida el mapa, no la ventana — el mismo mapa mide
-  // distinto en cada composición. En este envoltorio y no en `.spain-map`,
-  // porque un contenedor de consulta es también contenedor de lo que lleve
-  // `position: fixed` dentro, y la tarjeta tiene que poder ser hoja inferior
-  // de la pantalla.
+  // distinto en cada composición. Envuelve solo el dibujo: la tarjeta, la
+  // región viva y la atribución quedan fuera.
   &__viewport {
     container: map / inline-size;
   }

@@ -104,8 +104,46 @@ describe('LocationList', () => {
     fireEvent.click(rowOf('Gijón'))
     fireEvent.keyDown(rowOf('Gijón'), { key: 'Escape' })
 
-    expect(onToggleLocation).toHaveBeenCalledWith('gijon')
+    expect(onToggleLocation).toHaveBeenCalledWith('gijon', false)
     expect(onClearLocation).toHaveBeenCalledTimes(1)
+  })
+
+  // Una fila sabe si la activó el teclado por la tecla que la precede, no por
+  // `click.detail`: un toque, un puntero y una tecnología de asistencia
+  // también llegan como `click` sin tecla.
+  it.each([
+    ['un clic sin tecla previa', ['click'], [false]],
+    ['Intro y su clic', ['enter', 'click'], [true]],
+    ['Espacio y su clic', ['space', 'click'], [true]],
+    ['la tecla solo cuenta una vez', ['enter', 'click', 'click'], [true, false]],
+    ['otra tecla no cuenta', ['tab', 'click'], [false]],
+    ['una tecla que no activó nada no cuenta para un puntero posterior', ['enter', 'pointerdown', 'click'], [false]],
+    ['ni para un clic tras perder el foco', ['space', 'blur', 'click'], [false]],
+  ] as const)('avisa de si la activación fue con teclado: %s', (_name, events, expected) => {
+    const onToggleLocation = vi.fn()
+    render(<LocationList forecast={forecast([])} onToggleLocation={onToggleLocation} />)
+
+    const row = rowOf('Gijón')
+    const keys = { enter: 'Enter', space: ' ', tab: 'Tab' }
+    for (const event of events) {
+      if (event === 'click') fireEvent.click(row)
+      else if (event === 'pointerdown') fireEvent.pointerDown(row)
+      else if (event === 'blur') fireEvent.blur(row)
+      else fireEvent.keyDown(row, { key: keys[event] })
+    }
+
+    expect(onToggleLocation.mock.calls.map(([, keyboard]) => keyboard)).toEqual(expected)
+  })
+
+  it('registra cada fila con el id de su lugar y la retira al desmontarse', () => {
+    const registerRow = vi.fn()
+    const { unmount } = render(<LocationList forecast={forecast([])} registerRow={registerRow} />)
+
+    expect(registerRow).toHaveBeenCalledWith('gijon', rowOf('Gijón'))
+    expect(registerRow).toHaveBeenCalledTimes(locations.length)
+
+    unmount()
+    expect(registerRow).toHaveBeenCalledWith('gijon', null)
   })
 })
 

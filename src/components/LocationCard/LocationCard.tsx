@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useLayoutEffect, useRef } from 'react'
 import type { CSSProperties, KeyboardEvent, Ref } from 'react'
 
 import type { LocationSummary } from './location-summary.ts'
@@ -11,15 +11,23 @@ interface LocationCardProps {
   summary: LocationSummary
   /**
    * Hacia qué lado del marcador se abre en escritorio — hacia donde hay más
-   * mapa libre. En la composición apilada no cuenta: ahí es una hoja
-   * inferior a todo el ancho.
+   * mapa libre. En la composición apilada no cuenta: ahí va en el flujo,
+   * bajo el mapa y a todo el ancho.
    */
   side: 'east' | 'west'
   /** Posición del marcador (`--anchor-x`, `--anchor-y`, `--anchor-clearance`), en fracciones del mapa. */
   style: CSSProperties
   onClose: () => void
+  /**
+   * Justo antes de que la tarjeta salga del DOM, cuando todavía se puede medir
+   * lo que hay a su alrededor: quien la aloja corrige el desplazamiento si
+   * lo de debajo va a subir.
+   */
+  onRemove?: () => void
   /** Para saber, al cerrar, si el foco estaba dentro de la tarjeta. */
   ref?: Ref<HTMLElement>
+  /** El botón Cerrar, adonde quien aloja la tarjeta lleva el foco cuando se abre con teclado. */
+  closeRef?: Ref<HTMLButtonElement>
 }
 
 /**
@@ -29,16 +37,29 @@ interface LocationCardProps {
  * sitio. Dónde se coloca lo decide su CSS según la composición (008-plan.md
  * → punto 6).
  *
- * No es un diálogo: no atrapa el foco ni lo recibe al abrirse. El foco se
- * queda en el marcador para poder seguir recorriendo el mapa, y lo que la
- * tarjeta muestra lo anuncia aparte una región viva (`SpainMap.tsx`).
+ * No es un diálogo: no atrapa el foco. Con puntero o toque, y en escritorio,
+ * no lo recibe al abrirse y se queda donde estaba; lo que la tarjeta muestra
+ * lo anuncia aparte una región viva. Solo al abrirla con teclado en el flujo,
+ * `SpainMap.tsx` lleva el foco a Cerrar, para que no quede fuera de la vista.
  */
-function LocationCard({ summary, side, style, onClose, ref }: LocationCardProps) {
+function LocationCard({ summary, side, style, onClose, onRemove, ref, closeRef }: LocationCardProps) {
   const titleId = useId()
   const hasTemperatures = summary.minC != null && summary.maxC != null
 
+  // La limpieza de un efecto de layout se ejecuta con el nodo aún montado. Se
+  // lee el aviso de una referencia para no repetir la limpieza si cambia.
+  const removing = useRef(onRemove)
+  useLayoutEffect(() => {
+    removing.current = onRemove
+  })
+  useLayoutEffect(() => () => removing.current?.(), [])
+
   function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (event.key === 'Escape') onClose()
+    // Si el foco llegó aquí con la tecla aún pulsada (se abrió con Intro o
+    // Espacio y se mantiene), sus repeticiones no pueden activar Cerrar: la
+    // tarjeta se abriría y se cerraría sola.
+    else if (event.repeat && (event.key === 'Enter' || event.key === ' ')) event.preventDefault()
   }
 
   return (
@@ -49,7 +70,7 @@ function LocationCard({ summary, side, style, onClose, ref }: LocationCardProps)
         </h2>
         {summary.administrativeArea && <p className="location-card__area">{summary.administrativeArea}</p>}
       </div>
-      <button type="button" className="location-card__close" onClick={onClose} aria-label="Cerrar">
+      <button ref={closeRef} type="button" className="location-card__close" onClick={onClose} aria-label="Cerrar">
         <span aria-hidden="true">✕</span>
       </button>
       {summary.pokemonId && (

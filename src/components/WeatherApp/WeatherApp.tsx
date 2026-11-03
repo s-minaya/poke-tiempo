@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import type { CSSProperties } from 'react'
-import type { ExplorationState, LocationFilters, ZoneFilter } from './location-filters.ts'
+import type { ExplorationState, LocationFilters, SelectionOrigin, ZoneFilter } from './location-filters.ts'
 import type { ForecastFreshness } from '../../domain/forecast-freshness.ts'
 import type { PokedexId } from '../../domain/pokedex.ts'
 import type { Forecast } from '../../domain/types.ts'
@@ -58,6 +58,36 @@ function WeatherApp({ forecast, freshness, offerReload, inert = false }: Weather
     setExploration((current) => ({ ...current, selectedLocationId: null }))
   }, [])
 
+  // Por dónde se abrió el detalle, para volver ahí al cerrarlo desde la
+  // tarjeta. Un manejador estable por vía: así el origen y la selección se
+  // actualizan en el mismo render y los hijos siguen recibiendo callbacks que
+  // no cambian.
+  const [selectionOrigin, setSelectionOrigin] = useState<SelectionOrigin>({ via: 'map', keyboard: false })
+  const toggleFromMap = useCallback(
+    (id: string, keyboard: boolean) => {
+      setSelectionOrigin({ via: 'map', keyboard })
+      toggleLocation(id)
+    },
+    [toggleLocation],
+  )
+  const toggleFromList = useCallback(
+    (id: string, keyboard: boolean) => {
+      setSelectionOrigin({ via: 'list', keyboard })
+      toggleLocation(id)
+    },
+    [toggleLocation],
+  )
+
+  // Las filas de la lista se registran aquí, como los marcadores en
+  // `SpainMap`: son el sitio al que vuelve la vista cuando el detalle se abrió
+  // desde la lista.
+  const rows = useRef(new Map<string, HTMLElement>())
+  const registerRow = useCallback((id: string, element: HTMLElement | null) => {
+    if (element) rows.current.set(id, element)
+    else rows.current.delete(id)
+  }, [])
+  const findRow = useCallback((id: string) => rows.current.get(id) ?? null, [])
+
   // Todo cambio de filtros pasa por `applyFilters`, que en el mismo estado
   // nuevo anula la selección si deja de coincidir. Estables mientras no
   // cambie la previsión.
@@ -108,7 +138,9 @@ function WeatherApp({ forecast, freshness, offerReload, inert = false }: Weather
           forecast={forecast}
           selectedLocationId={selectedLocationId}
           matchingIds={matchingIds}
-          onToggleLocation={toggleLocation}
+          selectionOrigin={selectionOrigin}
+          findRow={findRow}
+          onToggleLocation={toggleFromMap}
           onClearLocation={clearLocation}
         />
         <LocationList
@@ -116,7 +148,8 @@ function WeatherApp({ forecast, freshness, offerReload, inert = false }: Weather
           filters={exploration.filters}
           selectedLocationId={selectedLocationId}
           matchingIds={matchingIds}
-          onToggleLocation={toggleLocation}
+          registerRow={registerRow}
+          onToggleLocation={toggleFromList}
           onClearLocation={clearLocation}
           onQueryChange={changeQuery}
           onZoneChange={changeZone}

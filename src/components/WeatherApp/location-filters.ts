@@ -120,6 +120,17 @@ export interface ExplorationState {
 export const INITIAL_EXPLORATION: ExplorationState = { filters: NO_FILTERS, selectedLocationId: null }
 
 /**
+ * Por dónde se abrió el detalle de un lugar: el mapa o la lista, y si la
+ * activación fue con teclado. Decide adónde vuelven la vista y el foco al
+ * cerrarlo desde la tarjeta. No es parte de la selección: cambia con ella,
+ * pero los filtros no lo tocan.
+ */
+export interface SelectionOrigin {
+  via: 'map' | 'list'
+  keyboard: boolean
+}
+
+/**
  * Aplica unos filtros nuevos. Si el lugar seleccionado deja de cumplirlos,
  * la selección se anula: su marcador pasa a sombra y su fila sale de la
  * lista, así que su tarjeta no puede seguir abierta (009-spec.md).

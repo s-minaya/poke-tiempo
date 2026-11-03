@@ -11,8 +11,15 @@ $list-gap: 1.2rem;
   padding: $padding;
   font-family: vars.$font-body;
 
-  // Mismo azul que la cabecera y el mapa (`Header.scss`, `SpainMap.scss`).
-  background: vars.$map-sea;
+  // En la composición apilada, la misma banda clara que la atribución de los
+  // datos (`SpainMap.scss`): la leyenda continúa esa superficie.
+  background: vars.$map-attribution;
+
+  // En dos columnas, vuelve al azul de la cabecera y el mapa
+  // (`Header.scss`, `SpainMap.scss`).
+  @include bp.respond-from(bp.$breakpoint-desktop-columns) {
+    background: vars.$map-sea;
+  }
 
   // En dos columnas, la leyenda mide lo que el mapa: la rejilla la estira
   // hasta el alto de su fila (`WeatherApp.scss`) y, en una sola columna, sus

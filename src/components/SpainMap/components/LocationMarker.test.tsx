@@ -118,7 +118,7 @@ describe('LocationMarker', () => {
     expect(selectedMarker.innerHTML).toBe(idleMarker.innerHTML)
   })
 
-  it('se activa con clic, con Intro y con Espacio, y avisa con su id', () => {
+  it('se activa con clic, con Intro y con Espacio, y avisa con su id y si fue con teclado', () => {
     const onActivate = vi.fn()
     render(
       <svg>
@@ -132,9 +132,9 @@ describe('LocationMarker', () => {
     fireEvent.keyDown(marker, { key: ' ' })
 
     expect(onActivate).toHaveBeenCalledTimes(3)
-    expect(onActivate).toHaveBeenNthCalledWith(1, 'granada')
-    expect(onActivate).toHaveBeenNthCalledWith(2, 'granada')
-    expect(onActivate).toHaveBeenNthCalledWith(3, 'granada')
+    expect(onActivate).toHaveBeenNthCalledWith(1, 'granada', false)
+    expect(onActivate).toHaveBeenNthCalledWith(2, 'granada', true)
+    expect(onActivate).toHaveBeenNthCalledWith(3, 'granada', true)
   })
 
   it('mantener pulsado Intro no lo activa en bucle', () => {

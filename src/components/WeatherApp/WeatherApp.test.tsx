@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 
 import type { ForecastFreshness } from '../../domain/forecast-freshness.ts'
@@ -191,33 +191,6 @@ describe('WeatherApp', () => {
     expect(screen.getByRole('region', { name: 'Jaca' })).toBeInTheDocument()
     expect(marker).toHaveAttribute('aria-pressed', 'true')
     expect(row).toHaveAttribute('aria-pressed', 'true')
-  })
-
-  it('al seleccionar, lleva a la vista lo que se activó, aunque un toque no lo enfoque', () => {
-    // jsdom no implementa `scrollIntoView`: se anota a quién se le pide.
-    const original = Element.prototype.scrollIntoView
-    const revealed: Element[] = []
-    Element.prototype.scrollIntoView = function (this: Element) {
-      revealed.push(this)
-    }
-    try {
-      render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
-
-      const row = list().getByRole('button', { name: /^Jaca/ })
-      fireEvent.click(row)
-      expect(row).not.toHaveFocus()
-      expect(revealed).toEqual([row])
-
-      // Cerrar no mueve nada.
-      fireEvent.click(row)
-      expect(revealed).toEqual([row])
-
-      const marker = map().getByRole('button', { name: /^Jaca/ })
-      fireEvent.keyDown(marker, { key: 'Enter' })
-      expect(revealed).toEqual([row, marker])
-    } finally {
-      Element.prototype.scrollIntoView = original
-    }
   })
 
   it('el orden de tabulación es el del DOM: ningún tabindex positivo, y los 74 marcadores enfocables', () => {
@@ -628,5 +601,526 @@ describe('WeatherApp — buscar, zona y ordenar', () => {
       expect(notice.previousElementSibling).toBe(container.querySelector('.header'))
       expect(notice.nextElementSibling).toBe(container.querySelector('.legend'))
     })
+  })
+})
+
+// En la composición apilada el detalle va en el flujo, bajo el mapa: seleccionar
+// lleva la página hasta él y cerrarlo desde la tarjeta devuelve la vista al
+// origen. jsdom no aplica el SCSS ni implementa `scrollIntoView`: se anota a
+// quién se le pide, y la tarjeta anclada se simula con una hoja de estilo.
+describe('WeatherApp — el detalle en el flujo', () => {
+  const original = Element.prototype.scrollIntoView
+  let scrolled: { element: Element; options?: ScrollIntoViewOptions }[]
+
+  beforeEach(() => {
+    scrolled = []
+    Element.prototype.scrollIntoView = function (this: Element, options?: boolean | ScrollIntoViewOptions) {
+      scrolled.push({ element: this, options: options as ScrollIntoViewOptions })
+    }
+  })
+
+  afterEach(() => {
+    Element.prototype.scrollIntoView = original
+    vi.restoreAllMocks()
+  })
+
+  function renderApp() {
+    render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
+  }
+
+  function searchbox() {
+    return screen.getByRole('searchbox', { name: 'Buscar' })
+  }
+
+  function closeButton(place: string) {
+    return within(screen.getByRole('region', { name: place })).getByRole('button', { name: 'Cerrar' })
+  }
+
+  /** Ancla la tarjeta junto a su marcador, como en escritorio. Devuelve cómo quitarlo. */
+  function anchorCard() {
+    const style = document.head.appendChild(document.createElement('style'))
+    style.textContent = '.location-card { position: absolute; }'
+    return () => style.remove()
+  }
+
+  describe('seleccionar lleva al comienzo del detalle', () => {
+    it('desde un marcador, por puntero o toque, y sin mover el foco', () => {
+      renderApp()
+      const focusBefore = document.activeElement
+
+      fireEvent.click(map().getByRole('button', { name: /^Jaca/ }))
+
+      expect(scrolled).toEqual([{ element: screen.getByRole('region', { name: 'Jaca' }), options: { block: 'nearest', inline: 'start' } }])
+      expect(document.activeElement).toBe(focusBefore)
+    })
+
+    // Desde la lista el detalle queda arriba: se alinea su borde superior aunque
+    // la tarjeta sea más alta que la ventana visual.
+    it('desde una fila, por puntero o toque, alineando su comienzo y sin mover el foco', () => {
+      renderApp()
+      const focusBefore = document.activeElement
+
+      fireEvent.click(list().getByRole('button', { name: /^Jaca/ }))
+
+      expect(scrolled).toEqual([{ element: screen.getByRole('region', { name: 'Jaca' }), options: { block: 'start', inline: 'start' } }])
+      expect(document.activeElement).toBe(focusBefore)
+    })
+
+    it('al cambiar de lugar, lleva al detalle del nuevo con la alineación de su nueva vía', () => {
+      renderApp()
+
+      fireEvent.click(list().getByRole('button', { name: /^Jaca/ }))
+      const jaca = screen.getByRole('region', { name: 'Jaca' })
+      fireEvent.click(map().getByRole('button', { name: /^Gijón/ }))
+      const gijon = screen.getByRole('region', { name: 'Gijón' })
+      fireEvent.click(list().getByRole('button', { name: /^Jaca/ }))
+
+      expect(scrolled).toEqual([
+        { element: jaca, options: { block: 'start', inline: 'start' } },
+        { element: gijon, options: { block: 'nearest', inline: 'start' } },
+        { element: screen.getByRole('region', { name: 'Jaca' }), options: { block: 'start', inline: 'start' } },
+      ])
+    })
+
+    it('con la tarjeta anclada junto a su marcador no desplaza la página', () => {
+      const unanchor = anchorCard()
+      try {
+        renderApp()
+        fireEvent.click(list().getByRole('button', { name: /^Jaca/ }))
+        fireEvent.click(closeButton('Jaca'))
+
+        expect(scrolled).toEqual([])
+      } finally {
+        unanchor()
+      }
+    })
+  })
+
+  // Con la tarjeta en el flujo, abrirla con Intro o Espacio lleva el foco a
+  // Cerrar: se quedaría en el origen, fuera de la vista. Un clic que no viene
+  // precedido de esa tecla —puntero, toque o una tecnología de asistencia que
+  // activa el botón, aunque llegue con `detail` 0— no mueve el foco.
+  describe('abrirla con teclado lleva el foco a Cerrar', () => {
+    const marker = () => map().getByRole('button', { name: /^Jaca/ })
+    const row = () => list().getByRole('button', { name: /^Jaca/ })
+    const pressMarker = (key: string) => (element: Element) => {
+      fireEvent.keyDown(element, { key })
+    }
+    // El navegador activa un botón con su tecla y, enseguida, un clic.
+    const pressRow = (key: string) => (element: Element) => {
+      fireEvent.keyDown(element, { key })
+      fireEvent.click(element)
+    }
+
+    it.each([
+      ['un marcador con Intro', marker, pressMarker('Enter'), 'nearest'],
+      ['un marcador con Espacio', marker, pressMarker(' '), 'nearest'],
+      ['una fila con Intro', row, pressRow('Enter'), 'start'],
+      ['una fila con Espacio', row, pressRow(' '), 'start'],
+    ] as const)('al abrir con %s, la vista va al detalle y el foco pasa a Cerrar', (_how, find, activate, block) => {
+      renderApp()
+      const origin = find()
+      origin.focus()
+
+      activate(origin)
+
+      expect(closeButton('Jaca')).toHaveFocus()
+      expect(scrolled).toEqual([{ element: screen.getByRole('region', { name: 'Jaca' }), options: { block, inline: 'start' } }])
+    })
+
+    it.each([
+      ['un clic sobre un marcador', marker, (element: Element) => fireEvent.click(element)],
+      ['un clic sobre una fila', row, (element: Element) => fireEvent.click(element)],
+      ['una activación sin teclas con detail 0 sobre un marcador', marker, (element: Element) => fireEvent.click(element, { detail: 0 })],
+      ['una activación sin teclas con detail 0 sobre una fila', row, (element: Element) => fireEvent.click(element, { detail: 0 })],
+      [
+        'una tecla que no activó nada y, después, un puntero',
+        row,
+        (element: Element) => {
+          fireEvent.keyDown(element, { key: 'Enter' })
+          fireEvent.pointerDown(element)
+          fireEvent.click(element)
+        },
+      ],
+    ])('al abrir con %s, el foco no se mueve', (_how, find, activate) => {
+      renderApp()
+      const origin = find()
+      origin.focus()
+
+      activate(origin)
+
+      expect(screen.getByRole('region', { name: 'Jaca' })).toBeInTheDocument()
+      expect(origin).toHaveFocus()
+      expect(closeButton('Jaca')).not.toHaveFocus()
+    })
+
+    it('con la tarjeta anclada junto a su marcador, abrir con teclado no mueve el foco ni desplaza', () => {
+      const unanchor = anchorCard()
+      try {
+        renderApp()
+        const origin = marker()
+        origin.focus()
+
+        fireEvent.keyDown(origin, { key: 'Enter' })
+
+        expect(screen.getByRole('region', { name: 'Jaca' })).toBeInTheDocument()
+        expect(origin).toHaveFocus()
+        expect(scrolled).toEqual([])
+      } finally {
+        unanchor()
+      }
+    })
+
+    it('mantener la tecla pulsada tras abrir no cierra la tarjeta ni la vuelve a abrir', () => {
+      renderApp()
+      marker().focus()
+      fireEvent.keyDown(marker(), { key: 'Enter' })
+      expect(closeButton('Jaca')).toHaveFocus()
+
+      // Las repeticiones llegan ya a Cerrar: el navegador no las activa.
+      const notPrevented = fireEvent.keyDown(document.activeElement!, { key: 'Enter', repeat: true })
+
+      expect(notPrevented).toBe(false)
+      expect(screen.getByRole('region', { name: 'Jaca' })).toBeInTheDocument()
+      expect(closeButton('Jaca')).toHaveFocus()
+    })
+
+    // No es modal: no atrapa el foco ni oculta nada, y el foco puede irse a
+    // donde sea sin que la tarjeta lo reclame.
+    it('no atrapa el foco: Tab y Mayús+Tab siguen su curso y el foco puede salir', () => {
+      renderApp()
+      marker().focus()
+      fireEvent.keyDown(marker(), { key: 'Enter' })
+      const card = screen.getByRole('region', { name: 'Jaca' })
+
+      expect(fireEvent.keyDown(closeButton('Jaca'), { key: 'Tab' })).toBe(true)
+      expect(fireEvent.keyDown(closeButton('Jaca'), { key: 'Tab', shiftKey: true })).toBe(true)
+      searchbox().focus()
+
+      expect(searchbox()).toHaveFocus()
+      expect(card).toBeInTheDocument()
+      expect(card).not.toHaveAttribute('aria-modal')
+      expect(card).not.toHaveAttribute('tabindex')
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+  })
+
+  // Abierta con teclado, Cerrar y Escape devuelven el foco y la vista al
+  // origen: la fila, con su búsqueda, o el marcador.
+  describe('cerrarla tras abrirla con teclado vuelve al origen', () => {
+    const closings = [
+      ['Escape', (close: Element) => fireEvent.keyDown(close, { key: 'Escape' })],
+      ['Cerrar', (close: Element) => fireEvent.click(close)],
+    ] as const
+
+    describe.each(closings)('con %s', (_closing, close) => {
+      it('abierta desde un marcador, devuelve el foco y la vista al marcador', () => {
+        renderApp()
+        const origin = map().getByRole('button', { name: /^Jaca/ })
+        origin.focus()
+        fireEvent.keyDown(origin, { key: 'Enter' })
+        scrolled.length = 0
+
+        close(closeButton('Jaca'))
+
+        expect(screen.queryByRole('region', { name: 'Jaca' })).not.toBeInTheDocument()
+        expect(origin).toHaveFocus()
+        expect(scrolled).toEqual([{ element: origin, options: { block: 'center', inline: 'center' } }])
+      })
+
+      it('abierta desde una fila, devuelve el foco y la vista a la fila, con la búsqueda conservada', () => {
+        renderApp()
+        fireEvent.change(searchbox(), { target: { value: 'jaca' } })
+        const origin = list().getByRole('button', { name: /^Jaca/ })
+        origin.focus()
+        fireEvent.keyDown(origin, { key: 'Enter' })
+        fireEvent.click(origin)
+        scrolled.length = 0
+
+        close(closeButton('Jaca'))
+
+        expect(screen.queryByRole('region', { name: 'Jaca' })).not.toBeInTheDocument()
+        expect(origin).toHaveFocus()
+        expect(origin).toHaveAttribute('aria-pressed', 'false')
+        expect(searchbox()).toHaveValue('jaca')
+        expect(scrolled).toEqual([{ element: origin, options: { block: 'center', inline: 'start' } }])
+      })
+    })
+  })
+
+  describe('cerrarla desde la tarjeta vuelve al origen', () => {
+    it('abierta desde una fila, a esa fila y con la búsqueda conservada', () => {
+      renderApp()
+      fireEvent.change(searchbox(), { target: { value: 'jaca' } })
+      const row = list().getByRole('button', { name: /^Jaca/ })
+      fireEvent.click(row)
+      scrolled.length = 0
+
+      fireEvent.click(closeButton('Jaca'))
+
+      expect(scrolled).toEqual([{ element: row, options: { block: 'center', inline: 'start' } }])
+      expect(searchbox()).toHaveValue('jaca')
+      expect(row).toHaveAttribute('aria-pressed', 'false')
+    })
+
+    it('abierta desde un marcador, a ese marcador', () => {
+      renderApp()
+      const marker = map().getByRole('button', { name: /^Jaca/ })
+      fireEvent.click(marker)
+      scrolled.length = 0
+
+      fireEvent.click(closeButton('Jaca'))
+
+      expect(scrolled).toEqual([{ element: marker, options: { block: 'center', inline: 'center' } }])
+    })
+
+    it('manda la última vía por la que se abrió, también al cambiar de lugar', () => {
+      renderApp()
+      const gijonMarker = map().getByRole('button', { name: /^Gijón/ })
+      fireEvent.click(list().getByRole('button', { name: /^Jaca/ }))
+      fireEvent.click(gijonMarker)
+      scrolled.length = 0
+      fireEvent.click(closeButton('Gijón'))
+      expect(scrolled.map(({ element }) => element)).toEqual([gijonMarker])
+
+      const jacaRow = list().getByRole('button', { name: /^Jaca/ })
+      fireEvent.click(gijonMarker)
+      fireEvent.click(jacaRow)
+      scrolled.length = 0
+      fireEvent.click(closeButton('Jaca'))
+      expect(scrolled.map(({ element }) => element)).toEqual([jacaRow])
+    })
+  })
+
+  // Quitar la tarjeta desde fuera no vuelve a ningún sitio, pero lo que había
+  // debajo sube lo que ella medía. Safari no tiene scroll anchoring: si la
+  // tarjeta empezaba por encima de lo que se ve, se compensa.
+  describe('cerrarla desde fuera de la tarjeta conserva lo que se está mirando', () => {
+    const CARD_HEIGHT = 120
+    const VIEWPORT_HEIGHT = 800
+    let cardTop: number
+    let rowTop: number
+    let markerTop: number
+    const scrollBy = vi.fn()
+
+    beforeEach(() => {
+      cardTop = -CARD_HEIGHT
+      rowTop = 100
+      markerTop = 100
+      Object.defineProperty(document.documentElement, 'clientHeight', { configurable: true, value: VIEWPORT_HEIGHT })
+      scrollBy.mockClear()
+      vi.spyOn(window, 'scrollBy').mockImplementation(scrollBy)
+      // La atribución va justo debajo de la tarjeta: sube su altura al quitarla.
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+        const cardMounted = document.querySelector('.location-card') !== null
+        const attributionTop = cardMounted ? 300 : 300 - CARD_HEIGHT
+        const isRow = this.classList.contains('location-list__row')
+        const isMarker = this.classList.contains('location-marker')
+        const top = this.classList.contains('location-card')
+          ? cardTop
+          : this.classList.contains('spain-map__attribution')
+            ? attributionTop
+            : isRow
+              ? rowTop
+              : isMarker
+                ? markerTop
+                : 0
+        const bottom = isRow || isMarker ? top + 50 : top
+        return { top, y: top, bottom, left: 0, x: 0, right: 0, width: 0, height: bottom - top, toJSON: () => ({}) }
+      })
+    })
+
+    afterEach(() => {
+      Reflect.deleteProperty(document.documentElement, 'clientHeight')
+    })
+
+    function openJaca() {
+      renderApp()
+      fireEvent.click(map().getByRole('button', { name: /^Jaca/ }))
+      scrolled.length = 0
+    }
+
+    it.each([
+      ['un filtro que excluye el lugar', () => fireEvent.change(searchbox(), { target: { value: 'gijon' } })],
+      ['pulsar otra vez su fila', () => fireEvent.click(list().getByRole('button', { pressed: true }))],
+      ['Escape en su fila', () => fireEvent.keyDown(list().getByRole('button', { pressed: true }), { key: 'Escape' })],
+      ['Escape en su marcador', () => fireEvent.keyDown(map().getByRole('button', { pressed: true }), { key: 'Escape' })],
+    ])('%s: se compensa lo que sube', (_name, close) => {
+      openJaca()
+
+      close()
+
+      expect(screen.queryByRole('region', { name: 'Jaca' })).not.toBeInTheDocument()
+      expect(scrollBy).toHaveBeenCalledTimes(1)
+      expect(scrollBy).toHaveBeenCalledWith(0, -CARD_HEIGHT)
+      expect(scrolled).toEqual([])
+    })
+
+    // La fila conserva el foco: Escape (o Intro) en ella cierra el detalle, y la
+    // vista, que pudo quedar lejos de ella, vuelve a ella tras compensar.
+    describe.each([
+      ['Escape en su fila', (row: Element) => fireEvent.keyDown(row, { key: 'Escape' })],
+      [
+        'Intro en su fila',
+        (row: Element) => {
+          fireEvent.keyDown(row, { key: 'Enter' })
+          fireEvent.click(row)
+        },
+      ],
+    ])('%s, con la tarjeta ya cerrada', (_how, close) => {
+      function openFromRowWithFocus() {
+        renderApp()
+        fireEvent.click(list().getByRole('button', { name: /^Jaca/ }))
+        const row = list().getByRole('button', { pressed: true })
+        row.focus()
+        scrolled.length = 0
+        return row
+      }
+
+      it('con la fila fuera de la vista: se compensa lo de debajo y la fila queda a la vista y enfocada', () => {
+        rowTop = -900
+        const row = openFromRowWithFocus()
+
+        close(row)
+
+        expect(screen.queryByRole('region', { name: 'Jaca' })).not.toBeInTheDocument()
+        expect(scrollBy).toHaveBeenCalledTimes(1)
+        expect(scrollBy).toHaveBeenCalledWith(0, -CARD_HEIGHT)
+        expect(scrolled).toEqual([{ element: row, options: { block: 'center', inline: 'start' } }])
+        expect(row).toHaveFocus()
+      })
+
+      it('con la fila a la vista: solo se compensa', () => {
+        const row = openFromRowWithFocus()
+
+        close(row)
+
+        expect(scrollBy).toHaveBeenCalledWith(0, -CARD_HEIGHT)
+        expect(scrolled).toEqual([])
+        expect(row).toHaveFocus()
+      })
+    })
+
+    // Escape en el marcador, que conserva el foco: como en la fila, se compensa
+    // lo de debajo y, si el marcador quedó fuera de la vista, se lleva a ella.
+    // Otros cierres desde el marcador no lo mueven.
+    describe('Escape en su marcador, con la tarjeta ya cerrada', () => {
+      function openFromMarkerWithFocus() {
+        openJaca()
+        const marker = map().getByRole('button', { pressed: true })
+        marker.focus()
+        scrolled.length = 0
+        return marker
+      }
+
+      it('con el marcador fuera de la vista: se compensa lo de debajo y el marcador queda a la vista y enfocado', () => {
+        markerTop = -900
+        const marker = openFromMarkerWithFocus()
+
+        fireEvent.keyDown(marker, { key: 'Escape' })
+
+        expect(screen.queryByRole('region', { name: 'Jaca' })).not.toBeInTheDocument()
+        expect(scrollBy).toHaveBeenCalledTimes(1)
+        expect(scrollBy).toHaveBeenCalledWith(0, -CARD_HEIGHT)
+        expect(scrolled).toEqual([{ element: marker, options: { block: 'center', inline: 'center' } }])
+        expect(marker).toHaveFocus()
+      })
+
+      it('con el marcador a la vista: solo se compensa', () => {
+        const marker = openFromMarkerWithFocus()
+
+        fireEvent.keyDown(marker, { key: 'Escape' })
+
+        expect(scrollBy).toHaveBeenCalledWith(0, -CARD_HEIGHT)
+        expect(scrolled).toEqual([])
+        expect(marker).toHaveFocus()
+      })
+
+      it.each([
+        ['Intro en su marcador', (marker: Element) => fireEvent.keyDown(marker, { key: 'Enter' })],
+        ['un clic en su marcador', (marker: Element) => fireEvent.click(marker)],
+      ])('%s no lo lleva a la vista: solo se compensa', (_how, close) => {
+        markerTop = -900
+        const marker = openFromMarkerWithFocus()
+
+        close(marker)
+
+        expect(screen.queryByRole('region', { name: 'Jaca' })).not.toBeInTheDocument()
+        expect(scrollBy).toHaveBeenCalledWith(0, -CARD_HEIGHT)
+        expect(scrolled).toEqual([])
+      })
+
+      it('con la tarjeta anclada junto a su marcador no se mueve nada', () => {
+        const unanchor = anchorCard()
+        try {
+          markerTop = -900
+          const marker = openFromMarkerWithFocus()
+
+          fireEvent.keyDown(marker, { key: 'Escape' })
+
+          expect(scrollBy).not.toHaveBeenCalled()
+          expect(scrolled).toEqual([])
+        } finally {
+          unanchor()
+        }
+      })
+    })
+
+    it('si la tarjeta se ve, no hay nada que compensar', () => {
+      cardTop = 40
+      openJaca()
+
+      fireEvent.change(searchbox(), { target: { value: 'gijon' } })
+
+      expect(scrollBy).not.toHaveBeenCalled()
+    })
+
+    it('cerrarla con su botón no compensa: la vista vuelve al origen', () => {
+      openJaca()
+
+      fireEvent.click(closeButton('Jaca'))
+
+      expect(scrollBy).not.toHaveBeenCalled()
+      expect(scrolled).toHaveLength(1)
+    })
+
+    it('con la tarjeta anclada junto a su marcador no compensa', () => {
+      const unanchor = anchorCard()
+      try {
+        openJaca()
+
+        fireEvent.change(searchbox(), { target: { value: 'gijon' } })
+
+        expect(scrollBy).not.toHaveBeenCalled()
+      } finally {
+        unanchor()
+      }
+    })
+  })
+})
+
+// Con un lugar seleccionado solo su Pokémon conserva el color, venga la
+// selección del mapa o de la lista; cerrar el detalle los devuelve a todos.
+describe('WeatherApp — selección visual', () => {
+  const silhouettes = (container: HTMLElement) => container.querySelectorAll('.marker-layers__sprites image[filter]').length
+  const sprites = (container: HTMLElement) => container.querySelectorAll('.marker-layers__sprites image').length
+
+  it.each([
+    ['un marcador', () => map().getByRole('button', { name: /^Jaca/ })],
+    ['una fila de la lista', () => list().getByRole('button', { name: /^Jaca/ })],
+  ])('al elegir %s, los demás pasan a silueta y al cerrar vuelven los colores', (_via, origin) => {
+    const { container } = render(<WeatherApp forecast={forecastData as Forecast} freshness={TOMORROW} offerReload={false} />)
+    const total = sprites(container)
+    expect(silhouettes(container)).toBe(0)
+
+    fireEvent.click(origin())
+    expect(silhouettes(container)).toBe(total - 1)
+    expect(map().getAllByRole('button', { pressed: false })).toHaveLength(73)
+
+    fireEvent.click(map().getByRole('button', { name: /^Gijón/ }))
+    expect(silhouettes(container)).toBe(total - 1)
+
+    fireEvent.click(within(screen.getByRole('region', { name: 'Gijón' })).getByRole('button', { name: 'Cerrar' }))
+    expect(silhouettes(container)).toBe(0)
   })
 })

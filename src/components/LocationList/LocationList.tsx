@@ -9,7 +9,6 @@ import type { Forecast } from '../../domain/types.ts'
 
 import { buildLocationViews } from '../../domain/location-views.ts'
 import { summarizeView } from '../LocationCard/location-summary.ts'
-import { useRevealWhenSelected } from '../LocationCard/use-reveal-when-selected.ts'
 import { NO_FILTERS } from '../WeatherApp/location-filters.ts'
 import { groupLocations } from './location-groups.ts'
 
@@ -34,9 +33,11 @@ interface LocationListProps {
    * muestra solo los que coinciden, los mismos que el mapa deja operables.
    */
   matchingIds?: ReadonlySet<string> | null
-  /** Activar una fila: la selecciona, o cierra la tarjeta si ya lo estaba. */
-  onToggleLocation?: (id: string) => void
+  /** Activar una fila: la selecciona, o cierra la tarjeta si ya lo estaba. `keyboard` dice si fue con Intro o Espacio. */
+  onToggleLocation?: (id: string, keyboard: boolean) => void
   onClearLocation?: () => void
+  /** Registra cada fila en `WeatherApp`: es adonde vuelve la vista al cerrar un detalle abierto desde aquí. */
+  registerRow?: (id: string, element: HTMLElement | null) => void
   onQueryChange?: (query: string) => void
   onZoneChange?: (zone: ZoneFilter) => void
   onToggleCondition?: (id: PokedexId) => void
@@ -50,8 +51,9 @@ interface LocationRowProps {
   summary: LocationSummary
   selected: boolean
   emphasis: Emphasis
-  onToggle?: (id: string) => void
+  onToggle?: (id: string, keyboard: boolean) => void
   onDismiss?: () => void
+  register?: (id: string, element: HTMLElement | null) => void
 }
 
 const ZONE_BY_ID = new Map(locations.map((location) => [location.id, location.zone]))
@@ -62,18 +64,32 @@ const ZONE_BY_ID = new Map(locations.map((location) => [location.id, location.zo
  * los manejadores de `useCallback` en `WeatherApp`): al cambiar la selección
  * solo se vuelven a pintar las dos filas cuyo `selected` cambia.
  */
-const LocationRow = memo(function LocationRow({ summary, selected, emphasis, onToggle, onDismiss }: LocationRowProps) {
-  const button = useRef<HTMLButtonElement | null>(null)
-  const markActivated = useRevealWhenSelected(button, selected)
+const LocationRow = memo(function LocationRow({ summary, selected, emphasis, onToggle, onDismiss, register }: LocationRowProps) {
+  const setButton = useCallback((node: HTMLButtonElement | null) => register?.(summary.id, node), [summary.id, register])
+
+  // Intro y Espacio activan el botón con un `click` que el navegador dispara
+  // justo después de su tecla. Un `click` que llega sin esa tecla previa lo
+  // hizo un puntero, un toque o una tecnología de asistencia, y ninguno de
+  // ellos debe mover el foco al abrir el detalle. `click.detail` no sirve
+  // para distinguirlo: también es 0 cuando una tecnología de asistencia
+  // activa el botón sin pulsar ninguna tecla.
+  const keyPressed = useRef(false)
 
   function activate() {
-    markActivated()
-    onToggle?.(summary.id)
+    const keyboard = keyPressed.current
+    keyPressed.current = false
+    onToggle?.(summary.id, keyboard)
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === 'Enter' || event.key === ' ') keyPressed.current = true
     // Como en el marcador: cierra la tarjeta sin mover el foco de aquí.
-    if (event.key === 'Escape') onDismiss?.()
+    else if (event.key === 'Escape') onDismiss?.()
+  }
+
+  // Una tecla que no llegó a activar nada no puede contar para un puntero posterior.
+  function forgetKey() {
+    keyPressed.current = false
   }
 
   const hasTemperatures = summary.minC != null && summary.maxC != null
@@ -82,7 +98,16 @@ const LocationRow = memo(function LocationRow({ summary, selected, emphasis, onT
 
   return (
     <li className="location-list__item">
-      <button ref={button} type="button" className="location-list__row" aria-pressed={selected} onClick={activate} onKeyDown={handleKeyDown}>
+      <button
+        ref={setButton}
+        type="button"
+        className="location-list__row"
+        aria-pressed={selected}
+        onClick={activate}
+        onKeyDown={handleKeyDown}
+        onPointerDown={forgetKey}
+        onBlur={forgetKey}
+      >
         {summary.pokemonId ? (
           // Decorativo: la condición va en texto al lado. En diferido: la
           // lista queda por debajo del pliegue en todas las composiciones.
@@ -148,6 +173,7 @@ function LocationList({
   matchingIds = null,
   onToggleLocation,
   onClearLocation,
+  registerRow,
   onQueryChange,
   onZoneChange,
   onToggleCondition,
@@ -210,6 +236,7 @@ function LocationList({
                 emphasis={emphasis}
                 onToggle={onToggleLocation}
                 onDismiss={onClearLocation}
+                register={registerRow}
               />
             ))}
           </ul>
