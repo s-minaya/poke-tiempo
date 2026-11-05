@@ -339,8 +339,10 @@ describe('App', () => {
       expect(shownStatus(container)).toBe('late')
       expect(container.querySelector('.freshness-notice')).toBeNull()
 
-      // Doce horas después ya es de anteayer: el aviso fuerte, sin recargar.
-      wait(12 * HOUR_MS)
+      // Cruzada la medianoche de Madrid que abre el día siguiente al de la
+      // carga, la previsión ya no es de ayer: el aviso fuerte, sin recargar.
+      vi.setSystemTime(madridMidnight(addCalendarDays(date, 2)) - 30 * 1000)
+      nextRecheck()
       expect(shownStatus(container)).toBe('very-late')
       expect(container.querySelector('.freshness-notice__reload')).toBeNull()
     })
