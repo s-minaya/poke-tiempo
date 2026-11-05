@@ -1,27 +1,27 @@
 {
-  "date": "2026-10-23",
-  "generatedAt": "2026-10-22T10:53:36.961Z",
+  "date": "2026-11-06",
+  "generatedAt": "2026-11-05T15:12:34.776Z",
   "source": "fallback",
-  "dayMode": "alerta",
-  "serious": true,
+  "dayMode": "parte",
+  "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "En el mapa domina el cielo poco nuboso. Seguimos observando."
+      "text": "Bien. En España se concentran las máximas más altas. Seguimos observando."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "consejo",
-      "text": "Atención un momento. Tenemos un aviso oficial naranja por fenómenos costeros en A Coruña y allí el mar levanta 4,2 m de ola, con periodos de 13,2 s."
+      "tone": "neutral",
+      "text": "Hay lluvia entre los lugares de Portugal representados en el mapa y Castform (Niebla) aparece en 4 lugares, entre ellos Lugo, Teruel y Alcañiz."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "neutral",
-      "text": "En Canarias se concentran las máximas más altas y Mega-Gyarados se deja ver en 7 lugares, entre ellos A Coruña, Pontevedra y Gijón. Tomo nota."
+      "tone": "guasa",
+      "text": "Castform ha vuelto a cambiarse de ropa. Cielo despejado en el noreste y esta vez, Lluvia moderada: aparece en 20 lugares."
     }
   ]
 }
