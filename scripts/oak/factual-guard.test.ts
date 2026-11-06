@@ -99,6 +99,17 @@ describe('paráfrasis válidas', () => {
     expect(check(1, 'Interesante... Castform (Niebla) aparece en 4 lugares del mapa.', brief).ok).toBe(true)
   })
 
+  // El token se expande a su claim, que empieza en mayúscula; colocado tras
+  // dos puntos o una coma, «En» quedaba en mitad de frase y parecía un nombre.
+  it('acepta un claim expandido en mitad de frase, aunque empiece por «En»', () => {
+    expect(check(1, 'Atención: En Benasque, la mínima nocturna baja hasta 10 °C. Charmeleon aparece en 35 lugares.').ok).toBe(true)
+    expect(check(1, 'Charmeleon aparece en 35 lugares, y En Benasque, la mínima nocturna baja hasta 10 °C.').ok).toBe(true)
+  })
+
+  it('una palabra gramatical en mayúscula tras una coma no es un nombre propio', () => {
+    expect(check(1, 'Vaya, En Benasque refresca de noche y Charmeleon aparece en 35 lugares.').ok).toBe(true)
+  })
+
   it('no confunde un nombre compuesto con el simple que contiene', () => {
     const brief = [BRIEF[0], BRIEF[1], { ...BRIEF[2], allowed: { ...BRIEF[2].allowed, pokemon: ['Mega-Gyarados'] } }]
 
@@ -125,6 +136,11 @@ describe('entidades que nadie autorizó', () => {
 
   it('rechaza un lugar inventado en mitad de la frase', () => {
     expect(check(1, 'Vaya, Charmeleon aparece en 35 lugares. En Madrid lo tenemos también.').ok).toBe(false)
+  })
+
+  it('una palabra gramatical en mayúscula no tapa el nombre inventado que la sigue', () => {
+    expect(check(1, 'Charmeleon aparece en 35 lugares, y En Madrid también.')).toEqual({ ok: false, reason: 'dialogue-2: nombra "Madrid", que no existe en los datos del día' })
+    expect(check(1, 'Charmeleon aparece en 35 lugares, y La Coruña también.')).toEqual({ ok: false, reason: 'dialogue-2: nombra "Coruña", que no existe en los datos del día' })
   })
 
   it('rechaza un Pokémon de nuestro censo que hoy no le tocaba', () => {

@@ -123,7 +123,7 @@ describe('selectProtagonists', () => {
   it('ignora los hechos que no son spotlight', () => {
     const facts: NarrativeFact[] = [
       { kind: 'calendar', date: '2026-09-18', weekday: 'viernes', weekend: false },
-      { kind: 'day_shape', totalLocations: 74, rainingLocations: 3, alertedLocations: 0, distinctPokemonCount: 2 },
+      { kind: 'day_shape', totalLocations: 74, rainingLocations: 3, alertedLocations: 0, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 2 },
       spotlight('zapdos', 2),
     ]
 

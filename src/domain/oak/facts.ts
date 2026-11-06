@@ -59,6 +59,13 @@ import type {
 // `locationCount`, no se pierde.
 const SPOTLIGHT_LOCATION_LIMIT = 3
 
+/**
+ * Cuántos lugares de un `AlertFact` se nombran al narrarlo. El hecho los
+ * conserva todos —el reparto los necesita para emparejar y retirar hechos—;
+ * las dos vías de redacción nombran esta muestra y dan el total real.
+ */
+export const NARRATED_ALERT_LOCATION_LIMIT = SPOTLIGHT_LOCATION_LIMIT
+
 // `Date.UTC` solo para calendario, nunca como instante real: evita que el día
 // de la semana dependa de la zona horaria del entorno de ejecución, igual que
 // en `target-date.ts` y `format-forecast-headline.ts`.
@@ -295,18 +302,31 @@ function marineFacts(entries: readonly LocationEntry[], date: string): MarineFac
 }
 
 /**
- * Los avisos activos el día del forecast, agrupados por
- * `officialZoneId + phenomenon + level + startsAt`: varios de los 74 lugares
- * comparten zona oficial y traerían el mismo aviso repetido. El aviso sigue
- * siendo uno solo y conserva todos los puntos del mapa a los que afecta, en
- * el orden estable de `locations` — no se elige un lugar representativo.
+ * Los avisos activos el día del forecast, agrupados por `phenomenon + level`
+ * en cualquier zona oficial y fuente: el rojo por lluvia de Castellón y el de
+ * Valencia son dos avisos y una sola cosa que contar. Un fenómeno sin
+ * categoría (`desconocido`) solo se agrupa con su mismo literal de origen.
+ *
+ * Los avisos y los lugares se cuentan aparte: `officialAlertCount` son los
+ * avisos oficiales distintos (zona y tramo, y la fuente puede repetir el
+ * mismo) y `affectedLocations` los puntos del mapa bajo alguno de ellos, cada
+ * uno una vez, en el orden estable de `locations` — no se elige un lugar
+ * representativo y no se recorta: la muestra es cosa de la narración.
  *
  * Aquí no se decide ningún modo narrativo: un aviso amarillo produce hecho
  * igual que uno rojo, y qué nivel activa el modo `alerta` se resuelve en
  * `day-mode.ts`.
  */
 function alertFacts(entries: readonly LocationEntry[], date: string): AlertFact[] {
-  const groups = new Map<string, { alert: OfficialAlert; places: FactLocation[] }>()
+  interface Group {
+    alert: OfficialAlert
+    officialAlerts: Set<string>
+    zones: Set<string>
+    sources: Set<OfficialAlert['source']>
+    sourcePhenomena: Set<string>
+    places: FactLocation[]
+  }
+  const groups = new Map<string, Group>()
 
   for (const entry of entries) {
     const { alerts } = entry.forecast
@@ -315,23 +335,37 @@ function alertFacts(entries: readonly LocationEntry[], date: string): AlertFact[
     for (const alert of alerts.alerts) {
       if (!isActiveOnDate(alert, date)) continue
 
-      const key = `${alert.officialZoneId}|${alert.phenomenon}|${alert.level}|${alert.startsAt}`
-      const group = groups.get(key) ?? { alert, places: [] }
+      const literal = alert.phenomenon === 'desconocido' ? alert.sourcePhenomenon : ''
+      const key = `${alert.phenomenon}|${literal}|${alert.level}`
+      const group = groups.get(key) ?? {
+        alert,
+        officialAlerts: new Set(),
+        zones: new Set(),
+        sources: new Set(),
+        sourcePhenomena: new Set(),
+        places: [],
+      }
+      group.officialAlerts.add(`${alert.source}|${alert.officialZoneId}|${alert.startsAt}`)
+      group.zones.add(alert.officialZoneId)
+      group.sources.add(alert.source)
+      group.sourcePhenomena.add(alert.sourcePhenomenon)
       // La fuente puede repetir el mismo aviso en un lugar: el lugar cuenta una vez.
       if (!group.places.some((place) => place.locationId === entry.location.id)) group.places.push(plainLocation(entry))
       groups.set(key, group)
     }
   }
 
-  return [...groups.values()].map(({ alert, places }) => ({
+  return [...groups.values()].map((group) => ({
     kind: 'alert',
-    level: alert.level,
-    phenomenon: alert.phenomenon,
-    sourcePhenomenon: alert.sourcePhenomenon,
-    officialZoneId: alert.officialZoneId,
-    source: alert.source,
-    affectedLocations: places,
-    affectedLocationCount: places.length,
+    level: group.alert.level,
+    phenomenon: group.alert.phenomenon,
+    sourcePhenomena: [...group.sourcePhenomena],
+    officialZoneIds: [...group.zones],
+    sources: [...group.sources],
+    officialAlertCount: group.officialAlerts.size,
+    affectedLocations: group.places,
+    affectedLocationCount: group.places.length,
+    otherAlertsActive: groups.size > 1,
   }))
 }
 
@@ -360,7 +394,8 @@ function spotlightFacts(entries: readonly LocationEntry[]): PokemonSpotlightFact
 /**
  * `alertedLocations` cuenta lugares con algún aviso activo, no avisos: es
  * "cuántos sitios están avisados", así que no se deduplica por zona — dos
- * lugares de la misma zona son dos sitios avisados.
+ * lugares de la misma zona son dos sitios avisados. Un lugar con la consulta
+ * de avisos caída no cuenta como no avisado: se cuenta aparte.
  *
  * Qué Pokémon domina el día no se responde aquí: eso es el `locationCount`
  * de cada `PokemonSpotlightFact`, y duplicarlo sería tener el mismo hecho en
@@ -372,6 +407,8 @@ function dayShapeFacts(entries: readonly LocationEntry[], date: string): DayShap
   const visiblePokemon = new Set<PokedexId>()
   let rainingLocations = 0
   let alertedLocations = 0
+  let alertsUnavailableLocations = 0
+  let alertsUnsupportedLocations = 0
 
   for (const entry of entries) {
     visiblePokemon.add(entry.mapLocation.mapPokemonId)
@@ -379,6 +416,8 @@ function dayShapeFacts(entries: readonly LocationEntry[], date: string): DayShap
     if ((entry.forecast.precipitation?.mm ?? 0) > 0) rainingLocations += 1
 
     const { alerts } = entry.forecast
+    if (alerts.status === 'error') alertsUnavailableLocations += 1
+    if (alerts.status === 'unsupported') alertsUnsupportedLocations += 1
     if (alerts.status === 'ok' && alerts.alerts.some((alert) => isActiveOnDate(alert, date))) alertedLocations += 1
   }
 
@@ -388,6 +427,8 @@ function dayShapeFacts(entries: readonly LocationEntry[], date: string): DayShap
       totalLocations: entries.length,
       rainingLocations,
       alertedLocations,
+      alertsUnavailableLocations,
+      alertsUnsupportedLocations,
       distinctPokemonCount: visiblePokemon.size,
     },
   ]

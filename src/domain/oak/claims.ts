@@ -1,6 +1,7 @@
 import { POKEMON_NAMES, displayPokemonName } from '../pokemon-names.ts'
 import type { AlertLevel, AlertPhenomenon, SkyCondition } from '../types.ts'
 import type { DayBriefing } from './briefing.ts'
+import { NARRATED_ALERT_LOCATION_LIMIT } from './facts.ts'
 import type { DayMode } from './day-mode.ts'
 import { scopeLabel } from './editorial-regions.ts'
 import type { LeitmotifId } from './leitmotifs.ts'
@@ -97,8 +98,12 @@ const WEEKDAY_TEXT: Record<Weekday, string> = {
   domingo: 'domingo',
 }
 
-/** Cómo se lee el fenómeno de un aviso. No reinterpreta el nivel ni la categoría. */
-const PHENOMENON_TEXT: Record<AlertPhenomenon, string> = {
+/**
+ * Cómo se lee el fenómeno de un aviso. No reinterpreta el nivel ni la
+ * categoría. `desconocido` no tiene lectura: el literal de origen es
+ * trazabilidad, así que el aviso se cuenta por su nivel y sus lugares.
+ */
+const PHENOMENON_TEXT: Record<AlertPhenomenon, string | null> = {
   lluvia: 'lluvia',
   nieve: 'nieve',
   viento: 'viento',
@@ -109,7 +114,7 @@ const PHENOMENON_TEXT: Record<AlertPhenomenon, string> = {
   niebla: 'niebla',
   calima: 'calima',
   deshielo: 'deshielo',
-  desconocido: 'un fenómeno sin clasificar',
+  desconocido: null,
 }
 
 /**
@@ -270,29 +275,41 @@ function marineClaims(fact: MarineFact): ClaimSet {
   })
 }
 
+/** El nivel en plural concuerda con «avisos»; «naranja» es invariable. */
+const LEVEL_PLURAL: Record<AlertLevel, string> = { amarillo: 'amarillos', naranja: 'naranja', rojo: 'rojos' }
+
 /**
- * Un aviso oficial. La frase separa el aviso —que es uno— de los lugares
- * nuestros que caen bajo su zona, que pueden ser varios: "7 avisos" salió de
- * mandar el recuento a secas, así que el recuento ya no viaja solo.
+ * Los avisos oficiales de un fenómeno y nivel. La frase separa los avisos
+ * —uno o varios, emitidos para zonas— de los lugares nuestros que caen bajo
+ * ellos: "7 avisos" salió de mandar el recuento a secas, así que el recuento
+ * es siempre de lugares y nunca viaja solo. Con más de tres lugares se nombra
+ * una muestra de tres, anunciada como muestra, y el total real.
  *
- * `officialZoneId`, `source` y `sourcePhenomenon` son trazabilidad y no
+ * Si hay otros avisos activos de otro fenómeno o nivel, se dice que los hay,
+ * sin enumerarlos: este no se presenta como el único.
+ *
+ * `officialZoneIds`, `sources` y `sourcePhenomena` son trazabilidad y no
  * entran en ninguna frase.
  */
 function alertClaims(fact: AlertFact): ClaimSet {
   const phenomenon = PHENOMENON_TEXT[fact.phenomenon]
-  const names = fact.affectedLocations.map((place) => place.locationName)
-  const head = `Hay un aviso oficial ${fact.level} por ${phenomenon}`
+  const names = fact.affectedLocations.slice(0, NARRATED_ALERT_LOCATION_LIMIT).map((place) => place.locationName)
+  const plural = fact.officialAlertCount > 1
+  const alerts = plural ? `avisos oficiales ${LEVEL_PLURAL[fact.level]}` : `un aviso oficial ${fact.level}`
+  const head = phenomenon === null ? `Hay ${alerts}` : `Hay ${alerts} por ${phenomenon}`
+  const affect = plural ? 'afectan' : 'afecta'
   const meta = { places: names, alertLevels: [fact.level] }
+  const others = fact.otherAlertsActive ? ' Hay más avisos oficiales activos en el mapa.' : ''
 
   if (names.length === 0) {
-    return claim(`${head} que afecta a ${places(fact.affectedLocationCount)} de nuestro mapa.`, meta)
+    return claim(`${head} que ${affect} a ${places(fact.affectedLocationCount)} de nuestro mapa.${others}`, meta)
   }
   if (fact.affectedLocationCount === names.length) {
-    if (names.length === 1) return claim(`${head} que afecta a nuestro lugar de ${names[0]}.`, meta)
-    return claim(`${head} que afecta a ${places(names.length)} de nuestro mapa: ${listNames(names)}.`, meta)
+    if (names.length === 1) return claim(`${head} que ${affect} a nuestro lugar de ${names[0]}.${others}`, meta)
+    return claim(`${head} que ${affect} a ${places(names.length)} de nuestro mapa: ${listNames(names)}.${others}`, meta)
   }
   const some = names.length === 1 ? `${names[0]} es uno de ellos` : `${listNames(names)} son algunos de ellos`
-  return claim(`${head} que afecta a ${places(fact.affectedLocationCount)} de nuestro mapa; ${some}.`, meta)
+  return claim(`${head} que ${affect} a ${places(fact.affectedLocationCount)} de nuestro mapa; ${some}.${others}`, meta)
 }
 
 /**
@@ -333,18 +350,32 @@ function spotlightClaims(fact: PokemonSpotlightFact): ClaimSet {
  * observación, cuatro son una tabla.
  */
 function dayShapeClaims(fact: DayShapeFact): ClaimSet {
-  const { alertedLocations: alerted, rainingLocations: raining } = fact
+  const { rainingLocations: raining } = fact
+  // Con la consulta de avisos caída en algún lugar, el recuento de avisos no
+  // se dice: ni como cifra, que sería una cota inferior, ni como «ni avisos».
+  const alertsKnown = fact.alertsUnavailableLocations === 0
+  const alerted = alertsKnown ? fact.alertedLocations : 0
   const total = places(fact.totalLocations)
+
+  if (!alertsKnown) {
+    if (raining > 0) return claim(`En el mapa, ${raining} de ${total} ${raining === 1 ? 'tiene' : 'tienen'} lluvia.`)
+    return claim(`No hay lluvia en ninguno de ${total} del mapa.`)
+  }
 
   if (alerted > 0 && raining > 0) {
     return claim(`Hay ${places(alerted)} del mapa bajo algún aviso y ${whole(raining)} con lluvia.`)
   }
+  // Con lugares sin producto de avisos (Andorra), el total no es el
+  // denominador de los avisos y no se puede decir que falten.
+  const fullCoverage = fact.alertsUnsupportedLocations === 0
   if (alerted > 0) {
+    if (!fullCoverage) return claim(`Hay ${places(alerted)} del mapa bajo algún aviso.`)
     return claim(`En el mapa, ${alerted} de ${total} ${alerted === 1 ? 'está' : 'están'} bajo algún aviso.`)
   }
   if (raining > 0) {
     return claim(`En el mapa, ${raining} de ${total} ${raining === 1 ? 'tiene' : 'tienen'} lluvia.`)
   }
+  if (!fullCoverage) return claim(`No hay lluvia en ninguno de ${total} del mapa.`)
   return claim(`No hay lluvia ni avisos en ninguno de ${total} del mapa.`)
 }
 

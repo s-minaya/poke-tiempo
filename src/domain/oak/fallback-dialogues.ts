@@ -1,6 +1,7 @@
 import { POKEMON_NAMES, displayPokemonName, hasSharedName } from '../pokemon-names.ts'
-import type { AlertPhenomenon, SkyCondition } from '../types.ts'
+import type { AlertLevel, AlertPhenomenon, SkyCondition } from '../types.ts'
 import { scopeLabel } from './editorial-regions.ts'
+import { NARRATED_ALERT_LOCATION_LIMIT } from './facts.ts'
 import type { LeitmotifId } from './leitmotifs.ts'
 import { DIALOGUE_MAX_LENGTH, DIALOGUE_MIN_LENGTH } from './plan-dialogues.ts'
 import type { DayPlan, DialogueSlot, OakDialogue, OakDialogues, Tone } from './plan-dialogues.ts'
@@ -69,8 +70,12 @@ const WEEKDAY_TEXT: Record<Weekday, string> = {
   domingo: 'domingo',
 }
 
-/** Cómo se lee en voz alta el fenómeno de un aviso. No reinterpreta el nivel ni la categoría. */
-const PHENOMENON_TEXT: Record<AlertPhenomenon, string> = {
+/**
+ * Cómo se lee en voz alta el fenómeno de un aviso. No reinterpreta el nivel ni
+ * la categoría. `desconocido` no tiene lectura: el literal de origen es
+ * trazabilidad, así que el aviso se cuenta por su nivel y sus lugares.
+ */
+const PHENOMENON_TEXT: Record<AlertPhenomenon, string | null> = {
   lluvia: 'lluvia',
   nieve: 'nieve',
   viento: 'viento',
@@ -81,7 +86,7 @@ const PHENOMENON_TEXT: Record<AlertPhenomenon, string> = {
   niebla: 'niebla',
   calima: 'calima',
   deshielo: 'deshielo',
-  desconocido: 'un fenómeno sin clasificar',
+  desconocido: null,
 }
 
 /**
@@ -275,27 +280,42 @@ function marineClause(fact: MarineFact, context: ClauseContext): Clause {
   return { fragment: pick([`el mar frente a ${place} levanta ${height} de ola`, `frente a ${place} se esperan olas de ${height}`], parts) + period }
 }
 
+/** El nivel en plural concuerda con «avisos»; «naranja» es invariable. */
+const LEVEL_PLURAL: Record<AlertLevel, string> = { amarillo: 'amarillos', naranja: 'naranja', rojo: 'rojos' }
+
 /**
- * Un aviso oficial: nivel, fenómeno y a quién afecta. `officialZoneId`,
- * `source` y `sourcePhenomenon` son trazabilidad y no se leen en voz alta.
- * El nivel se conserva tal cual — un naranja nunca se cuenta como rojo — y
- * no se añade ninguna instrucción oficial: nuestros datos no traen ninguna.
+ * Los avisos oficiales de un fenómeno y nivel: nivel, fenómeno y a quién
+ * afectan. Con varios avisos, en plural; con más de tres lugares, una muestra
+ * de tres y el total real. `officialZoneIds`, `sources` y `sourcePhenomena`
+ * son trazabilidad y no se leen en voz alta. El nivel se conserva tal cual —
+ * un naranja nunca se cuenta como rojo — y no se añade ninguna instrucción
+ * oficial: nuestros datos no traen ninguna.
  */
 function alertClause(fact: AlertFact, context: ClauseContext): Clause {
-  const parts = [...context.parts, 'alert', fact.officialZoneId, fact.phenomenon]
-  const phenomenon = PHENOMENON_TEXT[fact.phenomenon]
-  const names = fact.affectedLocations.map((place) => place.locationName)
+  const parts = [...context.parts, 'alert', fact.officialZoneIds.join(','), fact.phenomenon]
+  const phenomenonText = PHENOMENON_TEXT[fact.phenomenon]
+  const phenomenon = phenomenonText === null ? '' : ` por ${phenomenonText}`
+  const names = fact.affectedLocations.slice(0, NARRATED_ALERT_LOCATION_LIMIT).map((place) => place.locationName)
+  const plural = fact.officialAlertCount > 1
 
+  // En la forma compacta, una muestra se cae antes que el hecho: queda el total.
   let where: string
   if (names.length === 0) where = `en ${places(fact.affectedLocationCount)}`
-  else if (fact.affectedLocationCount > names.length) where = `en ${places(fact.affectedLocationCount)}, entre ellos ${listNames(names)}`
-  else where = `en ${listNames(names)}`
+  else if (fact.affectedLocationCount > names.length) {
+    where = context.compact ? `en ${places(fact.affectedLocationCount)}` : `en ${places(fact.affectedLocationCount)}, entre ellos ${listNames(names)}`
+  } else where = `en ${listNames(names)}`
 
-  if (context.compact) return { fragment: `hay aviso ${fact.level} por ${phenomenon} ${where}` }
+  if (plural) {
+    const level = LEVEL_PLURAL[fact.level]
+    if (context.compact) return { fragment: `hay avisos ${level}${phenomenon} ${where}` }
+    return { fragment: pick([`hay avisos ${level}${phenomenon} ${where}`, `tenemos avisos oficiales ${level}${phenomenon} ${where}`], parts) }
+  }
+
+  if (context.compact) return { fragment: `hay aviso ${fact.level}${phenomenon} ${where}` }
   // Nada de "se ha emitido": el aviso es de un organismo oficial, pero quien
   // lo cuenta es Oak, no el organismo.
   return {
-    fragment: pick([`hay un aviso ${fact.level} por ${phenomenon} ${where}`, `tenemos un aviso oficial ${fact.level} por ${phenomenon} ${where}`], parts),
+    fragment: pick([`hay un aviso ${fact.level}${phenomenon} ${where}`, `tenemos un aviso oficial ${fact.level}${phenomenon} ${where}`], parts),
   }
 }
 
@@ -370,9 +390,15 @@ function spotlightClause(fact: PokemonSpotlightFact, context: ClauseContext): Cl
 function dayShapeClause(fact: DayShapeFact, context: ClauseContext): Clause {
   const parts = [...context.parts, 'day_shape']
   const everywhere = `los ${whole(fact.totalLocations)} lugares del mapa`
+  // Con la consulta de avisos caída en algún lugar no se habla de avisos:
+  // ni la cifra, que sería una cota inferior, ni «no hay avisos».
+  const alertsKnown = fact.alertsUnavailableLocations === 0
+  // Con lugares sin producto de avisos (Andorra), el total no es el
+  // denominador de los avisos y no se puede decir que falten.
+  const fullCoverage = fact.alertsUnsupportedLocations === 0
 
-  if (fact.alertedLocations > 0) {
-    if (context.compact) return { fragment: `hay aviso en ${places(fact.alertedLocations)}` }
+  if (alertsKnown && fact.alertedLocations > 0) {
+    if (context.compact || !fullCoverage) return { fragment: `hay aviso en ${places(fact.alertedLocations)}` }
     return {
       fragment: pick(
         fact.alertedLocations === 1
@@ -395,22 +421,24 @@ function dayShapeClause(fact: DayShapeFact, context: ClauseContext): Clause {
     }
   }
 
+  if (!alertsKnown || !fullCoverage) {
+    if (context.compact) return { fragment: `sin lluvia en ${everywhere}` }
+    return { fragment: `no llueve en ninguno de ${everywhere}` }
+  }
   if (context.compact) return { fragment: `sin lluvia ni avisos en ${everywhere}` }
   return { fragment: pick([`no llueve en ninguno de ${everywhere}`, `no hay lluvia ni avisos en ${everywhere}`], parts) }
 }
 
 /**
- * Día de la semana y poco más: ni efemérides, ni estaciones, ni fiestas.
- * Anclado a la previsión, nunca al momento de lectura
- * (`relative-time-expressions.ts`).
+ * Día de la semana y nada más: ni efemérides, ni estaciones, ni fiestas, ni
+ * «fin de semana», que el sábado o el domingo ya dicen. Anclado a la
+ * previsión, nunca al momento de lectura (`relative-time-expressions.ts`).
  */
 function calendarClause(fact: CalendarFact, context: ClauseContext): Clause {
-  const parts = [...context.parts, 'calendar', fact.date]
   const weekday = WEEKDAY_TEXT[fact.weekday]
 
-  if (context.compact) return { fragment: `previsión del ${weekday}` }
-  if (fact.weekend) return { fragment: pick([`la previsión es para el ${weekday}, fin de semana`, `el mapa es del ${weekday}, fin de semana`], parts) }
-  return { fragment: pick([`la previsión es para el ${weekday}`, `el mapa es del ${weekday}`], parts) }
+  if (context.compact) return { fragment: `previsión para el ${weekday}` }
+  return { fragment: `la previsión es para el ${weekday}` }
 }
 
 /**
@@ -544,7 +572,8 @@ const OPENERS: Record<Tone, readonly string[]> = {
  * instrucción oficial: nuestros datos no traen ninguna y no se inventa.
  */
 const TAILS: Record<Tone, readonly string[]> = {
-  neutral: ['Seguimos observando.', 'Tomo nota.'],
+  // El neutral no remata: «Seguimos observando.» y «Tomo nota.» no decían nada.
+  neutral: [],
   cientifico: ['Habrá que anotarlo.', 'Me lo apunto en el cuaderno.'],
   epico: ['Días así no se olvidan.', 'Vaya con este mapa.'],
   consejo: ['Yo tendría cuidado.', 'Conviene estar atento.', 'Yo saldría preparado.'],
@@ -619,17 +648,25 @@ function joinerFor(facts: readonly NarrativeFact[], first: string, parts: readon
 
 /** Los lugares que una cláusula de este hecho va a nombrar. Un recuento del día y el calendario no nombran ninguno. */
 function placeNamesOf(fact: NarrativeFact): string[] {
-  if (fact.kind === 'alert') return fact.affectedLocations.map((place) => place.locationName)
+  if (fact.kind === 'alert') return fact.affectedLocations.slice(0, NARRATED_ALERT_LOCATION_LIMIT).map((place) => place.locationName)
   if (fact.kind === 'pokemon_spotlight') return fact.locations.map((place) => place.locationName)
   if (fact.kind === 'day_shape' || fact.kind === 'calendar' || fact.kind === 'pattern') return []
   return [fact.locationName]
 }
 
 function composeBody(slot: DialogueSlot, date: string, compact: boolean, gag: string | null): string {
+  // El calendario no se encadena con un dato del tiempo: «…y la previsión es
+  // para el sábado» une dos cosas que no tienen nada que ver. Va en su propia
+  // frase, detrás.
+  const weatherFacts = slot.facts.filter((fact) => fact.kind !== 'calendar')
+  const calendarFacts = slot.facts.filter((fact) => fact.kind === 'calendar')
+  const leading = weatherFacts.length > 0 ? weatherFacts : calendarFacts
+  const trailing = weatherFacts.length > 0 ? calendarFacts : []
+
   // Un aviso y su hecho acompañante hablan del mismo sitio: nombrarlo dos
   // veces en la misma frase suena a formulario, así que el segundo dice "allí".
   const named = new Set<string>()
-  const clauses = slot.facts.map((fact) => {
+  const clauses = leading.map((fact) => {
     const places = placeNamesOf(fact)
     // Solo si no hay duda de a dónde apunta: con dos lugares ya nombrados,
     // "allí" sería ambiguo y se repite el nombre.
@@ -637,8 +674,16 @@ function composeBody(slot: DialogueSlot, date: string, compact: boolean, gag: st
     for (const place of places) named.add(place)
     return clauseFor(fact, { parts: [date, slot.id], compact, gag, samePlace })
   })
-  const joiner = clauses.length > 1 ? joinerFor(slot.facts, clauses[0].fragment, [date, slot.id, 'joiner']) : ''
-  return `${capitalize(clauses[0].fragment)}${joiner}${clauses.slice(1).map((clause) => clause.fragment).join(joiner)}.`
+  const joiner = clauses.length > 1 ? joinerFor(leading, clauses[0].fragment, [date, slot.id, 'joiner']) : ''
+  // Si el aviso que se cuenta no es el único del día, se dice, sin enumerar
+  // los demás: es un apunte aparte, no otro elemento de la frase.
+  const otherAlerts = slot.facts.some((fact) => fact.kind === 'alert' && fact.otherAlertsActive)
+  const sentences = [
+    `${capitalize(clauses[0].fragment)}${joiner}${clauses.slice(1).map((clause) => clause.fragment).join(joiner)}.`,
+    ...(otherAlerts ? ['Hay más avisos en el mapa.'] : []),
+    ...trailing.map((fact) => `${capitalize(clauseFor(fact, { parts: [date, slot.id], compact, gag, samePlace: false }).fragment)}.`),
+  ]
+  return sentences.join(' ')
 }
 
 function withParts(...parts: readonly (string | null)[]): string {

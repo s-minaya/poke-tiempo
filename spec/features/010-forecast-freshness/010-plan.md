@@ -13,7 +13,7 @@ Los datos temporales con los que trabaja la página, y dónde se decide cada fec
 | `forecast.json` | `date` | Fecha de calendario `YYYY-MM-DD` que describe la previsión: el `targetDate` de la ejecución, el día siguiente al de la ejecución en `Europe/Madrid`. |
 | `forecast.json` | `generatedAt` | Instante de generación del forecast, fijado justo antes de escribir `forecast.json`, después de obtener y validar el dataset. Lo fija `fetch-forecast.ts` en ISO 8601 UTC con el reloj del runner. No es la hora de adquisición de cada proveedor. |
 | `forecast.json` | `locations[].date` | El mismo `targetDate` para los 74 lugares. Es una etiqueta de día, no un intervalo de instantes: en Canarias corresponde a su día local. |
-| `forecast.json` | `alerts[].startsAt` / `endsAt` | Instantes reales del aviso. AEMET los da con desfase (`+02:00`); IPMA, sin él. El JSON incluye avisos ya caducados: `isActiveOnDate` los descarta comparando el prefijo de fecha con `date`. |
+| `forecast.json` | `alerts[].startsAt` / `endsAt` | Instantes reales del aviso. AEMET los da con desfase (`+02:00`); IPMA, sin él. El JSON incluye avisos ya caducados: `isActiveOnDate` los descarta comparando la hora de pared del aviso con `date`: activo si empieza ese día o antes y termina después de su primera medianoche. |
 | `oak-today.json` | `date` | La misma fecha que `forecast.date`. |
 | `oak-today.json` | `generatedAt` | Instante en que empieza la generación de Oak, segundos después del de `forecast.json`. |
 | `oak-history.json` | `date` por entrada | Fecha de cada generación pasada, solo para la continuidad narrativa. |

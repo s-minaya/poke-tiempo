@@ -21,11 +21,13 @@ const alert: NarrativeFact = {
   kind: 'alert',
   level: 'naranja',
   phenomenon: 'lluvia',
-  sourcePhenomenon: 'Lluvias persistentes',
-  officialZoneId: '645301',
-  source: 'aemet',
+  sourcePhenomena: ['Lluvias persistentes'],
+  officialZoneIds: ['645301'],
+  sources: ['aemet'],
+  officialAlertCount: 1,
   affectedLocations: [{ locationId: 'ibiza', locationName: 'Ibiza' }],
   affectedLocationCount: 1,
+  otherAlertsActive: false,
 }
 
 const rain: NarrativeFact = {
@@ -39,7 +41,7 @@ const rain: NarrativeFact = {
 }
 
 const dialoguePlan: DialoguePlan = [
-  { id: 'dialogue-1', role: 'apertura', tone: 'neutral', facts: [{ kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 6, distinctPokemonCount: 10 }], leitmotif: null },
+  { id: 'dialogue-1', role: 'apertura', tone: 'neutral', facts: [{ kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 6, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 10 }], leitmotif: null },
   { id: 'dialogue-2', role: 'foco', tone: 'consejo', facts: [alert, rain], leitmotif: null },
   { id: 'dialogue-3', role: 'cierre', tone: 'guasa', facts: [spotlight], leitmotif: 'gyarados-mar' },
 ]

@@ -96,21 +96,28 @@ export interface MarineFact extends RepresentableFact {
 }
 
 /**
- * Un aviso oficial activo el día del forecast. Es **un** aviso, emitido para
- * una zona oficial, no para un lugar nuestro: por eso no lleva
- * `mapPokemonId` ni `mapRepresentsFact` — un aviso no es un eje
- * meteorológico y no dibuja Pokémon. `affectedLocations` dice qué puntos de
- * nuestro mapa caen bajo esa zona, que pueden ser varios.
+ * Los avisos oficiales activos el día del forecast con un mismo fenómeno y
+ * nivel, en cualquier zona oficial y fuente. Los avisos se emiten para zonas,
+ * no para lugares nuestros: por eso el hecho cuenta aparte los avisos
+ * (`officialAlertCount`) y los puntos de nuestro mapa que caen bajo ellos
+ * (`affectedLocations`, completos y en el orden estable de `locations`). No
+ * lleva `mapPokemonId` ni `mapRepresentsFact` — un aviso no es un eje
+ * meteorológico y no dibuja Pokémon.
  */
 export interface AlertFact {
   kind: 'alert'
   level: AlertLevel
   phenomenon: AlertPhenomenon
-  sourcePhenomenon: string // literal de la fuente — trazabilidad
-  officialZoneId: string
-  source: 'aemet' | 'ipma'
+  // Trazabilidad, sin repetidos y en orden de aparición; nunca entra en una frase.
+  sourcePhenomena: string[]
+  officialZoneIds: string[]
+  sources: ('aemet' | 'ipma')[]
+  /** Avisos oficiales distintos (zona y tramo) que forman el hecho. */
+  officialAlertCount: number
   affectedLocations: FactLocation[]
   affectedLocationCount: number
+  /** Hay otro aviso activo ese día de distinto fenómeno o nivel. No dice cuántos. */
+  otherAlertsActive: boolean
 }
 
 /**
@@ -137,6 +144,19 @@ export interface DayShapeFact {
   totalLocations: number
   rainingLocations: number
   alertedLocations: number
+  /**
+   * Lugares cuya consulta de avisos falló en esta ejecución (`status:
+   * 'error'`). Con alguno, `alertedLocations` es una cota inferior y no se
+   * puede decir que no haya avisos: los elegibles para hablar de avisos son
+   * los lugares cuya consulta funcionó (`013-spec.md`).
+   */
+  alertsUnavailableLocations: number
+  /**
+   * Lugares sin producto de avisos (`status: 'unsupported'`, hoy Andorra).
+   * Con alguno, ni se afirma que no haya avisos ni el total sirve de
+   * denominador del recuento de avisos.
+   */
+  alertsUnsupportedLocations: number
   distinctPokemonCount: number
 }
 

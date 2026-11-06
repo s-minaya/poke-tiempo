@@ -18,7 +18,7 @@ _Checklist derivada del `007-plan.md`, agrupada en bloques. Se implementa un blo
 - [x] Contratos repartidos por módulo en vez de un `types.ts` cajón: los 12 `NarrativeFact` en `types.ts`, `DayMode`/`DayModeDecision` en `day-mode.ts`, `Tone`/`DialogueRole`/`DialogueId`/`DialogueSlot`/`DayPlan`/`OakDialogue` en `plan-dialogues.ts`, `Protagonist` en `protagonists.ts`, `LeitmotifId` en `leitmotifs.ts`, `OakHistoryEntry` en `history.ts` y `OakToday` en `oak-today.ts`.
 - [x] `src/domain/oak/facts.ts` — `collectFacts(locations, forecast): NarrativeFact[]`. Cada número sale tal cual del `LocationForecast`; **cada `PokedexId` sale de `pickMapPokemon`**, nunca de un `assignBy*`.
 - [x] `mapRepresentsFact` calculado una sola vez por hecho, comparando el eje que lo produjo con el Pokémon visible del lugar.
-- [x] Filtrado de avisos por `forecast.date` con `isActiveOnDate` y deduplicado por `officialZoneId + phenomenon + level + startsAt`.
+- [x] Filtrado de avisos por `forecast.date` con `isActiveOnDate` y agrupado por `phenomenon + level` (más el literal de origen si es `desconocido`), con cada lugar una vez y los avisos oficiales contados aparte.
 - [x] Tests table-driven (`it.each`): un caso por `kind`, los `null`/`0`/`false` que no deben producir hecho, el filtrado/deduplicado de avisos, y **un test explícito de que ningún hecho expone un candidato descartado** (fixture con lluvia + tormenta en el mismo lugar).
 
 ## Bloque 2 — Protagonistas y modo del día

@@ -11,10 +11,15 @@ import type { Protagonist, ProtagonistRole } from './protagonists.ts'
 import type {
   AlertFact,
   CalendarFact,
+  CalimaFact,
   DayShapeFact,
+  FogFact,
+  MarineFact,
   NarrativeFact,
   PokemonSpotlightFact,
   RainFact,
+  SnowFact,
+  StormFact,
   TemperatureFact,
 } from './types.ts'
 
@@ -45,7 +50,7 @@ function protagonist(role: ProtagonistRole, spotlightFact: PokemonSpotlightFact)
 
 const calendar: CalendarFact = { kind: 'calendar', date: TODAY, weekday: 'viernes', weekend: false }
 const weekendCalendar: CalendarFact = { kind: 'calendar', date: '2026-09-19', weekday: 'sabado', weekend: true }
-const dayShape: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 12, alertedLocations: 2, distinctPokemonCount: 6 }
+const dayShape: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 12, alertedLocations: 2, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 6 }
 
 function temperature(locationId: string, mapPokemonId: PokedexId, mapRepresentsFact = true): TemperatureFact {
   return {
@@ -72,16 +77,38 @@ function rain(locationId: string, mapPokemonId: PokedexId, mapRepresentsFact = t
   }
 }
 
+function marine(locationId: string): MarineFact {
+  return { kind: 'marine', locationId, locationName: locationId, mapPokemonId: 'gyarados', mapRepresentsFact: true, waveHeightM: 4.2, wavePeriodS: 13 }
+}
+
+function snow(locationId: string): SnowFact {
+  return { kind: 'snow', locationId, locationName: locationId, mapPokemonId: 'snorunt', mapRepresentsFact: true, cm: 0.4 }
+}
+
+function calimaFact(locationId: string): CalimaFact {
+  return { kind: 'calima', locationId, locationName: locationId, mapPokemonId: 'hippowdon', mapRepresentsFact: true, fromAlert: true }
+}
+
+function storm(locationId: string): StormFact {
+  return { kind: 'storm', locationId, locationName: locationId, mapPokemonId: 'zapdos', mapRepresentsFact: true }
+}
+
+function fog(locationId: string): FogFact {
+  return { kind: 'fog', locationId, locationName: locationId, mapPokemonId: 'castform', mapRepresentsFact: true }
+}
+
 function alert(level: AlertFact['level'], overrides: Partial<AlertFact> = {}): AlertFact {
   return {
     kind: 'alert',
     level,
     phenomenon: 'lluvia',
-    sourcePhenomenon: 'Lluvias',
-    officialZoneId: '774602',
-    source: 'aemet',
+    sourcePhenomena: ['Lluvias'],
+    officialZoneIds: ['774602'],
+    sources: ['aemet'],
+    officialAlertCount: 1,
     affectedLocations: [{ locationId: 'ibiza', locationName: 'Ibiza' }],
     affectedLocationCount: 1,
+    otherAlertsActive: false,
     ...overrides,
   }
 }
@@ -255,9 +282,9 @@ describe('planDialogues — foco', () => {
     expect(planDialogues(input).dialoguePlan[1].tone).toBe('epico')
   })
 
-  it('alerta: añade el hecho del mismo fenómeno y lugar cuando la correspondencia es explícita', () => {
-    const trigger = alert('naranja')
-    const companion = rain('ibiza', 'castform-rain')
+  it('alerta: añade el hecho del mismo fenómeno y lugar cuando trae una medida propia', () => {
+    const trigger = alert('naranja', { phenomenon: 'costero', sourcePhenomena: ['Costeros'] })
+    const companion = marine('ibiza')
     const input = ordinaryDay({
       decision: { mode: 'alerta', trigger },
       facts: [calendar, dayShape, spotlight('zapdos'), trigger, companion],
@@ -268,9 +295,44 @@ describe('planDialogues — foco', () => {
     expect(focus.facts).toEqual([trigger, companion])
   })
 
+  // El aviso es de una zona; los milímetros, de un punto. «Aviso naranja por
+  // lluvia; se esperan 0,2 mm» se lee como una contradicción.
+  it.each([
+    { phenomenon: 'lluvia' as const, fact: rain('ibiza', 'castform-rain') },
+    { phenomenon: 'nieve' as const, fact: snow('ibiza') },
+  ])('alerta por $phenomenon: la cantidad del punto no acompaña al aviso ni sale en otro hueco', ({ phenomenon, fact }) => {
+    const trigger = alert('naranja', { phenomenon })
+    const input = ordinaryDay({
+      decision: { mode: 'alerta', trigger },
+      facts: [calendar, dayShape, spotlight('zapdos'), trigger, fact],
+      briefing: brief(dayShape, trigger, temperature('sevilla', 'charmander')),
+    })
+    const plan = planDialogues(input)
+
+    expect(plan.dialoguePlan[1].facts).toEqual([trigger])
+    expect(allFacts(plan)).not.toContain(fact)
+  })
+
+  // Sin medida que aportar, el hecho repite el aviso: «aviso por calima en
+  // Lanzarote y allí hay calima, con aviso oficial detrás».
+  it.each([
+    { phenomenon: 'calima' as const, fact: calimaFact('ibiza') },
+    { phenomenon: 'tormenta' as const, fact: storm('ibiza') },
+    { phenomenon: 'niebla' as const, fact: fog('ibiza') },
+  ])('alerta por $phenomenon: el aviso se cuenta solo, sin repetirse', ({ phenomenon, fact }) => {
+    const trigger = alert('naranja', { phenomenon })
+    const input = ordinaryDay({
+      decision: { mode: 'alerta', trigger },
+      facts: [calendar, dayShape, spotlight('zapdos'), trigger, fact],
+      briefing: brief(dayShape, trigger, temperature('sevilla', 'charmander')),
+    })
+
+    expect(planDialogues(input).dialoguePlan[1].facts).toEqual([trigger])
+  })
+
   it('alerta: no arrastra un hecho de otro lugar aunque sea del mismo fenómeno', () => {
-    const trigger = alert('naranja')
-    const elsewhere = rain('madrid', 'castform-rain')
+    const trigger = alert('naranja', { phenomenon: 'costero', sourcePhenomena: ['Costeros'] })
+    const elsewhere = marine('madrid')
     const input = ordinaryDay({
       decision: { mode: 'alerta', trigger },
       facts: [calendar, dayShape, spotlight('zapdos'), trigger, elsewhere],
@@ -282,7 +344,7 @@ describe('planDialogues — foco', () => {
   })
 
   it('alerta: no arrastra un hecho de otro fenómeno aunque sea del mismo lugar', () => {
-    const trigger = alert('naranja', { phenomenon: 'viento', sourcePhenomenon: 'Vientos' })
+    const trigger = alert('naranja', { phenomenon: 'viento', sourcePhenomena: ['Vientos'] })
     const sameLocation = rain('ibiza', 'castform-rain')
     const input = ordinaryDay({
       decision: { mode: 'alerta', trigger },
@@ -453,7 +515,7 @@ describe('planDialogues — entrada de historial', () => {
   })
 
   it('en alerta sin Pokémon acompañante, el foco histórico es null', () => {
-    const trigger = alert('naranja', { phenomenon: 'deshielo', sourcePhenomenon: 'Deshielo' })
+    const trigger = alert('naranja', { phenomenon: 'deshielo', sourcePhenomena: ['Deshielo'] })
     const plan = planDialogues(
       ordinaryDay({
         decision: { mode: 'alerta', trigger },
@@ -466,8 +528,8 @@ describe('planDialogues — entrada de historial', () => {
   })
 
   it('en alerta, el hecho acompañante no convierte a su Pokémon en foco del día', () => {
-    const trigger = alert('naranja')
-    const companion = rain('ibiza', 'castform-rain')
+    const trigger = alert('naranja', { phenomenon: 'costero', sourcePhenomena: ['Costeros'] })
+    const companion = marine('ibiza')
     const plan = planDialogues(
       ordinaryDay({
         decision: { mode: 'alerta', trigger },
@@ -476,8 +538,8 @@ describe('planDialogues — entrada de historial', () => {
       }),
     )
 
-    // El RainFact está en el foco y su mapa dibuja Castform, pero el
-    // protagonista elegido del día no es Castform: es el aviso.
+    // El MarineFact está en el foco y su mapa dibuja Gyarados, pero el
+    // protagonista elegido del día no es Gyarados: es el aviso.
     expect(plan.dialoguePlan[1].facts).toContain(companion)
     expect(plan.historyEntry.focusPokemonId).toBeNull()
   })

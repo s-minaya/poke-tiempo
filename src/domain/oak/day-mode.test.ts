@@ -18,7 +18,7 @@ function spotlight(pokemonId: PokedexId, locationCount: number): PokemonSpotligh
 }
 
 function dayShape(totalLocations: number): DayShapeFact {
-  return { kind: 'day_shape', totalLocations, rainingLocations: 0, alertedLocations: 0, distinctPokemonCount: 1 }
+  return { kind: 'day_shape', totalLocations, rainingLocations: 0, alertedLocations: 0, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 1 }
 }
 
 function alert(level: AlertLevel, overrides: Partial<AlertFact> = {}): AlertFact {
@@ -26,11 +26,13 @@ function alert(level: AlertLevel, overrides: Partial<AlertFact> = {}): AlertFact
     kind: 'alert',
     level,
     phenomenon: 'lluvia',
-    sourcePhenomenon: 'Lluvias',
-    officialZoneId: '774602',
-    source: 'aemet',
+    sourcePhenomena: ['Lluvias'],
+    officialZoneIds: ['774602'],
+    sources: ['aemet'],
+    officialAlertCount: 1,
     affectedLocations: [{ locationId: 'valencia', locationName: 'Valencia' }],
     affectedLocationCount: 1,
+    otherAlertsActive: false,
     ...overrides,
   }
 }
@@ -54,7 +56,7 @@ describe('resolveDayMode', () => {
     })
 
     it('el amarillo no estorba ni puede ser el trigger: manda el naranja', () => {
-      const severe = alert('naranja', { phenomenon: 'tormenta', sourcePhenomenon: 'Tormentas' })
+      const severe = alert('naranja', { phenomenon: 'tormenta', sourcePhenomena: ['Tormentas'] })
       const decision = resolveDayMode([...QUIET, alert('amarillo'), severe])
 
       expect(decision.mode).toBe('alerta')
@@ -62,15 +64,15 @@ describe('resolveDayMode', () => {
     })
 
     it('el rojo manda sobre el naranja aunque llegue después', () => {
-      const red = alert('rojo', { officialZoneId: '611001' })
+      const red = alert('rojo', { officialZoneIds: ['611001'] })
       const decision = resolveDayMode([...QUIET, alert('naranja'), red, alert('naranja')])
 
       expect(decision.trigger).toBe(red)
     })
 
     it('entre avisos del mismo nivel decide el orden estable, sin jerarquía de fenómenos', () => {
-      const first = alert('naranja', { phenomenon: 'lluvia', officialZoneId: '645301' })
-      const second = alert('naranja', { phenomenon: 'tormenta', officialZoneId: '645404' })
+      const first = alert('naranja', { phenomenon: 'lluvia', officialZoneIds: ['645301'] })
+      const second = alert('naranja', { phenomenon: 'tormenta', officialZoneIds: ['645404'] })
 
       expect(resolveDayMode([...QUIET, first, second]).trigger).toBe(first)
       // Invertido: gana el que ahora llega primero, no un fenómeno concreto.

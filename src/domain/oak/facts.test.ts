@@ -107,8 +107,23 @@ describe('collectFacts — hechos por kind', () => {
       totalLocations: 3,
       rainingLocations: 2,
       alertedLocations: 1,
+      alertsUnavailableLocations: 0,
+      alertsUnsupportedLocations: 0,
       distinctPokemonCount: 2,
     })
+  })
+
+  it('day_shape: cuenta aparte los lugares con la consulta de avisos caída y los que no tienen ese producto', () => {
+    const facts = collectFacts(
+      [location('madrid', 'Madrid'), location('a-coruna', 'A Coruña'), location('andorra-la-vella', 'Andorra la Vella')],
+      forecast([
+        locationForecast('madrid', { alerts: { status: 'error' } }),
+        locationForecast('a-coruna', { alerts: { status: 'error' } }),
+        locationForecast('andorra-la-vella', { alerts: { status: 'unsupported' } }),
+      ]),
+    )
+
+    expect(factsOfKind(facts, 'day_shape')[0]).toMatchObject({ alertedLocations: 0, alertsUnavailableLocations: 2, alertsUnsupportedLocations: 1 })
   })
 
   it('day_shape: no dice qué Pokémon domina — ese dato vive en pokemon_spotlight', () => {
@@ -341,12 +356,105 @@ describe('collectFacts — avisos oficiales', () => {
       kind: 'alert',
       level: 'naranja',
       phenomenon: 'lluvia',
-      sourcePhenomenon: 'Lluvias',
-      officialZoneId: '774602',
-      source: 'aemet',
+      sourcePhenomena: ['Lluvias'],
+      officialZoneIds: ['774602'],
+      sources: ['aemet'],
+      officialAlertCount: 1,
       affectedLocations: [{ locationId: 'madrid', locationName: 'Madrid' }],
       affectedLocationCount: 1,
+      otherAlertsActive: false,
     })
+  })
+
+  // Caso real del 2026-10-02: rojo por lluvia en Castellón y en Valencia, dos
+  // zonas oficiales. Oak solo nombraba Castellón.
+  it('el mismo fenómeno y nivel en zonas distintas es un solo hecho, con los avisos y los lugares contados aparte', () => {
+    const facts = collectFacts(
+      [location('castellon', 'Castellón'), location('valencia', 'Valencia')],
+      forecast([
+        locationForecast('castellon', { alerts: { status: 'ok', alerts: [alert({ level: 'rojo', officialZoneId: '771204' })] } }),
+        locationForecast('valencia', { alerts: { status: 'ok', alerts: [alert({ level: 'rojo', officialZoneId: '774602' })] } }),
+      ]),
+    )
+    const alerts = factsOfKind(facts, 'alert')
+
+    expect(alerts).toHaveLength(1)
+    expect(alerts[0]).toMatchObject({
+      level: 'rojo',
+      officialZoneIds: ['771204', '774602'],
+      officialAlertCount: 2,
+      affectedLocations: [
+        { locationId: 'castellon', locationName: 'Castellón' },
+        { locationId: 'valencia', locationName: 'Valencia' },
+      ],
+      affectedLocationCount: 2,
+      otherAlertsActive: false,
+    })
+  })
+
+  it('el mismo fenómeno y nivel en AEMET e IPMA también se agrupa, y conserva las dos fuentes', () => {
+    const facts = collectFacts(
+      [location('pontevedra', 'Pontevedra'), location('porto', 'Porto')],
+      forecast([
+        locationForecast('pontevedra', { alerts: { status: 'ok', alerts: [alert({ officialZoneId: '153601' })] } }),
+        locationForecast('porto', {
+          alerts: { status: 'ok', alerts: [alert({ source: 'ipma', sourcePhenomenon: 'Precipitação', officialZoneId: 'PTO', startsAt: `${DATE}T06:00:00`, endsAt: `${DATE}T18:00:00` })] },
+        }),
+      ]),
+    )
+    const [fact] = factsOfKind(facts, 'alert')
+
+    expect(fact).toMatchObject({ sources: ['aemet', 'ipma'], sourcePhenomena: ['Lluvias', 'Precipitação'], officialAlertCount: 2, affectedLocationCount: 2 })
+  })
+
+  it('dos tramos del mismo aviso en una zona son dos avisos oficiales y un solo lugar', () => {
+    const facts = collectFacts(
+      MADRID,
+      forecast([
+        locationForecast('madrid', {
+          alerts: { status: 'ok', alerts: [alert({ endsAt: `${DATE}T11:59:59+02:00` }), alert({ startsAt: `${DATE}T12:00:00+02:00` })] },
+        }),
+      ]),
+    )
+
+    expect(factsOfKind(facts, 'alert')).toEqual([expect.objectContaining({ officialAlertCount: 2, affectedLocationCount: 1 })])
+  })
+
+  it('el hecho conserva todos los lugares: el recorte a una muestra es de la narración', () => {
+    const ids = ['a-coruna', 'pontevedra', 'gijon', 'cantabria', 'pais-vasco']
+    const facts = collectFacts(
+      ids.map((id) => location(id, id)),
+      forecast(ids.map((id, index) => locationForecast(id, { alerts: { status: 'ok', alerts: [alert({ phenomenon: 'costero', officialZoneId: `zona-${index}` })] } }))),
+    )
+    const [fact] = factsOfKind(facts, 'alert')
+
+    expect(fact.affectedLocations.map((place) => place.locationId)).toEqual(ids)
+    expect(fact.affectedLocationCount).toBe(5)
+  })
+
+  it('dos fenómenos sin categoría con literales distintos no se agrupan', () => {
+    const facts = collectFacts(
+      MADRID,
+      forecast([
+        locationForecast('madrid', {
+          alerts: {
+            status: 'ok',
+            alerts: [alert({ level: 'amarillo', phenomenon: 'desconocido', sourcePhenomenon: 'Rissagas' }), alert({ level: 'amarillo', phenomenon: 'desconocido', sourcePhenomenon: 'Galernas' })],
+          },
+        }),
+      ]),
+    )
+
+    expect(factsOfKind(facts, 'alert')).toHaveLength(2)
+  })
+
+  it('otherAlertsActive dice si hay otro aviso de distinto fenómeno o nivel, sin contarlos', () => {
+    const facts = collectFacts(
+      MADRID,
+      forecast([locationForecast('madrid', { alerts: { status: 'ok', alerts: [alert({ level: 'rojo' }), alert({ phenomenon: 'tormenta', sourcePhenomenon: 'Tormentas', level: 'amarillo' })] } })]),
+    )
+
+    expect(factsOfKind(facts, 'alert').map((fact) => fact.otherAlertsActive)).toEqual([true, true])
   })
 
   it('un aviso no arrastra Pokémon: no dibuja ninguno y no finge corresponder a uno', () => {

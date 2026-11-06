@@ -32,6 +32,8 @@ const dayShape: DayShapeFact = {
   totalLocations: 74,
   rainingLocations: 23,
   alertedLocations: 6,
+  alertsUnavailableLocations: 0,
+  alertsUnsupportedLocations: 0,
   distinctPokemonCount: 10,
 }
 
@@ -74,11 +76,13 @@ function alert(level: AlertFact['level'], overrides: Partial<AlertFact> = {}): A
     kind: 'alert',
     level,
     phenomenon: 'lluvia',
-    sourcePhenomenon: 'Lluvias y tormentas persistentes',
-    officialZoneId: '645301',
-    source: 'aemet',
+    sourcePhenomena: ['Lluvias y tormentas persistentes'],
+    officialZoneIds: ['645301'],
+    sources: ['aemet'],
+    officialAlertCount: 1,
     affectedLocations: [place('Ibiza')],
     affectedLocationCount: 1,
+    otherAlertsActive: false,
     ...overrides,
   }
 }
@@ -373,6 +377,77 @@ describe('avisos oficiales', () => {
     expect(text).not.toContain('Lluvias y tormentas persistentes')
   })
 
+  // El literal de origen es trazabilidad («Rissagas», o el portugués de
+  // IPMA): sin categoría propia, el aviso se cuenta por nivel y lugar.
+  it('un fenómeno sin categoría no se describe como «sin clasificar» ni con el literal de origen', () => {
+    for (const date of ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21']) {
+      const text = render([alert('amarillo', { phenomenon: 'desconocido', sourcePhenomena: ['Rissagas'], affectedLocations: [place('Menorca')] })], { date })
+
+      expect(text).not.toMatch(/sin clasificar|fenómeno|Rissagas|por\s+en/i)
+      expect(text).toMatch(/aviso (oficial )?amarillo en Menorca/)
+    }
+  })
+
+  it('varios avisos del mismo fenómeno y nivel se cuentan en plural, con el total y una muestra de tres', () => {
+    for (const date of ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21']) {
+      const pair = render([alert('rojo', { officialAlertCount: 2, affectedLocations: [place('Castellón'), place('Valencia')], affectedLocationCount: 2 })], { date })
+      const coast = render(
+        [
+          alert('naranja', {
+            officialAlertCount: 5,
+            affectedLocations: ['A Coruña', 'Pontevedra', 'Gijón', 'Cantabria', 'País Vasco'].map(place),
+            affectedLocationCount: 5,
+          }),
+        ],
+        { date },
+      )
+
+      expect(pair).toMatch(/avisos (oficiales )?rojos por lluvia en Castellón y Valencia/)
+      expect(coast).toMatch(/avisos (oficiales )?naranja por lluvia en 5 lugares, entre ellos A Coruña, Pontevedra y Gijón/)
+      expect(coast).not.toContain('Cantabria')
+    }
+  })
+
+  // Caso real del 2026-10-23: costeros naranja en cinco lugares, el oleaje de
+  // A Coruña como acompañante y otros avisos activos. Sin forma compacta que
+  // quepa, el fallback lanzaba y el día no se publicaba.
+  it('aviso agrupado con acompañante y otros avisos cabe en 160 caracteres', () => {
+    const coast = alert('naranja', {
+      phenomenon: 'costero',
+      officialAlertCount: 5,
+      affectedLocations: ['A Coruña', 'Pontevedra', 'Gijón', 'Cantabria', 'País Vasco'].map(place),
+      affectedLocationCount: 5,
+      otherAlertsActive: true,
+    })
+    const waves: NarrativeFact = { kind: 'marine', ...mapPlace('A Coruña', 'gyarados-mega'), mapRepresentsFact: true, waveHeightM: 4.2, wavePeriodS: 13.2 }
+
+    for (const date of ['2026-10-23', '2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21']) {
+      for (const tone of ['consejo', 'epico'] as const) {
+        const text = render([coast, waves], { date, tone })
+
+        expect(text.length).toBeLessThanOrEqual(MAX)
+        expect(text).toMatch(/avisos .*naranja por fenómenos costeros en 5 lugares/)
+        expect(text).toContain('Hay más avisos en el mapa.')
+      }
+    }
+  })
+
+  it('un solo aviso oficial sigue siendo «un aviso»', () => {
+    expect(render([alert('naranja')])).toMatch(/un aviso (oficial )?naranja/)
+  })
+
+  it('con otros avisos de otro fenómeno o nivel, dice que hay más sin enumerarlos', () => {
+    for (const date of ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21']) {
+      for (const tone of ['consejo', 'epico'] as const) {
+        const text = render([alert('naranja', { otherAlertsActive: true }), rain(6.4, 90)], { date, tone })
+
+        expect(text).toContain('Hay más avisos en el mapa.')
+        expect(text.length).toBeLessThanOrEqual(MAX)
+      }
+    }
+    expect(render([alert('naranja')])).not.toContain('más avisos')
+  })
+
   it('nombra a los afectados cuando son pocos', () => {
     const text = render([alert('amarillo', { affectedLocations: [place('Ibiza'), place('Palma')], affectedLocationCount: 2 })])
 
@@ -498,9 +573,9 @@ describe('forma del día y calendario', () => {
     const dates = ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22']
     const shapes: DayShapeFact[] = [
       dayShape,
-      { kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 0, distinctPokemonCount: 10 },
-      { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, distinctPokemonCount: 10 },
-      { kind: 'day_shape', totalLocations: 74, rainingLocations: 1, alertedLocations: 1, distinctPokemonCount: 1 },
+      { kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 0, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 10 },
+      { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 10 },
+      { kind: 'day_shape', totalLocations: 74, rainingLocations: 1, alertedLocations: 1, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 1 },
     ]
 
     for (const shape of shapes) {
@@ -534,9 +609,9 @@ describe('forma del día y calendario', () => {
   })
 
   it('prioriza avisos, luego lluvia, y si no hay ninguno lo dice', () => {
-    const alerted: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 6, distinctPokemonCount: 10 }
-    const rainy: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 0, distinctPokemonCount: 10 }
-    const quiet: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, distinctPokemonCount: 10 }
+    const alerted: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 6, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 10 }
+    const rainy: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 23, alertedLocations: 0, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 10 }
+    const quiet: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 10 }
 
     // Sin mayúsculas: el recuento puede abrir la frase.
     expect(render([alerted])).toMatch(/avisos?|bajo aviso/i)
@@ -545,13 +620,67 @@ describe('forma del día y calendario', () => {
     expect(render([quiet])).toMatch(/no llueve|no hay lluvia/i)
   })
 
+  it('con la consulta de avisos caída en algún lugar, no afirma nada sobre avisos', () => {
+    const dates = ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22']
+    const shapes: DayShapeFact[] = [
+      { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, alertsUnavailableLocations: 65, alertsUnsupportedLocations: 0, distinctPokemonCount: 4 },
+      { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 3, alertsUnavailableLocations: 65, alertsUnsupportedLocations: 0, distinctPokemonCount: 4 },
+      { kind: 'day_shape', totalLocations: 74, rainingLocations: 5, alertedLocations: 3, alertsUnavailableLocations: 1, alertsUnsupportedLocations: 0, distinctPokemonCount: 4 },
+    ]
+
+    for (const shape of shapes) {
+      for (const date of dates) {
+        const text = render([shape], { date })
+
+        expect(text).not.toMatch(/aviso/i)
+        expect(text).toMatch(/llueve|lluvia/i)
+      }
+    }
+  })
+
+  it('con lugares sin cobertura de avisos, no afirma ausencia de avisos ni usa el total como denominador', () => {
+    const quiet: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 1, distinctPokemonCount: 4 }
+    const alerted: DayShapeFact = { ...quiet, alertedLocations: 6 }
+
+    for (const date of ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22']) {
+      expect(render([quiet], { date })).not.toMatch(/aviso/i)
+      expect(render([alerted], { date })).toMatch(/aviso/i)
+      expect(render([alerted], { date })).not.toMatch(/de los 74|uno de los/)
+    }
+  })
+
   it('un día sin lluvia ni avisos no produce recuentos raros', () => {
-    const quiet: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, distinctPokemonCount: 4 }
+    const quiet: DayShapeFact = { kind: 'day_shape', totalLocations: 74, rainingLocations: 0, alertedLocations: 0, alertsUnavailableLocations: 0, alertsUnsupportedLocations: 0, distinctPokemonCount: 4 }
     const texts = new Set(['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22'].map((date) => render([quiet], { date })))
 
     for (const text of texts) {
       expect(text).not.toMatch(/\b0 (lugares|de los)/)
       expect(text.length).toBeGreaterThanOrEqual(MIN)
+    }
+  })
+
+  // «…y la previsión es para el sábado, fin de semana» encadenaba un dato del
+  // tiempo con el calendario y repetía lo que el sábado ya dice.
+  it('el calendario va en su propia frase y no repite «fin de semana»', () => {
+    for (const date of ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22']) {
+      const text = render([rain(6.4, 90), calendar], { date })
+
+      expect(text).toContain('La previsión es para el sábado.')
+      expect(text).not.toMatch(/fin de semana|el mapa es del/)
+      expect(text).not.toMatch(/(y|además,|mientras) la previsión/)
+    }
+  })
+
+  it('el calendario solo, sin otro hecho, también se dice entero', () => {
+    expect(render([calendar])).toContain('a previsión es para el sábado.')
+  })
+
+  // «Seguimos observando.» y «Tomo nota.» no decían nada: el neutral no remata.
+  it('el tono neutral no añade coletillas vacías', () => {
+    for (const date of ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22']) {
+      const text = render([rain(6.4, 90)], { date })
+
+      expect(text).not.toMatch(/Seguimos observando|Tomo nota/)
     }
   })
 

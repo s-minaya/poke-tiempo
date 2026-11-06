@@ -87,19 +87,27 @@ export interface DayPlan {
 
 /**
  * Correspondencia entre el fenómeno de un aviso oficial y el eje que lo
- * cuenta en nuestros hechos. Es el mismo vocabulario en los dos lados, no una
- * interpretación: no hay entrada para `temperatura_maxima`,
- * `temperatura_minima`, `deshielo` ni `desconocido` porque ahí no existe una
- * pareja limpia, y sin pareja el aviso se narra solo.
+ * acompaña en el foco. Solo entran los ejes cuyo hecho trae una medida que la
+ * 003 ya considera notable (viento por encima de su umbral, olas desde
+ * Gyarados): esa medida añade algo al aviso sin contradecirlo. Tormenta,
+ * niebla y calima no traen medida y solo repetirían el aviso; sin pareja, el
+ * aviso se narra solo.
  */
 const ALERT_COMPANION_KIND: Partial<Record<AlertPhenomenon, NarrativeFact['kind']>> = {
+  viento: 'wind',
+  costero: 'marine',
+}
+
+/**
+ * Acumulados de un punto que no se cuentan el mismo día que el aviso de zona
+ * del mismo fenómeno: el aviso cubre una zona y un periodo, y el acumulado es
+ * cualquier cantidad mayor que cero en nuestro punto. «Aviso naranja por
+ * lluvia; se esperan 0,2 mm» se lee como una contradicción, también si los
+ * milímetros salen en otro bocadillo.
+ */
+const ALERT_POINT_AMOUNT_KIND: Partial<Record<AlertPhenomenon, NarrativeFact['kind']>> = {
   lluvia: 'rain',
   nieve: 'snow',
-  viento: 'wind',
-  tormenta: 'storm',
-  niebla: 'fog',
-  calima: 'calima',
-  costero: 'marine',
 }
 
 // Hechos sobre los que tiene sentido dar un consejo práctico. Solo decide
@@ -171,6 +179,17 @@ function alertCompanion(alert: AlertFact, facts: readonly NarrativeFact[], used:
   return take(facts, used, (fact) => fact.kind === companionKind && isRepresentable(fact) && affected.has(fact.locationId))
 }
 
+/** Retira del reparto los acumulados del mismo fenómeno en los lugares del aviso. */
+function withholdPointAmounts(alert: AlertFact, facts: readonly NarrativeFact[], used: Set<NarrativeFact>): void {
+  const amountKind = ALERT_POINT_AMOUNT_KIND[alert.phenomenon]
+  if (!amountKind) return
+
+  const affected = new Set(alert.affectedLocations.map((place) => place.locationId))
+  for (const fact of facts) {
+    if (fact.kind === amountKind && isRepresentable(fact) && affected.has(fact.locationId)) used.add(fact)
+  }
+}
+
 /**
  * El foco empieza con el hecho de `highlight`. En `alerta` ese hecho es el
  * propio `trigger` del modo, así que no se duplica. Un protagonista o el
@@ -192,6 +211,7 @@ function buildFocus(
   if (decision.mode === 'alerta') {
     const companion = alertCompanion(decision.trigger, facts, used)
     if (companion) slotFacts.push(companion)
+    withholdPointAmounts(decision.trigger, facts, used)
 
     // Un naranja se cuenta con consejo práctico; lo épico se reserva al rojo,
     // que es el único nivel que de verdad lo justifica.
@@ -304,9 +324,9 @@ function buildClosing(
  * El Pokémon **elegido explícitamente** como foco narrativo: el
  * `PokemonSpotlightFact` que protagoniza el diálogo principal, y nada más.
  *
- * No vale el `mapPokemonId` de un hecho cualquiera del slot: que el aviso de
- * lluvia de Ibiza venga acompañado de un `RainFact` cuyo mapa dibuja
- * Castform no convierte a Castform en el protagonista del día. En `alerta` el
+ * No vale el `mapPokemonId` de un hecho cualquiera del slot: que el aviso
+ * costero de A Coruña venga acompañado de un `MarineFact` cuyo mapa dibuja
+ * Gyarados no convierte a Gyarados en el protagonista del día. En `alerta` el
  * centro es el aviso, así que normalmente no hay foco — y `null` es la
  * respuesta honesta.
  */

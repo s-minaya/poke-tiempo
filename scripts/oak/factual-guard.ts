@@ -44,6 +44,15 @@ const ALERT_LEVEL_STEMS: Record<AlertLevel, string> = {
  */
 const NEUTRAL_CAPITALS: ReadonlySet<string> = new Set(['Pokémon', 'Pokemon', 'Oak', 'Profesor', 'PokéTiempo'])
 
+/**
+ * Artículos, preposiciones y conjunciones: en mayúscula tras una coma o dos
+ * puntos son un descuido de redacción, no una entidad. No tapan nada: el
+ * nombre que venga detrás ("En Madrid", "La Coruña") se sigue comprobando.
+ */
+const FUNCTION_WORDS: ReadonlySet<string> = new Set([
+  'A', 'Al', 'Con', 'De', 'Del', 'Desde', 'El', 'En', 'Entre', 'Hasta', 'La', 'Las', 'Los', 'O', 'Para', 'Por', 'Sin', 'Un', 'Una', 'Y',
+])
+
 /** Signos que abren y no cierran: entre ellos y la palabra no hay frase nueva. */
 const OPENERS = '¡¿"«»“”‘’\'()[]-–—*'
 const SENTENCE_END = '.!?…'
@@ -169,11 +178,31 @@ function scanKnownNames(text: string, known: readonly string[], allowed: Readonl
  */
 function foreignProperNoun(masked: string): string | null {
   for (const match of masked.matchAll(CAPITALIZED)) {
-    if (NEUTRAL_CAPITALS.has(match[0])) continue
+    if (NEUTRAL_CAPITALS.has(match[0]) || FUNCTION_WORDS.has(match[0])) continue
     if (isSentenceStart(masked, match.index)) continue
     return match[0]
   }
   return null
+}
+
+/**
+ * Tapa los claims del hueco que aparezcan literales en el texto. Son la
+ * expansión de un token —o una copia fiel— y su contenido ya está autorizado
+ * por construcción; tapados, su mayúscula inicial deja de parecer un nombre
+ * cuando el token se colocó tras una coma o dos puntos. Los signos de fin de
+ * frase se conservan: la frase siguiente tiene que seguir empezando.
+ */
+function maskClaims(masked: string, text: string, claims: readonly string[]): string {
+  // Por unidades UTF-16, las mismas que los índices de `indexOf`.
+  const chars = masked.split('')
+  for (const claim of claims) {
+    for (let at = text.indexOf(claim); at !== -1; at = text.indexOf(claim, at + claim.length)) {
+      for (let index = at; index < at + claim.length; index += 1) {
+        if (!SENTENCE_END.includes(text[index])) chars[index] = MASK
+      }
+    }
+  }
+  return chars.join('')
 }
 
 function foreignAlertLevel(text: string, allowed: ReadonlySet<string>): AlertLevel | null {
@@ -210,7 +239,7 @@ function checkOne(text: string, slot: DialogueClaims, known: readonly string[]):
   const { masked, foreign } = scanKnownNames(text, known, allowedNames)
   if (foreign !== null) return `nombra "${foreign}", que no está en sus claims`
 
-  const invented = foreignProperNoun(maskUnits(masked))
+  const invented = foreignProperNoun(maskUnits(maskClaims(masked, text, slot.claims)))
   if (invented !== null) return `nombra "${invented}", que no existe en los datos del día`
 
   return null

@@ -72,8 +72,8 @@ function spotlight(locationCount: number, names: string[], pokemonId: 'charmeleo
   }
 }
 
-function dayShape(alertedLocations: number, rainingLocations: number): NarrativeFact {
-  return { kind: 'day_shape', totalLocations: 74, rainingLocations, alertedLocations, distinctPokemonCount: 8 }
+function dayShape(alertedLocations: number, rainingLocations: number, alertsUnavailableLocations = 0, alertsUnsupportedLocations = 0): NarrativeFact {
+  return { kind: 'day_shape', totalLocations: 74, rainingLocations, alertedLocations, alertsUnavailableLocations, alertsUnsupportedLocations, distinctPokemonCount: 8 }
 }
 
 function alert(affected: string[], affectedLocationCount: number): NarrativeFact {
@@ -81,11 +81,13 @@ function alert(affected: string[], affectedLocationCount: number): NarrativeFact
     kind: 'alert',
     level: 'naranja',
     phenomenon: 'lluvia',
-    sourcePhenomenon: 'Lluvias persistentes',
-    officialZoneId: '645301',
-    source: 'aemet',
+    sourcePhenomena: ['Lluvias persistentes'],
+    officialZoneIds: ['645301'],
+    sources: ['aemet'],
+    officialAlertCount: 1,
     affectedLocations: affected.map((name) => ({ locationId: name.toLowerCase(), locationName: name })),
     affectedLocationCount,
+    otherAlertsActive: false,
   }
 }
 
@@ -210,6 +212,24 @@ describe('day_shape: elegimos nosotros qué es interesante', () => {
   it('sin lluvia ni avisos, lo dice', () => {
     expect(textOf([dayShape(0, 0)])).toBe('No hay lluvia ni avisos en ninguno de 74 lugares del mapa.')
   })
+
+  // Un lugar cuya consulta de avisos falló no es un lugar sin aviso
+  // (`013-spec.md`: los elegibles son los lugares cuya consulta funcionó).
+  it('con la consulta de avisos caída en algún lugar, no afirma nada sobre avisos', () => {
+    expect(textOf([dayShape(0, 0, 65)])).toBe('No hay lluvia en ninguno de 74 lugares del mapa.')
+    expect(textOf([dayShape(3, 2, 65)])).toBe('En el mapa, 2 de 74 lugares tienen lluvia.')
+    expect(textOf([dayShape(3, 0, 1)])).toBe('No hay lluvia en ninguno de 74 lugares del mapa.')
+  })
+
+  // Andorra no tiene producto de avisos (`status: 'unsupported'`): no se puede
+  // decir que allí no haya avisos, ni dar a entender que el resto del total
+  // está sin avisos.
+  it('con lugares sin cobertura de avisos, no afirma ausencia de avisos ni usa el total como denominador', () => {
+    expect(textOf([dayShape(0, 0, 0, 1)])).toBe('No hay lluvia en ninguno de 74 lugares del mapa.')
+    expect(textOf([dayShape(7, 0, 0, 1)])).toBe('Hay 7 lugares del mapa bajo algún aviso.')
+    expect(textOf([dayShape(7, 2, 0, 1)])).toBe('Hay 7 lugares del mapa bajo algún aviso y 2 con lluvia.')
+    expect(textOf([dayShape(0, 2, 0, 1)])).toBe('En el mapa, 2 de 74 lugares tienen lluvia.')
+  })
 })
 
 describe('aviso: un aviso no es un lugar', () => {
@@ -221,6 +241,12 @@ describe('aviso: un aviso no es un lugar', () => {
     )
     // Un solo aviso: en la frase no hay ningún recuento de avisos.
     expect(text).not.toContain('4 avisos')
+  })
+
+  it('un fenómeno sin categoría se cuenta por nivel y lugar, sin «sin clasificar» ni el literal de origen', () => {
+    const unknown = { ...alert(['Menorca'], 1), level: 'amarillo', phenomenon: 'desconocido', sourcePhenomena: ['Rissagas'] } as NarrativeFact
+
+    expect(textOf([unknown])).toBe('Hay un aviso oficial amarillo que afecta a nuestro lugar de Menorca.')
   })
 
   it('un único lugar afectado se nombra, sin recuento', () => {
@@ -236,6 +262,36 @@ describe('aviso: un aviso no es un lugar', () => {
 
   it('sin nombres, solo el recuento de lugares', () => {
     expect(textOf([alert([], 4)])).toContain('afecta a 4 lugares de nuestro mapa')
+  })
+
+  // Varios avisos oficiales del mismo fenómeno y nivel: se dicen en plural y
+  // el recuento sigue siendo de lugares, nunca de avisos.
+  it('varios avisos del mismo fenómeno y nivel: plural, el total de lugares y una muestra de tres', () => {
+    const grouped = (names: string[], count: number, level: 'rojo' | 'naranja' | 'amarillo') =>
+      ({ ...alert(names, count), level, officialAlertCount: 2, affectedLocations: names.map((name) => ({ locationId: name, locationName: name })) }) as NarrativeFact
+
+    expect(textOf([grouped(['Castellón', 'Valencia'], 2, 'rojo')])).toBe(
+      'Hay avisos oficiales rojos por lluvia que afectan a 2 lugares de nuestro mapa: Castellón y Valencia.',
+    )
+    expect(textOf([grouped(['A Coruña', 'Pontevedra', 'Gijón', 'Cantabria', 'País Vasco'], 5, 'naranja')])).toBe(
+      'Hay avisos oficiales naranja por lluvia que afectan a 5 lugares de nuestro mapa; A Coruña, Pontevedra y Gijón son algunos de ellos.',
+    )
+    expect(textOf([grouped(['Ibiza'], 1, 'amarillo')])).toBe('Hay avisos oficiales amarillos por lluvia que afectan a nuestro lugar de Ibiza.')
+  })
+
+  it('la muestra autoriza solo los lugares que nombra', () => {
+    const many = { ...alert(['A Coruña', 'Pontevedra', 'Gijón', 'Cantabria'], 4), officialAlertCount: 4 } as NarrativeFact
+    const { allowed } = buildDayClaims(planWith(slot([many]))).dialogues[0]
+
+    expect(allowed.places).toEqual(['A Coruña', 'Pontevedra', 'Gijón'])
+  })
+
+  it('con otros avisos activos de otro fenómeno o nivel, no se presenta como el único', () => {
+    const withOthers = { ...alert(['Ibiza'], 1), otherAlertsActive: true } as NarrativeFact
+
+    expect(textOf([withOthers])).toBe(
+      'Hay un aviso oficial naranja por lluvia que afecta a nuestro lugar de Ibiza. Hay más avisos oficiales activos en el mapa.',
+    )
   })
 
   it('no viaja la trazabilidad ni el nivel se reinterpreta', () => {

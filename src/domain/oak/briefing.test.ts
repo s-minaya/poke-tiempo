@@ -618,6 +618,8 @@ function dayShapeFact(totalLocations: number): DayShapeFact {
     totalLocations,
     rainingLocations: 0,
     alertedLocations: 0,
+    alertsUnavailableLocations: 0,
+    alertsUnsupportedLocations: 0,
     distinctPokemonCount: 1,
   };
 }
@@ -655,11 +657,13 @@ function alertFact(
     kind: "alert",
     level,
     phenomenon,
-    sourcePhenomenon: phenomenon,
-    officialZoneId: "0000",
-    source: "aemet",
+    sourcePhenomena: [phenomenon],
+    officialZoneIds: ["0000"],
+    sources: ["aemet"],
+    officialAlertCount: 1,
     affectedLocations: [],
     affectedLocationCount: 0,
+    otherAlertsActive: false,
   };
 }
 

@@ -320,7 +320,7 @@ describe('escritura segura', () => {
     expect(Object.keys(today).sort()).toEqual(['date', 'dayMode', 'dialogues', 'generatedAt', 'serious', 'source'])
     for (const dialogue of today.dialogues) expect(Object.keys(dialogue).sort()).toEqual(['id', 'role', 'text', 'tone'])
     expect(JSON.stringify(today)).not.toContain('mapPokemonId')
-    expect(JSON.stringify(today)).not.toContain('officialZoneId')
+    expect(JSON.stringify(today)).not.toContain('officialZoneIds')
   })
 })
 

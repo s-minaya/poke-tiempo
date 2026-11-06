@@ -123,19 +123,21 @@ export interface MarineFact extends RepresentableFact {
   wavePeriodS: number | null
 }
 
-/** Un aviso oficial nunca dibuja Pokémon: se emite para una zona oficial, no
- *  para un lugar nuestro, así que no lleva `mapPokemonId` ni
- *  `mapRepresentsFact`. `affectedLocations` dice qué puntos del mapa caen
- *  bajo esa zona. */
+/** Los avisos oficiales activos de un mismo fenómeno y nivel, en cualquier
+ *  zona y fuente. Un aviso nunca dibuja Pokémon: se emite para una zona
+ *  oficial, no para un lugar nuestro, así que no lleva `mapPokemonId` ni
+ *  `mapRepresentsFact`. Avisos y lugares se cuentan aparte. */
 export interface AlertFact {
   kind: 'alert'
   level: AlertLevel
   phenomenon: AlertPhenomenon
-  sourcePhenomenon: string        // literal de la fuente — trazabilidad
-  officialZoneId: string
-  source: 'aemet' | 'ipma'
-  affectedLocations: FactLocation[]
+  sourcePhenomena: string[]       // literales de la fuente — trazabilidad
+  officialZoneIds: string[]
+  sources: ('aemet' | 'ipma')[]
+  officialAlertCount: number      // avisos oficiales distintos (zona y tramo)
+  affectedLocations: FactLocation[] // todos, cada uno una vez, orden de `locations`
   affectedLocationCount: number
+  otherAlertsActive: boolean      // hay otro aviso activo de otro fenómeno o nivel
 }
 
 /** El Pokémon protagonista y dónde se le ve. Siempre un Pokémon visible:
@@ -156,6 +158,8 @@ export interface DayShapeFact {
   totalLocations: number
   rainingLocations: number
   alertedLocations: number
+  alertsUnavailableLocations: number  // consulta de avisos caída (`status: 'error'`)
+  alertsUnsupportedLocations: number  // sin producto de avisos (`status: 'unsupported'`, Andorra)
   distinctPokemonCount: number
 }
 
@@ -304,7 +308,15 @@ Cuatro modos con condición comprobable en vez de trece con reglas artificiales.
 ### Dos advertencias sobre el dato actual
 
 1. **Los avisos persistidos no están filtrados por fecha.** Son el "último elaborado", que cubre sobre todo el día en curso, mientras que `forecast.date` es mañana. Oak filtra con el mismo `isActiveOnDate` que ya usa la 003 — de ahí el movimiento a `src/domain/alerts.ts`.
-2. **Un mismo aviso aparece repetido** en los lugares que comparten zona oficial. Los `AlertFact` se deduplican por `officialZoneId + phenomenon + level + startsAt` antes de entrar en el plan.
+2. **Un mismo aviso aparece repetido** en los lugares que comparten zona oficial, a veces también dentro de un mismo lugar, y un mismo fenómeno y nivel puede llegar en varias zonas y tramos. Los `AlertFact` se agrupan por `phenomenon + level` —un fenómeno `desconocido`, además, por su literal de origen—, en cualquier zona y fuente. Cada lugar cuenta una vez, y `officialAlertCount` cuenta los avisos oficiales distintos (zona y tramo), que no son los lugares.
+
+### Cómo se narran
+
+- **Mismo fenómeno y nivel en zonas distintas:** una sola narración, en plural si hay varios avisos oficiales («avisos oficiales rojos por lluvia»). El recuento es siempre de lugares, nunca de avisos. Con más de tres lugares se nombran tres como muestra, anunciada como tal, y el total real.
+- **Fenómenos o niveles distintos:** el foco es el aviso más grave con el desempate vigente (`day-mode.ts`). Si hay más avisos activos de otro fenómeno o nivel, se dice que los hay («Hay más avisos en el mapa»), sin enumerarlos.
+- **Fenómeno sin categoría (`desconocido`):** se cuenta por nivel y lugar, sin nombrar el fenómeno; el literal de origen es trazabilidad.
+- **Acompañante del aviso:** solo el viento y el oleaje, cuyos hechos traen una medida que la 003 ya considera notable. Tormenta, niebla y calima solo repetirían el aviso. Los acumulados de lluvia o nieve de un punto, cualquier cantidad mayor que cero, no se cuentan ese día en los lugares del aviso del mismo fenómeno: junto a un aviso de zona se leen como una contradicción.
+- **Sin cobertura no se afirma ausencia:** con algún lugar cuya consulta de avisos falló, el recuento del día no habla de avisos. Con lugares sin producto de avisos (Andorra), no dice «ni avisos» ni usa el total como denominador del recuento de avisos.
 
 ### Decisiones cerradas
 
@@ -397,7 +409,7 @@ Registro orientativo (referencia de voz, **no** plantillas literales):
 Mismo `DialoguePlan`, mismos hechos, sin red. `generateFallbackDialogues(dayPlan: DayPlan): OakDialogues` **no decide nada**: no toca los hechos, no elige protagonista, no cambia el modo, no busca otro leitmotiv, no vuelve al forecast y no mira `MAP_PRIORITY`. Recibe un plan cerrado y lo pone en palabras. Se compone, no se enumera:
 
 1. **Una cláusula por `kind` de hecho** — 12 funciones puras y cortas, cada una con dos o tres redacciones y una formulación compacta de reserva. Devuelven un **fragmento** sin punto final, para poder encadenarse; el spotlight devuelve además una frase suelta con la etiqueta del fenómeno.
-2. **Aperturas y remates por tono**, no por rol: el tono ya viene decidido por el plan y es lo que manda el registro. `consejo` remata siempre con prudencia genérica — nunca con una instrucción oficial, que nuestros datos no traen.
+2. **Aperturas y remates por tono**, no por rol: el tono ya viene decidido por el plan y es lo que manda el registro. `consejo` remata siempre con prudencia genérica — nunca con una instrucción oficial, que nuestros datos no traen. `neutral` no remata: una coletilla que no dice nada no aporta voz.
 3. **Tres o cuatro redacciones por leitmotiv**, que es lo único que aporta el `guasa`.
 
 Reglas de redacción que no son de estilo sino de verdad:
@@ -406,7 +418,8 @@ Reglas de redacción que no son de estilo sino de verdad:
 - **La etiqueta (`POKEMON_LABELS`) no se verbaliza.** Mezcla sustantivos ("Niebla"), adjetivos ("Caluroso") y sintagmas ("Nevadas intensas"), así que ninguna plantilla la admite entera y clasificarlos gramaticalmente sería un vocabulario nuevo a cambio de muy poco. El nombre y el reparto ya dicen la verdad del spotlight, y cuando el hueco lleva además un hecho meteorológico, sus cifras dicen bastante más que una etiqueta. Decisión tomada, no deuda pendiente.
 - **Ningún hecho meteorológico nombra al Pokémon del mapa, y es deliberado.** Ni con `mapRepresentsFact: false` (sería atribuirle un fenómeno ajeno) ni con `true`, donde el contrato solo afirma coincidencia y no causa. Los Pokémon se nombran por `PokemonSpotlightFact` y por los leitmotivs, que son las dos piezas que existen para eso; así la regla del `false` no depende de acordarse de ella, sino de que no haya por dónde romperla. Abrir asociaciones Pokémon-fenómeno desde `RainFact` o `WindFact` sería una decisión de producto aparte.
 - **Lo opcional se omite cuando no existe**: sin `probabilityPercent` no hay porcentaje, sin `gustKmh` no hay racha, sin `wavePeriodS` no hay periodo. Y la probabilidad se cuenta como probabilidad: un 60 % nunca es una certeza.
-- **Trazabilidad que no se lee en voz alta**: `officialZoneId`, `source` y `sourcePhenomenon` no aparecen nunca en un texto.
+- **Trazabilidad que no se lee en voz alta**: `officialZoneIds`, `sources` y `sourcePhenomena` no aparecen nunca en un texto.
+- **El calendario va en su propia frase** y solo dice el día de la semana: «La previsión es para el sábado.», sin «fin de semana», que el día ya dice, y sin encadenarlo con un dato del tiempo.
 - **Muestra, no censo**: cuando `locationCount` supera a los lugares nombrados, la lista se presenta como muestra ("entre ellos"). "Solo" se reserva al único caso que lo justifica, un lugar.
 - **Lugares, no puntos**: un punto es la chincheta del mapa. El recuento es el mismo; la palabra es la de una persona.
 - **Unión sin causa**: dos hechos del mismo hueco se encadenan con " y ", "; además, " o " mientras " — nunca con un conector causal. " y " se descarta si el primer fragmento ya termina en enumeración, donde se leería como un elemento más de la lista. Y si los dos hablan del mismo sitio y no hay ambigüedad, el segundo dice "allí" en vez de repetir el nombre.
@@ -441,7 +454,7 @@ Da variedad suficiente sin tabla combinatoria: unas 60 piezas cortas bien escrit
 
 El `role` se lo pone después el programa desde el `DialoguePlan`. Validación propia antes de publicar: objeto exacto, 3 elementos, los 3 `id` esperados y en orden, `text` no vacío, 20–160 caracteres, sin campos extra. Cualquier desviación → fallback.
 
-**Guarda factual (`scripts/oak/factual-guard.ts`).** Después de la forma, el contenido. No es un verificador semántico —eso no se puede hacer con reglas deterministas— sino una comprobación estrecha y decidible: que no haya entrado **ninguna entidad factual nueva**. Cuatro controles por hueco, contra los claims de ese mismo hueco: cifras (normalizando coma y punto decimal), nombres de lugar, nombres de Pokémon (el censo entero de `POKEMON_NAMES`, no solo los del día) y niveles de aviso. Los nombres propios que no conocemos se detectan por mayúscula interior de frase. Es la red por debajo del diseño, no el diseño: la defensa primera es que el payload ya no lleve nada que invite a inventar. Un falso positivo cuesta un texto de IA y publica el fallback, que es bueno; un falso negativo publica una mentira — ante la duda, se rechaza.
+**Guarda factual (`scripts/oak/factual-guard.ts`).** Después de la forma, el contenido. No es un verificador semántico —eso no se puede hacer con reglas deterministas— sino una comprobación estrecha y decidible: que no haya entrado **ninguna entidad factual nueva**. Cuatro controles por hueco, contra los claims de ese mismo hueco: cifras (normalizando coma y punto decimal), nombres de lugar, nombres de Pokémon (el censo entero de `POKEMON_NAMES`, no solo los del día) y niveles de aviso. Los nombres propios que no conocemos se detectan por mayúscula interior de frase; los claims del hueco que aparecen literales (la expansión de un token tras una coma o dos puntos) y las palabras gramaticales en mayúscula («En», «La»…) no cuentan como nombre, pero el nombre que las sigue sí se comprueba. Es la red por debajo del diseño, no el diseño: la defensa primera es que el payload ya no lleve nada que invite a inventar. Un falso positivo cuesta un texto de IA y publica el fallback, que es bueno; un falso negativo publica una mentira — ante la duda, se rechaza.
 
 **Todo lo que cae al fallback** y termina en éxito: sin `GROQ_API_KEY`, timeout, error de red, HTTP no 2xx, 429, respuesta sin `content`, JSON ilegible, esquema inesperado, ids mal o en otro orden, texto vacío o fuera de rango, cualquier campo extra, y cualquier cifra, lugar, Pokémon o nivel de aviso que no estuviera en los claims de ese hueco. Se registra `Oak AI unavailable/invalid → using local fallback (motivo)`, sin secretos ni cabeceras.
 

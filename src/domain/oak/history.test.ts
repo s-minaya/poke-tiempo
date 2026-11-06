@@ -32,11 +32,13 @@ const ALERT: AlertFact = {
   kind: 'alert',
   level: 'naranja',
   phenomenon: 'lluvia',
-  sourcePhenomenon: 'Lluvias',
-  officialZoneId: '774602',
-  source: 'aemet',
+  sourcePhenomena: ['Lluvias'],
+  officialZoneIds: ['774602'],
+  sources: ['aemet'],
+  officialAlertCount: 1,
   affectedLocations: [{ locationId: 'valencia', locationName: 'Valencia' }],
   affectedLocationCount: 1,
+  otherAlertsActive: false,
 }
 
 describe('recentHistory', () => {
