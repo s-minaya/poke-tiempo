@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-11-07",
+    "focusPokemonId": null,
+    "leitmotifIds": []
+  },
+  {
     "date": "2026-11-06",
     "focusPokemonId": "castform-ice",
     "leitmotifIds": [
@@ -23,11 +28,6 @@
   },
   {
     "date": "2026-10-18",
-    "focusPokemonId": null,
-    "leitmotifIds": []
-  },
-  {
-    "date": "2026-10-17",
     "focusPokemonId": null,
     "leitmotifIds": []
   }

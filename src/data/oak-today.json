@@ -1,27 +1,27 @@
 {
-  "date": "2026-11-06",
-  "generatedAt": "2026-11-05T15:12:34.776Z",
+  "date": "2026-11-07",
+  "generatedAt": "2026-11-06T13:29:33.190Z",
   "source": "fallback",
-  "dayMode": "parte",
-  "serious": false,
+  "dayMode": "alerta",
+  "serious": true,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Bien. En España se concentran las máximas más altas. Seguimos observando."
+      "text": "Veamos. El cielo está poco nuboso en el mapa; además, el mapa es del sábado, fin de semana. Seguimos observando."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "neutral",
-      "text": "Hay lluvia entre los lugares de Portugal representados en el mapa y Castform (Niebla) aparece en 4 lugares, entre ellos Lugo, Teruel y Alcañiz."
+      "tone": "consejo",
+      "text": "Atención un momento. Tenemos un aviso oficial naranja por lluvia en La Palma y La Palma; además, allí se esperan 2,3 mm, con un 85 % de probabilidad."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "guasa",
-      "text": "Castform ha vuelto a cambiarse de ropa. Cielo despejado en el noreste y esta vez, Lluvia moderada: aparece en 20 lugares."
+      "tone": "neutral",
+      "text": "Las máximas más altas se concentran en Canarias y Castform (Niebla) se deja ver en Lleida, Burgos y Soria. Tomo nota."
     }
   ]
 }
