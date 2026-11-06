@@ -317,7 +317,8 @@ function alertFacts(entries: readonly LocationEntry[], date: string): AlertFact[
 
       const key = `${alert.officialZoneId}|${alert.phenomenon}|${alert.level}|${alert.startsAt}`
       const group = groups.get(key) ?? { alert, places: [] }
-      group.places.push(plainLocation(entry))
+      // La fuente puede repetir el mismo aviso en un lugar: el lugar cuenta una vez.
+      if (!group.places.some((place) => place.locationId === entry.location.id)) group.places.push(plainLocation(entry))
       groups.set(key, group)
     }
   }

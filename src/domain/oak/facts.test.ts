@@ -413,6 +413,39 @@ describe('collectFacts — avisos oficiales', () => {
     expect(factsOfKind(facts, 'alert')).toHaveLength(3)
   })
 
+  // Caso real del 2026-10-22: AEMET entregó dos veces el mismo aviso naranja
+  // de lluvia de la zona 659303 y Oak dijo «en La Palma y La Palma». También
+  // llegan repeticiones que solo cambian `endsAt` (Barcelona, 2026-10-17).
+  it('un aviso que la fuente repite en un mismo lugar cuenta ese lugar una sola vez', () => {
+    const repeated = alert({ officialZoneId: '659303' })
+    const facts = collectFacts(
+      [location('la-palma', 'La Palma'), location('la-gomera', 'La Gomera')],
+      forecast([
+        locationForecast('la-palma', {
+          alerts: {
+            status: 'ok',
+            alerts: [repeated, { ...repeated }, alert({ officialZoneId: '659303', phenomenon: 'viento', sourcePhenomenon: 'Vientos' })],
+          },
+        }),
+        locationForecast('la-gomera', { alerts: { status: 'ok', alerts: [{ ...repeated }, { ...repeated, endsAt: `${DATE}T12:00:00+02:00` }] } }),
+      ]),
+    )
+    const alerts = factsOfKind(facts, 'alert')
+
+    expect(alerts.map(({ phenomenon, affectedLocations, affectedLocationCount }) => ({ phenomenon, affectedLocations, affectedLocationCount }))).toEqual([
+      {
+        phenomenon: 'lluvia',
+        affectedLocations: [
+          { locationId: 'la-palma', locationName: 'La Palma' },
+          { locationId: 'la-gomera', locationName: 'La Gomera' },
+        ],
+        affectedLocationCount: 2,
+      },
+      { phenomenon: 'viento', affectedLocations: [{ locationId: 'la-palma', locationName: 'La Palma' }], affectedLocationCount: 1 },
+    ])
+    expect(factsOfKind(facts, 'day_shape')[0].alertedLocations).toBe(2)
+  })
+
   it('alerts.status distinto de ok no produce hechos ni cuenta como lugar avisado', () => {
     const facts = collectFacts(MADRID, forecast([locationForecast('madrid', { alerts: { status: 'error' } })]))
 
