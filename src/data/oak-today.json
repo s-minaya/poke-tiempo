@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-07",
-  "generatedAt": "2026-11-06T13:29:33.190Z",
+  "date": "2026-11-09",
+  "generatedAt": "2026-11-08T12:27:30.658Z",
   "source": "fallback",
   "dayMode": "alerta",
   "serious": true,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Veamos. El cielo está poco nuboso en el mapa; además, el mapa es del sábado, fin de semana. Seguimos observando."
+      "text": "En el mapa hay lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Atención un momento. Tenemos un aviso oficial naranja por lluvia en La Palma y La Palma; además, allí se esperan 2,3 mm, con un 85 % de probabilidad."
+      "text": "Atención un momento. Tenemos un aviso oficial naranja por lluvia en Huelva. Hay más avisos en el mapa. Conviene estar atento."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Las máximas más altas se concentran en Canarias y Castform (Niebla) se deja ver en Lleida, Burgos y Soria. Tomo nota."
+      "text": "Hay tormentas entre los lugares de Portugal representados en el mapa y Mega-Gyarados se deja ver en 5 lugares, entre ellos Pontevedra, Cádiz y Porto."
     }
   ]
 }
