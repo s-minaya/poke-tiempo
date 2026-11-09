@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-09",
-  "generatedAt": "2026-11-08T12:27:30.658Z",
+  "date": "2026-11-10",
+  "generatedAt": "2026-11-09T14:40:47.952Z",
   "source": "fallback",
   "dayMode": "alerta",
   "serious": true,
@@ -15,13 +15,13 @@
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Atención un momento. Tenemos un aviso oficial naranja por lluvia en Huelva. Hay más avisos en el mapa. Conviene estar atento."
+      "text": "Un apunte. Hay un aviso naranja por lluvia en Plasencia. Hay más avisos en el mapa. Yo saldría preparado."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Hay tormentas entre los lugares de Portugal representados en el mapa y Mega-Gyarados se deja ver en 5 lugares, entre ellos Pontevedra, Cádiz y Porto."
+      "text": "En Baleares se queda sin lluvia y Mega-Gyarados aparece en 5 lugares, entre ellos Pontevedra, Cádiz y Porto."
     }
   ]
 }
