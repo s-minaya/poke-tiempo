@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-10",
-  "generatedAt": "2026-11-09T14:40:47.952Z",
+  "date": "2026-11-11",
+  "generatedAt": "2026-11-10T14:00:32.856Z",
   "source": "fallback",
   "dayMode": "alerta",
   "serious": true,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "En el mapa hay lluvia."
+      "text": "Veamos. Hay lluvia en el mapa."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "consejo",
-      "text": "Un apunte. Hay un aviso naranja por lluvia en Plasencia. Hay más avisos en el mapa. Yo saldría preparado."
+      "tone": "epico",
+      "text": "Hay avisos rojos por viento en 6 lugares; además, viento de 33 km/h en La Palma. Hay más avisos en el mapa. Yo tendría cuidado."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "En Baleares se queda sin lluvia y Mega-Gyarados aparece en 5 lugares, entre ellos Pontevedra, Cádiz y Porto."
+      "text": "Bien. En Baleares domina el cielo poco nuboso; además, Mega-Gyarados se deja ver en 7 lugares, entre ellos Pontevedra, Huelva y Cádiz."
     }
   ]
 }
