@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-12",
-  "generatedAt": "2026-11-11T13:12:46.983Z",
+  "date": "2026-11-13",
+  "generatedAt": "2026-11-12T14:15:19.918Z",
   "source": "fallback",
   "dayMode": "alerta",
   "serious": true,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Hay lluvia en el mapa."
+      "text": "Veamos. En la península ibérica hay lluvia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Un apunte. Hay un aviso naranja por lluvia en Jaca y Benasque. Hay más avisos en el mapa. Yo saldría preparado."
+      "text": "Hay un aviso naranja por fenómenos costeros en Mallorca; además, allí el mar levanta 3 m de ola, con periodos de 6,8 s. Hay más avisos en el mapa."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "En Canarias se queda sin lluvia; además, Mega-Gyarados se deja ver en 8 lugares, entre ellos Pontevedra, Huelva y Cádiz."
+      "text": "En Canarias domina el cielo poco nuboso y Mega-Gyarados se deja ver en 5 lugares, entre ellos Pontevedra, Cádiz y Mallorca."
     }
   ]
 }
