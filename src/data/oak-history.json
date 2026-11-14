@@ -1,5 +1,12 @@
 [
   {
+    "date": "2026-11-15",
+    "focusPokemonId": "castform-rain",
+    "leitmotifIds": [
+      "hoppip-vuela"
+    ]
+  },
+  {
     "date": "2026-11-13",
     "focusPokemonId": null,
     "leitmotifIds": []
@@ -21,11 +28,6 @@
   },
   {
     "date": "2026-11-09",
-    "focusPokemonId": null,
-    "leitmotifIds": []
-  },
-  {
-    "date": "2026-11-07",
     "focusPokemonId": null,
     "leitmotifIds": []
   }

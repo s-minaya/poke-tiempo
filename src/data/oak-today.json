@@ -1,27 +1,27 @@
 {
-  "date": "2026-11-13",
-  "generatedAt": "2026-11-12T14:15:19.918Z",
-  "source": "fallback",
-  "dayMode": "alerta",
-  "serious": true,
+  "date": "2026-11-15",
+  "generatedAt": "2026-11-14T12:46:44.926Z",
+  "source": "ai",
+  "dayMode": "invasion",
+  "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Veamos. En la península ibérica hay lluvia."
+      "text": "Vaya... En la península ibérica hay lluvia. Observemos el domingo, fin de semana."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "consejo",
-      "text": "Hay un aviso naranja por fenómenos costeros en Mallorca; además, allí el mar levanta 3 m de ola, con periodos de 6,8 s. Hay más avisos en el mapa."
+      "tone": "epico",
+      "text": "¡Increíble! En la meseta se concentran las máximas más bajas. Además, Castform (Lluvia moderada) aparece en 32 lugares del mapa."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "neutral",
-      "text": "En Canarias domina el cielo poco nuboso y Mega-Gyarados se deja ver en 5 lugares, entre ellos Pontevedra, Cádiz y Mallorca."
+      "tone": "guasa",
+      "text": "Curioso... En Canarias domina el cielo despejado. Hoppip, con su leve brizna, difícilmente permanecerá quieto."
     }
   ]
 }
