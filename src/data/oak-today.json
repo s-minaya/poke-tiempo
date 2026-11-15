@@ -1,27 +1,27 @@
 {
-  "date": "2026-11-15",
-  "generatedAt": "2026-11-14T12:46:44.926Z",
-  "source": "ai",
-  "dayMode": "invasion",
+  "date": "2026-11-16",
+  "generatedAt": "2026-11-15T13:11:27.937Z",
+  "source": "fallback",
+  "dayMode": "avistamiento",
   "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... En la península ibérica hay lluvia. Observemos el domingo, fin de semana."
+      "text": "Bien. El viento se hace notar en el mapa."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "epico",
-      "text": "¡Increíble! En la meseta se concentran las máximas más bajas. Además, Castform (Lluvia moderada) aparece en 32 lugares del mapa."
+      "tone": "cientifico",
+      "text": "Curioso... El cielo está despejado en Canarias; además, Charmander solo asoma en Tenerife. Me lo apunto en el cuaderno."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "guasa",
-      "text": "Curioso... En Canarias domina el cielo despejado. Hoppip, con su leve brizna, difícilmente permanecerá quieto."
+      "text": "Castform ha vuelto a cambiarse de ropa. Hay lluvia en el noroeste y esta vez, Niebla: aparece en 8 lugares, entre ellos Benasque, Ciudad Real y Cáceres."
     }
   ]
 }
