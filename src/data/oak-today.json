@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-16",
-  "generatedAt": "2026-11-15T13:11:27.937Z",
+  "date": "2026-11-17",
+  "generatedAt": "2026-11-16T14:16:26.212Z",
   "source": "fallback",
   "dayMode": "avistamiento",
   "serious": false,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Bien. El viento se hace notar en el mapa."
+      "text": "El viento gana protagonismo en el mapa."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "cientifico",
-      "text": "Curioso... El cielo está despejado en Canarias; además, Charmander solo asoma en Tenerife. Me lo apunto en el cuaderno."
+      "text": "Vaya, esto merece una nota. El cielo está despejado en Canarias; además, Zapdos solo aparece en País Vasco."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "guasa",
-      "text": "Castform ha vuelto a cambiarse de ropa. Hay lluvia en el noroeste y esta vez, Niebla: aparece en 8 lugares, entre ellos Benasque, Ciudad Real y Cáceres."
+      "text": "Mejor no molestar a quien está de guardia en el mar. Cielo poco nuboso en Baleares; además, Mega-Gyarados aparece en 4 lugares."
     }
   ]
 }
