@@ -1,27 +1,27 @@
 {
-  "date": "2026-11-17",
-  "generatedAt": "2026-11-16T14:16:26.212Z",
+  "date": "2026-11-18",
+  "generatedAt": "2026-11-17T15:10:32.974Z",
   "source": "fallback",
-  "dayMode": "avistamiento",
-  "serious": false,
+  "dayMode": "alerta",
+  "serious": true,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "El viento gana protagonismo en el mapa."
+      "text": "Bien. El viento gana protagonismo en el mapa."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "cientifico",
-      "text": "Vaya, esto merece una nota. El cielo está despejado en Canarias; además, Zapdos solo aparece en País Vasco."
+      "tone": "consejo",
+      "text": "Hay avisos naranja por fenómenos costeros en 7 lugares y olas de 3,9 m frente a A Coruña. Hay más avisos en el mapa. Yo tendría cuidado."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "guasa",
-      "text": "Mejor no molestar a quien está de guardia en el mar. Cielo poco nuboso en Baleares; además, Mega-Gyarados aparece en 4 lugares."
+      "tone": "neutral",
+      "text": "Veamos. Sin lluvia en Canarias; además, Mega-Gyarados aparece en 7 lugares, entre ellos A Coruña, Pontevedra y Gijón."
     }
   ]
 }
