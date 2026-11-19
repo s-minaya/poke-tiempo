@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-11-20",
+    "focusPokemonId": null,
+    "leitmotifIds": []
+  },
+  {
     "date": "2026-11-19",
     "focusPokemonId": null,
     "leitmotifIds": []
@@ -29,10 +34,5 @@
     "leitmotifIds": [
       "hoppip-vuela"
     ]
-  },
-  {
-    "date": "2026-11-13",
-    "focusPokemonId": null,
-    "leitmotifIds": []
   }
 ]
