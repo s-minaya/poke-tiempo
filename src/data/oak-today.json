@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-20",
-  "generatedAt": "2026-11-19T14:57:31.811Z",
+  "date": "2026-11-21",
+  "generatedAt": "2026-11-20T14:38:36.904Z",
   "source": "fallback",
   "dayMode": "alerta",
   "serious": true,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "En España se concentran las máximas más altas."
+      "text": "Veamos. Hay lluvia en la península ibérica. La previsión es para el sábado."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Un apunte. Hay avisos naranja por fenómenos costeros en 5 lugares; además, olas de 3,3 m frente a A Coruña. Hay más avisos en el mapa. Yo tendría cuidado."
+      "text": "Atención un momento. Tenemos avisos oficiales naranja por lluvia en Porto, Vila Real y Guarda. Hay más avisos en el mapa. Conviene estar atento."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "El cielo está despejado en Baleares y Mega-Gyarados se deja ver en 7 lugares, entre ellos A Coruña, Pontevedra y Gijón."
+      "text": "Bien. Sin lluvia en el sureste; además, Mega-Gyarados aparece en Pontevedra, Porto y Lisboa."
     }
   ]
 }
