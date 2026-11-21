@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-21",
-  "generatedAt": "2026-11-20T14:38:36.904Z",
+  "date": "2026-11-22",
+  "generatedAt": "2026-11-21T13:57:33.476Z",
   "source": "fallback",
   "dayMode": "alerta",
   "serious": true,
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Veamos. Hay lluvia en la península ibérica. La previsión es para el sábado."
+      "text": "Bien. El viento gana protagonismo en el mapa. La previsión es para el domingo."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "consejo",
-      "text": "Atención un momento. Tenemos avisos oficiales naranja por lluvia en Porto, Vila Real y Guarda. Hay más avisos en el mapa. Conviene estar atento."
+      "text": "Un apunte. Hay avisos naranja por fenómenos costeros en Gijón, Cantabria y País Vasco; además, olas de 2,7 m frente a Gijón. Hay más avisos en el mapa."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "neutral",
-      "text": "Bien. Sin lluvia en el sureste; además, Mega-Gyarados aparece en Pontevedra, Porto y Lisboa."
+      "text": "Las máximas más bajas se concentran en la meseta y Mega-Gyarados aparece en 6 lugares, entre ellos Pontevedra, Gijón y Cantabria."
     }
   ]
 }
