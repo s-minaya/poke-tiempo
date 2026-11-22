@@ -1,27 +1,27 @@
 {
-  "date": "2026-11-22",
-  "generatedAt": "2026-11-21T13:57:33.476Z",
-  "source": "fallback",
-  "dayMode": "alerta",
-  "serious": true,
+  "date": "2026-11-23",
+  "generatedAt": "2026-11-22T13:51:19.401Z",
+  "source": "ai",
+  "dayMode": "avistamiento",
+  "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Bien. El viento gana protagonismo en el mapa. La previsión es para el domingo."
+      "text": "Observando el mapa, En el mapa domina el cielo poco nuboso. Notable claridad."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "consejo",
-      "text": "Un apunte. Hay avisos naranja por fenómenos costeros en Gijón, Cantabria y País Vasco; además, olas de 2,7 m frente a Gijón. Hay más avisos en el mapa."
+      "tone": "cientifico",
+      "text": "En la meseta, En la meseta se concentran las máximas más bajas. Un patrón interesante para estudiar."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "neutral",
-      "text": "Las máximas más bajas se concentran en la meseta y Mega-Gyarados aparece en 6 lugares, entre ellos Pontevedra, Gijón y Cantabria."
+      "tone": "guasa",
+      "text": "En el noroeste domina el cielo poco nuboso. Mantener distancia es prudente."
     }
   ]
 }
