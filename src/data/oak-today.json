@@ -1,27 +1,27 @@
 {
-  "date": "2026-11-23",
-  "generatedAt": "2026-11-22T13:51:19.401Z",
+  "date": "2026-11-24",
+  "generatedAt": "2026-11-23T16:48:40.270Z",
   "source": "ai",
-  "dayMode": "avistamiento",
+  "dayMode": "invasion",
   "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Observando el mapa, En el mapa domina el cielo poco nuboso. Notable claridad."
+      "text": "Vaya... En el mapa hay lluvia. Observamos que ocurre en 54 de los 74 lugares registrados."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "cientifico",
-      "text": "En la meseta, En la meseta se concentran las máximas más bajas. Un patrón interesante para estudiar."
+      "tone": "epico",
+      "text": "¡Interesante! En el noroeste hay tormentas. Castform (Lluvia moderada) se muestra en 40 puntos, como La Rioja y Huesca."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
       "tone": "guasa",
-      "text": "En el noroeste domina el cielo poco nuboso. Mantener distancia es prudente."
+      "text": "Curioso... Sin lluvia en Canarias. Castform (Niebla) solo viste Girona y Plasencia; parece que su armario es muy selectivo."
     }
   ]
 }

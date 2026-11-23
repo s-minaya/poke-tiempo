@@ -1,5 +1,12 @@
 [
   {
+    "date": "2026-11-24",
+    "focusPokemonId": "castform-rain",
+    "leitmotifIds": [
+      "castform-vestuario"
+    ]
+  },
+  {
     "date": "2026-11-23",
     "focusPokemonId": "charmander",
     "leitmotifIds": [
@@ -23,11 +30,6 @@
   },
   {
     "date": "2026-11-19",
-    "focusPokemonId": null,
-    "leitmotifIds": []
-  },
-  {
-    "date": "2026-11-18",
     "focusPokemonId": null,
     "leitmotifIds": []
   }
