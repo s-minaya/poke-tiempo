@@ -1,27 +1,27 @@
 {
-  "date": "2026-11-24",
-  "generatedAt": "2026-11-23T16:48:40.270Z",
-  "source": "ai",
-  "dayMode": "invasion",
-  "serious": false,
+  "date": "2026-11-25",
+  "generatedAt": "2026-11-24T16:45:31.491Z",
+  "source": "fallback",
+  "dayMode": "alerta",
+  "serious": true,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Vaya... En el mapa hay lluvia. Observamos que ocurre en 54 de los 74 lugares registrados."
+      "text": "El viento gana protagonismo en el mapa."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "epico",
-      "text": "¡Interesante! En el noroeste hay tormentas. Castform (Lluvia moderada) se muestra en 40 puntos, como La Rioja y Huesca."
+      "tone": "consejo",
+      "text": "Atención un momento. Hay avisos naranja por fenómenos costeros en Cantabria y País Vasco; además, olas de 4,3 m frente a Cantabria. Hay más avisos en el mapa."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "guasa",
-      "text": "Curioso... Sin lluvia en Canarias. Castform (Niebla) solo viste Girona y Plasencia; parece que su armario es muy selectivo."
+      "tone": "neutral",
+      "text": "En el norte hay tormentas y Mega-Gyarados se deja ver en 7 lugares, entre ellos A Coruña, Pontevedra y Gijón."
     }
   ]
 }
