@@ -1,27 +1,27 @@
 {
-  "date": "2026-11-25",
-  "generatedAt": "2026-11-24T16:45:31.491Z",
-  "source": "fallback",
-  "dayMode": "alerta",
-  "serious": true,
+  "date": "2026-11-27",
+  "generatedAt": "2026-11-26T16:04:32.069Z",
+  "source": "ai",
+  "dayMode": "parte",
+  "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "El viento gana protagonismo en el mapa."
+      "text": "Curioso... En la península ibérica se concentran las máximas más bajas. Observemos la tendencia."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "consejo",
-      "text": "Atención un momento. Hay avisos naranja por fenómenos costeros en Cantabria y País Vasco; además, olas de 4,3 m frente a Cantabria. Hay más avisos en el mapa."
+      "tone": "neutral",
+      "text": "Veamos: En la meseta se concentran las máximas más bajas. Además, Castform (Niebla) aparece en 13 lugares del mapa."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "neutral",
-      "text": "En el norte hay tormentas y Mega-Gyarados se deja ver en 7 lugares, entre ellos A Coruña, Pontevedra y Gijón."
+      "tone": "guasa",
+      "text": "Guau... En el Mediterráneo domina el cielo despejado. Mientras tanto, Hoppip parece no poder quedarse quieto."
     }
   ]
 }
