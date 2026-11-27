@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-11-28",
+    "focusPokemonId": "gyarados-mega",
+    "leitmotifIds": []
+  },
+  {
     "date": "2026-11-27",
     "focusPokemonId": "castform-ice",
     "leitmotifIds": [
@@ -27,11 +32,6 @@
   },
   {
     "date": "2026-11-22",
-    "focusPokemonId": null,
-    "leitmotifIds": []
-  },
-  {
-    "date": "2026-11-21",
     "focusPokemonId": null,
     "leitmotifIds": []
   }

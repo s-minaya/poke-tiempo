@@ -1,27 +1,27 @@
 {
-  "date": "2026-11-27",
-  "generatedAt": "2026-11-26T16:04:32.069Z",
+  "date": "2026-11-28",
+  "generatedAt": "2026-11-27T15:53:33.028Z",
   "source": "ai",
-  "dayMode": "parte",
+  "dayMode": "avistamiento",
   "serious": false,
   "dialogues": [
     {
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Curioso... En la península ibérica se concentran las máximas más bajas. Observemos la tendencia."
+      "text": "Curioso... En el mapa domina el cielo poco nuboso. Esto será bajo el cielo del sábado, fin de semana."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
-      "tone": "neutral",
-      "text": "Veamos: En la meseta se concentran las máximas más bajas. Además, Castform (Niebla) aparece en 13 lugares del mapa."
+      "tone": "cientifico",
+      "text": "Veamos, En el noroeste hay lluvia. Además, Mega-Gyarados aparece en 1 lugar del mapa: Gijón."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "guasa",
-      "text": "Guau... En el Mediterráneo domina el cielo despejado. Mientras tanto, Hoppip parece no poder quedarse quieto."
+      "tone": "neutral",
+      "text": "Interesante, En la meseta se concentran las máximas más bajas. Por eso Altaria se registra en 19 lugares, entre ellos Alicante."
     }
   ]
 }
