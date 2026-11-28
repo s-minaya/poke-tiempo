@@ -1,7 +1,7 @@
 {
-  "date": "2026-11-28",
-  "generatedAt": "2026-11-27T15:53:33.028Z",
-  "source": "ai",
+  "date": "2026-11-29",
+  "generatedAt": "2026-11-28T14:47:28.874Z",
+  "source": "fallback",
   "dayMode": "avistamiento",
   "serious": false,
   "dialogues": [
@@ -9,19 +9,19 @@
       "id": "dialogue-1",
       "role": "apertura",
       "tone": "neutral",
-      "text": "Curioso... En el mapa domina el cielo poco nuboso. Esto será bajo el cielo del sábado, fin de semana."
+      "text": "En el mapa domina el cielo poco nuboso. La previsión es para el domingo."
     },
     {
       "id": "dialogue-2",
       "role": "foco",
       "tone": "cientifico",
-      "text": "Veamos, En el noroeste hay lluvia. Además, Mega-Gyarados aparece en 1 lugar del mapa: Gijón."
+      "text": "Interesante. En el noroeste hay lluvia; además, Zapdos solo asoma en Pontevedra."
     },
     {
       "id": "dialogue-3",
       "role": "cierre",
-      "tone": "neutral",
-      "text": "Interesante, En la meseta se concentran las máximas más bajas. Por eso Altaria se registra en 19 lugares, entre ellos Alicante."
+      "tone": "guasa",
+      "text": "Gyarados parece tener la agenda llena. El viento gana protagonismo en Canarias y solo aparece en Gran Canaria."
     }
   ]
 }
